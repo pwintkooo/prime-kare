@@ -1,0 +1,20 @@
+stages:
+  - build
+
+frontend_build:
+  stage: build
+  image: node:22
+
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
+
+backend_build:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+
+  script:
+    - cd backend
+    - dotnet restore
+    - dotnet build --no-restore
