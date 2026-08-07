@@ -21,7 +21,7 @@ backend_build:
     - dotnet build --no-restore
 
 backend_test:
-  state: test
+  stage: test
   image: mcr.microsoft.com/dotnet/sdk:10.0
 
   script:
