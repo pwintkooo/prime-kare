@@ -10,3 +10,15 @@ dotnet add PrimeKare.Api.Tests/PrimeKare.Api.Tests.csproj package Microsoft.AspN
 dotnet add package Microsoft.EntityFrameworkCore
 dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
 dotnet add package Microsoft.EntityFrameworkCore.Design
+
+dotnet tool install --global dotnet-ef
+//create database migration
+dotnet ef migrations add InitialCreate
+//apply the migration
+dotnet ef database update
+
+//install dotnetenv
+dotnet add package DotNetEnv
+//save the secrets locally with user-secrets
+dotnet user-secrets init
+dotnet user-secrets set ...

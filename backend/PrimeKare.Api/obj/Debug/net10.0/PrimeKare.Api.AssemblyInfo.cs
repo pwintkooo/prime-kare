@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("1565a498-d4e6-4f70-b865-0c316cf858c8")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("PrimeKare.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4e4b1a8ce9e2151e065d3919742f4628c5fddf5a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d5baad0588927f41559b1e1a116f85064f5dcd78")]
 [assembly: System.Reflection.AssemblyProductAttribute("PrimeKare.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PrimeKare.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

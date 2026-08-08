@@ -8,6 +8,20 @@
           "build/netstandard2.0/coverlet.collector.targets": {}
         }
       },
+      "DotNetEnv/3.2.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration": "1.1.2",
+          "Microsoft.Extensions.Configuration.Abstractions": "1.1.2",
+          "Superpower": "3.0.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/DotNetEnv.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/DotNetEnv.dll": {}
+        }
+      },
       "Microsoft.AspNetCore.Mvc.Testing/10.0.10": {
         "type": "package",
         "dependencies": {
@@ -1099,6 +1113,19 @@
           }
         }
       },
+      "Superpower/3.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net5.0/Superpower.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net5.0/Superpower.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "System.Diagnostics.EventLog/10.0.10": {
         "type": "package",
         "compile": {
@@ -1225,6 +1252,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
+          "DotNetEnv": "3.2.0",
           "Microsoft.AspNetCore.OpenApi": "10.0.10",
           "Microsoft.EntityFrameworkCore": "10.0.10",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.3"
@@ -1310,6 +1338,20 @@
         "coverlet-icon.png",
         "coverlet.collector.6.0.4.nupkg.sha512",
         "coverlet.collector.nuspec"
+      ]
+    },
+    "DotNetEnv/3.2.0": {
+      "sha512": "2q+PD+aJcRW9QuRcIv4F8WbvEDxI6cwxzZJec2i45cBY4cAKCAoW4ZPkApJ7H82wr6Yfmxx/0kb1nLnRmZrGZA==",
+      "type": "package",
+      "path": "dotnetenv/3.2.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "README.md",
+        "dotnetenv.3.2.0.nupkg.sha512",
+        "dotnetenv.nuspec",
+        "lib/netstandard2.0/DotNetEnv.dll"
       ]
     },
     "Microsoft.AspNetCore.Mvc.Testing/10.0.10": {
@@ -2724,6 +2766,22 @@
         "npgsql.entityframeworkcore.postgresql.10.0.3.nupkg.sha512",
         "npgsql.entityframeworkcore.postgresql.nuspec",
         "postgresql.png"
+      ]
+    },
+    "Superpower/3.0.0": {
+      "sha512": "bjKbAYWePooCAvPxQq+3KnmcLfRggMyRoXmtBMlmCG71bdwBHrO6rmRJ2DRIodg5aztNcxeZXBUVWT+H+MZUhw==",
+      "type": "package",
+      "path": "superpower/3.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Superpower-White-400px.png",
+        "lib/net5.0/Superpower.dll",
+        "lib/net5.0/Superpower.xml",
+        "lib/netstandard2.0/Superpower.dll",
+        "lib/netstandard2.0/Superpower.xml",
+        "superpower.3.0.0.nupkg.sha512",
+        "superpower.nuspec"
       ]
     },
     "System.Diagnostics.EventLog/10.0.10": {
