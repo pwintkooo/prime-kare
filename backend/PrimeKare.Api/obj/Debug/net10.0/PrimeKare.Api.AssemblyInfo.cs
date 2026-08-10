@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PrimeKare.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d5baad0588927f41559b1e1a116f85064f5dcd78")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+afa6e0a68a09a225a1645b0a6fc0b439c9edfae5")]
 [assembly: System.Reflection.AssemblyProductAttribute("PrimeKare.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PrimeKare.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

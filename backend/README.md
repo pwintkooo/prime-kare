@@ -22,3 +22,12 @@ dotnet add package DotNetEnv
 //save the secrets locally with user-secrets
 dotnet user-secrets init
 dotnet user-secrets set ...
+
+//install Swagger UI Package
+dotnet add package Swashbuckle.AspNetCore
+
+//clean the project
+dotnet clean
+rmdir /s /q bin
+rmdir /s /q obj
+dotnet restore
