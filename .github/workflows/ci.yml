@@ -45,11 +45,11 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        working-directory: backend/PrimeKare.Api
+        working-directory: backend/dev/PrimeKare.Api
         run: dotnet restore
 
       - name: Build
-        working-directory: backend/PrimeKare.Api
+        working-directory: backend/dev/PrimeKare.Api
         run: dotnet build --no-restore
   
   backend_test:

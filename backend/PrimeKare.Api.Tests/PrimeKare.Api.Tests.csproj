@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PrimeKare.Api\PrimeKare.Api.csproj" />
+    <ProjectReference Include="..\dev\PrimeKare.Api\PrimeKare.Api.csproj" />
   </ItemGroup>
 
 </Project>

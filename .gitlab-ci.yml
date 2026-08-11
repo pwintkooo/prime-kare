@@ -16,7 +16,7 @@ backend_build:
   image: mcr.microsoft.com/dotnet/sdk:10.0
 
   script:
-    - cd backend/PrimeKare.Api
+    - cd backend/dev/PrimeKare.Api
     - dotnet restore
     - dotnet build --no-restore
 
