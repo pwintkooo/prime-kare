@@ -1,0 +1,16 @@
+namespace PrimeKare.Api.DTOs.Services;
+
+public class ServiceDto
+{
+    public int Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string Description { get; set; } = string.Empty;
+
+    public decimal Price { get; set; }
+
+    public int EstimatedMinutes { get; set; }
+
+    public bool IsActive { get; set; }
+}
