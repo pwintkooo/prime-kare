@@ -11,6 +11,8 @@ public class AppDbContext : DbContext
 
     }
     public DbSet<Service> Services { get; set; }
+    public DbSet<Customer> Customers { get; set; }
+    public DbSet<Vehicle> Vehicles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
