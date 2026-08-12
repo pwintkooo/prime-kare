@@ -3,11 +3,22 @@ using PrimeKare.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var useInMemoryDatabase =
+    builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
+
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection");
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+if (useInMemoryDatabase)
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseInMemoryDatabase("PrimeKareTestDb"));
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(connectionString));
+}
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

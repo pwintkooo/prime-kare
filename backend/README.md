@@ -3,8 +3,10 @@ dotnet new webapi --name PrimeKare.Api
 
 //create a new xUnit test
 dotnet new xunit --name PrimeKare.Api.Tests
+//reference the project
 dotnet add PrimeKare.Api.Tests/PrimeKare.Api.Tests.csproj reference dev/PrimeKare.Api/PrimeKare.Api.csproj
 dotnet add PrimeKare.Api.Tests/PrimeKare.Api.Tests.csproj package Microsoft.AspNetCore.Mvc.Testing --version 10.0.10
+dotnet add package Microsoft.EntityFrameworkCore.InMemory
 
 //install Entity Framework Core, PostgreSQL
 dotnet add package Microsoft.EntityFrameworkCore
