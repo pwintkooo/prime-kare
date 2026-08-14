@@ -23,7 +23,7 @@ dotnet ef database update
 dotnet add package DotNetEnv
 //save the secrets locally with user-secrets
 dotnet user-secrets init
-dotnet user-secrets set ...
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "..."
 
 //install Swagger UI Package
 dotnet add package Swashbuckle.AspNetCore
@@ -33,3 +33,6 @@ dotnet clean
 rmdir /s /q bin
 rmdir /s /q obj
 dotnet restore
+
+//install JWT
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer  

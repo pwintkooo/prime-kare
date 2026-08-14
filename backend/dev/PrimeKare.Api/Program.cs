@@ -1,4 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using PrimeKare.Api.Models;
 using PrimeKare.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +30,9 @@ else
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
+
+//register IPasswordHasher
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 var app = builder.Build();
 

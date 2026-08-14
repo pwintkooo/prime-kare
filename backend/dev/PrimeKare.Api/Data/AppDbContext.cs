@@ -13,10 +13,18 @@ public class AppDbContext : DbContext
     public DbSet<Service> Services { get; set; }
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Vehicle> Vehicles { get; set; }
+    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        //Keep the user account when the associated customer is deleted
+        modelBuilder.Entity<User>()
+        .HasOne(u => u.Customer)
+        .WithMany()
+        .HasForeignKey(u => u.CustomerId)
+        .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<Service>().HasData(
             new Service
