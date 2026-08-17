@@ -69,4 +69,6 @@ jobs:
 
       - name: Run backend tests
         working-directory: backend/PrimeKare.Api.Tests
+        env:  
+          Jwt__Key: ${{ secrets.JWT_KEY }}
         run: dotnet test
