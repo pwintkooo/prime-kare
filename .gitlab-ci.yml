@@ -23,6 +23,9 @@ backend_build:
 backend_test:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:10.0
+  variables:
+    UseInMemoryDatabase: "true"
+    Jwt__Key: $JWT_KEY
 
   script:
     - cd backend/PrimeKare.Api.Tests
