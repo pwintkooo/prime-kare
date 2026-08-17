@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.Models;
 using PrimeKare.Api.DTOs.Vehicles;
@@ -8,6 +9,7 @@ namespace PrimeKare.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class VehiclesController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -17,6 +19,7 @@ public class VehiclesController : ControllerBase
         _context = context;
     }
 
+    [Authorize(Roles = "Admin,Receptionist,Mechanic")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<VehicleDto>>> GetVehicles()
     {
@@ -35,6 +38,7 @@ public class VehiclesController : ControllerBase
         return vehicles;
     }
 
+    [Authorize(Roles = "Admin,Receptionist")]
     [HttpGet("{id}")]
     public async Task<ActionResult<VehicleDto>> GetVehicle(int id)
     {
@@ -58,6 +62,7 @@ public class VehiclesController : ControllerBase
         return vehicleDto;
     }
 
+    [Authorize(Roles = "Admin,Receptionist")]
     [HttpPost]
     public async Task<ActionResult<VehicleDto>> CreateVehicle(CreateVehicleDto dto)
     {
@@ -99,6 +104,7 @@ public class VehiclesController : ControllerBase
         );
     }
 
+    [Authorize(Roles = "Admin,Receptionist")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateVehicle(int id, UpdateVehicleDto dto)
     {
@@ -128,6 +134,7 @@ public class VehiclesController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteVehicle(int id)
     {
@@ -144,4 +151,14 @@ public class VehiclesController : ControllerBase
 
         return NoContent();
     }
+
+    // [Authorize(Roles = "Admin")]
+    // [HttpGet("admin-test")]
+    // public IActionResult AdminTest()
+    // {
+    //     return Ok(new
+    //     {
+    //         message = "You are an Admin."
+    //     });
+    // }
 }
