@@ -1,7 +1,9 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
 using PrimeKare.Api.DTOs.Vehicles;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.Models;
@@ -12,16 +14,26 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
     private readonly CustomWebApplicationFactory _factory;
+    private readonly IConfiguration _configuration;
 
     public VehiclesApiTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();
+        _configuration = factory.Services
+            .GetRequiredService<IConfiguration>();
     }
 
     [Fact]
     public async Task GetVehicles_ReturnsSuccessStatusCode()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+
         // Act
         var response = await _client.GetAsync("/api/vehicles");
 
@@ -39,6 +51,13 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetVehicles_ReturnsJSONResponse()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+
         // Act
         var response = await _client.GetAsync("/api/vehicles");
 
@@ -53,6 +72,13 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetVehicle_NonExistingId_ReturnsNotFound()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+
         // using var scope = _factory.Services.CreateScope();
 
         // var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -72,6 +98,13 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task CreateVehicle_ReturnsCreated()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+
         // using var scope = _factory.Services.CreateScope();
 
         // var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -125,6 +158,13 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task CreateVehicleWithInvalidCustomer_ReturnsBadRequest()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+
         await TestDataHelper.CreateCleanDatabase(_factory);
 
         var request = new CreateVehicleDto
@@ -147,6 +187,13 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task CreateVehicle_GetVehicle_ReturnsVehicle()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+
         var context = await TestDataHelper.CreateCleanDatabase(_factory);
 
         await TestDataHelper.AddCustomer(context);
@@ -197,6 +244,13 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task CreateVehicle_ThenUpdateVehicle_ThenGetVehicle_ReturnsVehicle()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+
         var context = await TestDataHelper.CreateCleanDatabase(_factory);
 
         await TestDataHelper.AddCustomer(context);
@@ -264,6 +318,13 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task UpdateVehicle_WithNonExistingId_ReturnsNotFound()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+
         await TestDataHelper.CreateCleanDatabase(_factory);
 
         //update vehicle
@@ -287,6 +348,13 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task DeleteVehicle_ThenGetVehicle_ReturnsNotFound()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+
         var context = await TestDataHelper.CreateCleanDatabase(_factory);
 
         await TestDataHelper.AddCustomer(context);
@@ -327,6 +395,13 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task CreateVehicle_WithEmptyPlateNumber_ReturnsBadRequest()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+
         var context = await TestDataHelper.CreateCleanDatabase(_factory);
 
         await TestDataHelper.AddCustomer(context);
@@ -354,6 +429,13 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task CreateVehicle_ThenUpdateVehicle_WithEmptyMake_ReturnsBadRequest()
     {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "admin@primekare.com",
+            "Admin");
+            
         var context = await TestDataHelper.CreateCleanDatabase(_factory);
 
         await TestDataHelper.AddCustomer(context);
@@ -399,5 +481,42 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, updateResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetVehicles_AsCustomer_ReturnsForbidden()
+    {
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "PK@example.com",
+            "Customer");
+
+        // Act
+        var response = await _client.GetAsync("/api/vehicles");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+
+        // var content = await response.Content.ReadAsStringAsync();
+
+        // Assert.True(
+        //     response.IsSuccessStatusCode,
+        //     $"Status: {response.StatusCode}\nResponse: {content}"
+        // );
+    }
+
+    [Fact]
+    public async Task GetVehicles_WithoutAuthentication_ReturnsUnauthorized()
+    {
+        TestAuthHelper.ClearAuthentication(_client);
+
+        var response = await _client.GetAsync(
+            "/api/vehicles");
+
+        Assert.Equal(
+            HttpStatusCode.Unauthorized,
+            response.StatusCode);
     }
 }
