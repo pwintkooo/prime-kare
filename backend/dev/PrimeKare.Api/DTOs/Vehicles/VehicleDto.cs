@@ -12,5 +12,7 @@ public class VehicleDto
 
     public int Year { get; set; }
 
+    public string Status { get; set; } = "active";
+
     public int CustomerId { get; set; }
 }

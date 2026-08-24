@@ -44,7 +44,9 @@ public class AuthController : ControllerBase
         {
             Email = request.Email,
             Role = "Customer",
-            CustomerId = request.CustomerId
+            CustomerId = request.CustomerId,
+            Status = "active",
+            CreatedAt = DateTime.UtcNow
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(
@@ -61,6 +63,8 @@ public class AuthController : ControllerBase
             user.Id,
             user.Email,
             user.Role,
+            user.Status,
+            user.CreatedAt,
             user.CustomerId
         });
     }
@@ -88,11 +92,11 @@ public class AuthController : ControllerBase
         }
 
         var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Email, user.Email),
-        new Claim(ClaimTypes.Role, user.Role)
-    };
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role)
+        };
 
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(

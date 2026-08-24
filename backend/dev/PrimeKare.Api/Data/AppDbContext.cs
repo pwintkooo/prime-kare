@@ -19,12 +19,16 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        //Keep the user account when the associated customer is deleted
         modelBuilder.Entity<User>()
-        .HasOne(u => u.Customer)
-        .WithMany()
-        .HasForeignKey(u => u.CustomerId)
-        .OnDelete(DeleteBehavior.SetNull);
+            .HasOne(u => u.Customer)
+            .WithMany()
+            .HasForeignKey(u => u.CustomerId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        var seedDate = new DateTime(
+            2026, 8, 20, 0, 0, 0,
+            DateTimeKind.Utc
+        );
 
         modelBuilder.Entity<Service>().HasData(
             new Service
@@ -34,7 +38,9 @@ public class AppDbContext : DbContext
                 Description = "Engine oil and oil filter replacement.",
                 Price = 89.90m,
                 EstimatedMinutes = 45,
-                IsActive = true
+                IsActive = true,
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate
             },
             new Service
             {
@@ -43,7 +49,9 @@ public class AppDbContext : DbContext
                 Description = "Brake inspection, repair and replacement.",
                 Price = 150.00m,
                 EstimatedMinutes = 90,
-                IsActive = true
+                IsActive = true,
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate
             },
             new Service
             {
@@ -52,7 +60,9 @@ public class AppDbContext : DbContext
                 Description = "Computerized engine diagnostics and inspection.",
                 Price = 120.00m,
                 EstimatedMinutes = 60,
-                IsActive = true
+                IsActive = true,
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate
             },
             new Service
             {
@@ -61,7 +71,9 @@ public class AppDbContext : DbContext
                 Description = "Tyre inspection, replacement and balancing.",
                 Price = 80.00m,
                 EstimatedMinutes = 45,
-                IsActive = true
+                IsActive = true,
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate
             },
             new Service
             {
@@ -70,7 +82,9 @@ public class AppDbContext : DbContext
                 Description = "Battery testing and replacement service.",
                 Price = 180.00m,
                 EstimatedMinutes = 30,
-                IsActive = true
+                IsActive = true,
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate
             },
             new Service
             {
@@ -79,7 +93,9 @@ public class AppDbContext : DbContext
                 Description = "Air conditioning inspection and servicing.",
                 Price = 100.00m,
                 EstimatedMinutes = 60,
-                IsActive = true
+                IsActive = true,
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate
             }
         );
     }

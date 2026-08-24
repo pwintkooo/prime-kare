@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PrimeKare.Api.Data;
@@ -11,9 +12,11 @@ using PrimeKare.Api.Data;
 namespace PrimeKare.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260820095310_UpdateCustomersVehiclesServicesUsersSchemas")]
+    partial class UpdateCustomersVehiclesServicesUsersSchemas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -96,68 +99,68 @@ namespace PrimeKare.Api.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(6506),
                             Description = "Engine oil and oil filter replacement.",
                             EstimatedMinutes = 45,
                             IsActive = true,
                             Name = "Oil Change",
                             Price = 89.90m,
-                            UpdatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc)
+                            UpdatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(6510)
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(8238),
                             Description = "Brake inspection, repair and replacement.",
                             EstimatedMinutes = 90,
                             IsActive = true,
                             Name = "Brake Service",
                             Price = 150.00m,
-                            UpdatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc)
+                            UpdatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(8239)
                         },
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(8242),
                             Description = "Computerized engine diagnostics and inspection.",
                             EstimatedMinutes = 60,
                             IsActive = true,
                             Name = "Engine Diagnostics",
                             Price = 120.00m,
-                            UpdatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc)
+                            UpdatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(8242)
                         },
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(8243),
                             Description = "Tyre inspection, replacement and balancing.",
                             EstimatedMinutes = 45,
                             IsActive = true,
                             Name = "Tyre Service",
                             Price = 80.00m,
-                            UpdatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc)
+                            UpdatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(8244)
                         },
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(8245),
                             Description = "Battery testing and replacement service.",
                             EstimatedMinutes = 30,
                             IsActive = true,
                             Name = "Battery Replacement",
                             Price = 180.00m,
-                            UpdatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc)
+                            UpdatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(8245)
                         },
                         new
                         {
                             Id = 6,
-                            CreatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(8246),
                             Description = "Air conditioning inspection and servicing.",
                             EstimatedMinutes = 60,
                             IsActive = true,
                             Name = "Air Conditioning",
                             Price = 100.00m,
-                            UpdatedAt = new DateTime(2026, 8, 20, 0, 0, 0, 0, DateTimeKind.Utc)
+                            UpdatedAt = new DateTime(2026, 8, 20, 9, 53, 7, 354, DateTimeKind.Utc).AddTicks(8247)
                         });
                 });
 
@@ -187,7 +190,7 @@ namespace PrimeKare.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("Statis")
                         .IsRequired()
                         .HasColumnType("text");
 

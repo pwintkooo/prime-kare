@@ -20,5 +20,8 @@ public class UpdateVehicleDto
     public int Year { get; set; }
 
     [Required]
+    public string Status {get; set;} = "active";
+
+    [Required]
     public int CustomerId { get; set; }
 }

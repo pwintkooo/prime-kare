@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using PrimeKare.Api.Controllers;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Vehicles;
@@ -105,7 +107,16 @@ public class VehiclesControllerTests
         context.Vehicles.Add(vehicle);
         await context.SaveChangesAsync();
 
-        var controller = new VehiclesController(context);
+        var controller = new VehiclesController(context)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity())
+                }
+            }
+        };
 
         var result = await controller.GetVehicle(1);
 
@@ -133,7 +144,8 @@ public class VehiclesControllerTests
                 Make = "Toyota",
                 Model = "Camry",
                 Year = 2024,
-                CustomerId = 1
+                CustomerId = 1,
+                Status = "active"
             },
             new Vehicle
             {
@@ -142,7 +154,8 @@ public class VehiclesControllerTests
                 Make = "Toyota",
                 Model = "Camry",
                 Year = 2024,
-                CustomerId = 1
+                CustomerId = 1,
+                Status = "active"
             },
             new Vehicle
             {
@@ -151,14 +164,24 @@ public class VehiclesControllerTests
                 Make = "Toyota",
                 Model = "Camry",
                 Year = 2024,
-                CustomerId = 1
+                CustomerId = 1,
+                Status = "active"
             }
         };
 
         context.Vehicles.AddRange(vehicles);
         await context.SaveChangesAsync();
 
-        var controller = new VehiclesController(context);
+        var controller = new VehiclesController(context)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity())
+                }
+            }
+        };
 
         var result = await controller.GetVehicles();
 
@@ -175,7 +198,16 @@ public class VehiclesControllerTests
     {
         using var context = CreateDbContext();
 
-        var controller = new VehiclesController(context);
+        var controller = new VehiclesController(context)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity())
+                }
+            }
+        };
 
         var result = await controller.GetVehicle(1);
 

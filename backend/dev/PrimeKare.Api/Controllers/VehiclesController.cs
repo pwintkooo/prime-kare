@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.Models;
 using PrimeKare.Api.DTOs.Vehicles;
@@ -19,47 +20,100 @@ public class VehiclesController : ControllerBase
         _context = context;
     }
 
-    [Authorize(Roles = "Admin,Receptionist,Mechanic")]
+    [Authorize(Roles = "Admin,Receptionist,Mechanic,Customer")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<VehicleDto>>> GetVehicles()
     {
-        var vehicles = await _context.Vehicles
-        .Select(vehicle => new VehicleDto
+        var query = _context.Vehicles.AsQueryable();
+
+        if (User.IsInRole("Customer"))
         {
-            Id = vehicle.Id,
-            PlateNumber = vehicle.PlateNumber,
-            Make = vehicle.Make,
-            Model = vehicle.Model,
-            Year = vehicle.Year,
-            CustomerId = vehicle.CustomerId
-        })
-        .ToListAsync();
+            var userId = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userId, out var parsedUserId))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(
+                    u => u.Id == int.Parse(userId));
+
+            if (user == null || user.CustomerId == null)
+            {
+                return NotFound();
+            }
+
+            query = query.Where(
+                vehicle => vehicle.CustomerId == user.CustomerId);
+        }
+
+        var vehicles = await query
+            .Select(vehicle => new VehicleDto
+            {
+                Id = vehicle.Id,
+                PlateNumber = vehicle.PlateNumber,
+                Make = vehicle.Make,
+                Model = vehicle.Model,
+                Year = vehicle.Year,
+                Status = vehicle.Status,
+                CustomerId = vehicle.CustomerId
+            })
+            .ToListAsync();
 
         return vehicles;
     }
 
-    [Authorize(Roles = "Admin,Receptionist")]
+    [Authorize(Roles = "Admin,Receptionist,Mechanic,Customer")]
     [HttpGet("{id}")]
     public async Task<ActionResult<VehicleDto>> GetVehicle(int id)
     {
-        var vehicle = await _context.Vehicles.FindAsync(id);
+        var query = _context.Vehicles
+            .Where(v => v.Id == id);
+
+        if (User.IsInRole("Customer"))
+        {
+            var userId = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userId, out var parsedUserId))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(
+                    u => u.Id == parsedUserId);
+
+            if (user == null || user.CustomerId == null)
+            {
+                return NotFound();
+            }
+
+            query = query.Where(
+                v => v.CustomerId == user.CustomerId);
+        }
+
+        var vehicle = await query
+            .Select(v => new VehicleDto
+            {
+                Id = v.Id,
+                PlateNumber = v.PlateNumber,
+                Make = v.Make,
+                Model = v.Model,
+                Year = v.Year,
+                Status = v.Status,
+                CustomerId = v.CustomerId
+            })
+            .FirstOrDefaultAsync();
 
         if (vehicle == null)
         {
             return NotFound();
         }
 
-        var vehicleDto = new VehicleDto
-        {
-            Id = vehicle.Id,
-            PlateNumber = vehicle.PlateNumber,
-            Make = vehicle.Make,
-            Model = vehicle.Model,
-            Year = vehicle.Year,
-            CustomerId = vehicle.CustomerId
-        };
-
-        return vehicleDto;
+        return vehicle;
     }
 
     [Authorize(Roles = "Admin,Receptionist")]
@@ -80,7 +134,10 @@ public class VehiclesController : ControllerBase
             Make = dto.Make,
             Model = dto.Model,
             Year = dto.Year,
-            CustomerId = dto.CustomerId
+            CustomerId = dto.CustomerId,
+            Status = "active",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         _context.Vehicles.Add(vehicle);
@@ -94,7 +151,8 @@ public class VehiclesController : ControllerBase
             Make = vehicle.Make,
             Model = vehicle.Model,
             Year = vehicle.Year,
-            CustomerId = vehicle.CustomerId
+            CustomerId = vehicle.CustomerId,
+            Status = vehicle.Status
         };
 
         return CreatedAtAction(
@@ -128,6 +186,8 @@ public class VehiclesController : ControllerBase
         existingVehicle.Model = dto.Model;
         existingVehicle.Year = dto.Year;
         existingVehicle.CustomerId = dto.CustomerId;
+        existingVehicle.Status = dto.Status;
+        existingVehicle.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 

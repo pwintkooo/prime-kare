@@ -27,6 +27,7 @@ public class CustomersController : ControllerBase
             Name = customer.Name,
             Phone = customer.Phone,
             Email = customer.Email,
+            Status = "active"
         })
         .ToListAsync();
 
@@ -49,6 +50,7 @@ public class CustomersController : ControllerBase
             Name = customer.Name,
             Phone = customer.Phone,
             Email = customer.Email,
+            Status = customer.Status
         };
 
         return customerDto;
@@ -62,6 +64,9 @@ public class CustomersController : ControllerBase
             Name = dto.Name,
             Phone = dto.Phone,
             Email = dto.Email,
+            Status = "active",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         _context.Customers.Add(customer);
@@ -74,6 +79,7 @@ public class CustomersController : ControllerBase
             Name = customer.Name,
             Phone = customer.Phone,
             Email = customer.Email,
+            Status = customer.Status
         };
 
         return CreatedAtAction(
@@ -96,6 +102,8 @@ public class CustomersController : ControllerBase
         existingCustomer.Name = dto.Name;
         existingCustomer.Phone = dto.Phone;
         existingCustomer.Email = dto.Email;
+        existingCustomer.Status = dto.Status;
+        existingCustomer.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 

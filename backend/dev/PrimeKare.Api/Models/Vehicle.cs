@@ -12,6 +12,12 @@ public class Vehicle
 
     public int Year { get; set; }
 
+    public string Status { get; set; } = "active";
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
     // Foreign Key
     public int CustomerId { get; set; }
 

@@ -435,7 +435,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             1,
             "admin@primekare.com",
             "Admin");
-            
+
         var context = await TestDataHelper.CreateCleanDatabase(_factory);
 
         await TestDataHelper.AddCustomer(context);
@@ -484,8 +484,10 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetVehicles_AsCustomer_ReturnsForbidden()
+    public async Task GetVehicles_AsCustomer_ReturnsNotFound()
     {
+        await TestDataHelper.CreateCleanDatabase(_factory);
+
         TestAuthHelper.AuthenticateAs(
             _client,
             _configuration,
@@ -497,7 +499,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.GetAsync("/api/vehicles");
 
         // Assert
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
         // var content = await response.Content.ReadAsStringAsync();
 
@@ -517,6 +519,196 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
 
         Assert.Equal(
             HttpStatusCode.Unauthorized,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetVehicle_AsCustomer_ReturnsOnlyOwnVehicle()
+    {
+        var context = await TestDataHelper.CreateCleanDatabase(_factory);
+
+        var customerA = new Customer
+        {
+            Id = 1,
+            Name = "PK1",
+            Phone = "91234567",
+            Email = "pk1@example.com"
+        };
+
+        var customerB = new Customer
+        {
+            Id = 2,
+            Name = "PK2",
+            Phone = "91234568",
+            Email = "pk2@example.com"
+        };
+
+        context.Customers.AddRange(customerA, customerB);
+
+        var vehicleA = new Vehicle
+        {
+            Id = 1,
+            PlateNumber = "SLA1234A",
+            Make = "Toyota",
+            Model = "Camry",
+            Year = 2024,
+            CustomerId = 1
+        };
+
+        var vehicleB = new Vehicle
+        {
+            Id = 2,
+            PlateNumber = "SLA5678B",
+            Make = "Honda",
+            Model = "Civic",
+            Year = 2023,
+            CustomerId = 2
+        };
+
+        context.Vehicles.AddRange(vehicleA, vehicleB);
+
+        var customerUser = new User
+        {
+            Id = 1,
+            Email = "PK1@example.com",
+            Role = "Customer",
+            CustomerId = 1,
+            PasswordHash = "test"
+        };
+
+        context.Users.Add(customerUser);
+        await context.SaveChangesAsync();
+
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "PK1@example.com",
+            "Customer");
+
+        var response = await _client.GetAsync(
+        "/api/vehicles");
+
+        Assert.Equal(
+            HttpStatusCode.OK,
+            response.StatusCode);
+
+        var vehicles = await response.Content
+            .ReadFromJsonAsync<List<VehicleDto>>();
+
+        Assert.NotNull(vehicles);
+        Assert.Single(vehicles);
+
+        Assert.Equal(1, vehicles[0].Id);
+        Assert.Equal("SLA1234A", vehicles[0].PlateNumber);
+        Assert.Equal(1, vehicles[0].CustomerId);
+    }
+
+    [Fact]
+    public async Task GetVehicle_AsCustomer_WithOwnVehicle_ReturnsOk()
+    {
+        var context = await TestDataHelper.CreateCleanDatabase(_factory);
+
+        var customer = new Customer
+        {
+            Id = 1,
+            Name = "PK",
+            Phone = "91234567",
+            Email = "pk@example.com"
+        };
+
+        context.Customers.Add(customer);
+
+        var vehicle = new Vehicle
+        {
+            Id = 1,
+            PlateNumber = "SLA1234A",
+            Make = "Toyota",
+            Model = "Camry",
+            Year = 2024,
+            CustomerId = 1
+        };
+
+        context.Vehicles.Add(vehicle);
+
+        var customerUser = new User
+        {
+            Id = 1,
+            Email = "PK@example.com",
+            Role = "Customer",
+            CustomerId = 1,
+            PasswordHash = "test"
+        };
+
+        context.Users.Add(customerUser);
+        await context.SaveChangesAsync();
+
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "PK@example.com",
+            "Customer");
+
+        var response = await _client.GetAsync(
+        "/api/vehicles/1");
+
+        Assert.Equal(
+            HttpStatusCode.OK,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetVehicle_AsCustomer_WithOtherCustomersVehicle_ReturnsNotFound()
+    {
+        var context = await TestDataHelper.CreateCleanDatabase(_factory);
+
+        var customer = new Customer
+        {
+            Id = 1,
+            Name = "PK",
+            Phone = "91234567",
+            Email = "pk@example.com"
+        };
+
+        context.Customers.Add(customer);
+
+        var vehicle = new Vehicle
+        {
+            Id = 1,
+            PlateNumber = "SLA1234A",
+            Make = "Toyota",
+            Model = "Camry",
+            Year = 2024,
+            CustomerId = 2
+        };
+
+        context.Vehicles.Add(vehicle);
+
+        var customerUser = new User
+        {
+            Id = 1,
+            Email = "PK@example.com",
+            Role = "Customer",
+            CustomerId = 1,
+            PasswordHash = "test"
+        };
+
+        context.Users.Add(customerUser);
+        await context.SaveChangesAsync();
+
+        TestAuthHelper.AuthenticateAs(
+            _client,
+            _configuration,
+            1,
+            "PK@example.com",
+            "Customer");
+
+        var response = await _client.GetAsync(
+        "/api/vehicles/2");
+
+        Assert.Equal(
+            HttpStatusCode.NotFound,
             response.StatusCode);
     }
 }

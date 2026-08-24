@@ -67,7 +67,9 @@ public class ServicesController : ControllerBase
             Description = dto.Description,
             Price = dto.Price,
             EstimatedMinutes = dto.EstimatedMinutes,
-            IsActive = dto.IsActive
+            IsActive = dto.IsActive,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         _context.Services.Add(service);
@@ -106,6 +108,7 @@ public class ServicesController : ControllerBase
         existingService.Price = dto.Price;
         existingService.EstimatedMinutes = dto.EstimatedMinutes;
         existingService.IsActive = dto.IsActive;
+        existingService.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
