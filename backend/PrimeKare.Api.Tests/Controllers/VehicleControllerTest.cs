@@ -6,6 +6,8 @@ using PrimeKare.Api.Controllers;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Vehicles;
 using PrimeKare.Api.Models;
+using PrimeKare.Api.Services;
+using Moq;
 
 namespace PrimeKare.Api.Tests.Controllers;
 
@@ -37,7 +39,12 @@ public class VehiclesControllerTests
         context.Customers.Add(customer);
         await context.SaveChangesAsync();
 
-        var controller = new VehiclesController(context);
+        var vehicleService = new VehicleService(context);
+        var currentUser = new Mock<ICurrentUserService>();
+
+        var controller = new VehiclesController(
+            vehicleService,
+            currentUser.Object);
 
         var dto = new CreateVehicleDto
         {
@@ -68,7 +75,12 @@ public class VehiclesControllerTests
     {
         using var context = CreateDbContext();
 
-        var controller = new VehiclesController(context);
+        var vehicleService = new VehicleService(context);
+        var currentUser = new Mock<ICurrentUserService>();
+
+        var controller = new VehiclesController(
+            vehicleService,
+            currentUser.Object);
 
         var dto = new CreateVehicleDto
         {
@@ -107,16 +119,16 @@ public class VehiclesControllerTests
         context.Vehicles.Add(vehicle);
         await context.SaveChangesAsync();
 
-        var controller = new VehiclesController(context)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = new ClaimsPrincipal(new ClaimsIdentity())
-                }
-            }
-        };
+        var vehicleService = new VehicleService(context);
+
+        var currentUser = new Mock<ICurrentUserService>();
+
+        currentUser.Setup(x => x.IsCustomer)
+            .Returns(false);
+
+        var controller = new VehiclesController(
+            vehicleService,
+            currentUser.Object);
 
         var result = await controller.GetVehicle(1);
 
@@ -172,16 +184,16 @@ public class VehiclesControllerTests
         context.Vehicles.AddRange(vehicles);
         await context.SaveChangesAsync();
 
-        var controller = new VehiclesController(context)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = new ClaimsPrincipal(new ClaimsIdentity())
-                }
-            }
-        };
+        var vehicleService = new VehicleService(context);
+
+        var currentUser = new Mock<ICurrentUserService>();
+
+        currentUser.Setup(x => x.IsCustomer)
+            .Returns(false);
+
+        var controller = new VehiclesController(
+            vehicleService,
+            currentUser.Object);
 
         var result = await controller.GetVehicles();
 
@@ -198,16 +210,16 @@ public class VehiclesControllerTests
     {
         using var context = CreateDbContext();
 
-        var controller = new VehiclesController(context)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = new ClaimsPrincipal(new ClaimsIdentity())
-                }
-            }
-        };
+        var vehicleService = new VehicleService(context);
+
+        var currentUser = new Mock<ICurrentUserService>();
+
+        currentUser.Setup(x => x.IsCustomer)
+            .Returns(false);
+
+        var controller = new VehiclesController(
+            vehicleService,
+            currentUser.Object);
 
         var result = await controller.GetVehicle(1);
 
@@ -242,7 +254,12 @@ public class VehiclesControllerTests
         context.Vehicles.Add(vehicle);
         await context.SaveChangesAsync();
 
-        var controller = new VehiclesController(context);
+        var vehicleService = new VehicleService(context);
+        var currentUser = new Mock<ICurrentUserService>();
+
+        var controller = new VehiclesController(
+            vehicleService,
+            currentUser.Object);
 
         var dto = new UpdateVehicleDto
         {
@@ -282,13 +299,25 @@ public class VehiclesControllerTests
             Make = "Toyota",
             Model = "Camry",
             Year = 2024,
-            CustomerId = 1
+            CustomerId = 1,
+            Status = "active"
         };
 
         context.Vehicles.Add(vehicle);
         await context.SaveChangesAsync();
 
-        var controller = new VehiclesController(context);
+        var vehicleService = new VehicleService(context);
+        var currentUser = new Mock<ICurrentUserService>();
+
+        currentUser.Setup(x => x.IsAdmin)
+        .Returns(true);
+
+        currentUser.Setup(x => x.IsCustomer)
+            .Returns(false);
+
+        var controller = new VehiclesController(
+            vehicleService,
+            currentUser.Object);
 
         //act
         var result = await controller.DeleteVehicle(1);
@@ -307,7 +336,12 @@ public class VehiclesControllerTests
         //arrange
         using var context = CreateDbContext();
 
-        var controller = new VehiclesController(context);
+        var vehicleService = new VehicleService(context);
+        var currentUser = new Mock<ICurrentUserService>();
+
+        var controller = new VehiclesController(
+            vehicleService,
+            currentUser.Object);
 
         //act
         var result = await controller.DeleteVehicle(1);

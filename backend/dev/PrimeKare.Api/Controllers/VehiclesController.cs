@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using PrimeKare.Api.Data;
-using PrimeKare.Api.Models;
 using PrimeKare.Api.DTOs.Vehicles;
+using PrimeKare.Api.Services;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -13,54 +10,32 @@ namespace PrimeKare.Api.Controllers;
 [Authorize]
 public class VehiclesController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IVehicleService _vehicleService;
+    private readonly ICurrentUserService _currentUser;
 
-    public VehiclesController(AppDbContext context)
+    public VehiclesController(
+        IVehicleService vehicleService,
+        ICurrentUserService currentUser)
     {
-        _context = context;
+        _vehicleService = vehicleService;
+        _currentUser = currentUser;
     }
 
     [Authorize(Roles = "Admin,Receptionist,Mechanic,Customer")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<VehicleDto>>> GetVehicles()
     {
-        var query = _context.Vehicles.AsQueryable();
+        var customerId = _currentUser.IsCustomer
+            ? _currentUser.CustomerId
+            : null;
 
-        if (User.IsInRole("Customer"))
+        if (_currentUser.IsCustomer && customerId == null)
         {
-            var userId = User.FindFirstValue(
-                ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userId, out var parsedUserId))
-            {
-                return Unauthorized();
-            }
-
-            var user = await _context.Users
-                .FirstOrDefaultAsync(
-                    u => u.Id == int.Parse(userId));
-
-            if (user == null || user.CustomerId == null)
-            {
-                return NotFound();
-            }
-
-            query = query.Where(
-                vehicle => vehicle.CustomerId == user.CustomerId);
+            return NotFound();
         }
 
-        var vehicles = await query
-            .Select(vehicle => new VehicleDto
-            {
-                Id = vehicle.Id,
-                PlateNumber = vehicle.PlateNumber,
-                Make = vehicle.Make,
-                Model = vehicle.Model,
-                Year = vehicle.Year,
-                Status = vehicle.Status,
-                CustomerId = vehicle.CustomerId
-            })
-            .ToListAsync();
+        var vehicles = await _vehicleService
+            .GetVehiclesAsync(customerId);
 
         return vehicles;
     }
@@ -69,44 +44,17 @@ public class VehiclesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<VehicleDto>> GetVehicle(int id)
     {
-        var query = _context.Vehicles
-            .Where(v => v.Id == id);
+        var customerId = _currentUser.IsCustomer
+            ? _currentUser.CustomerId
+            : null;
 
-        if (User.IsInRole("Customer"))
+        if (_currentUser.IsCustomer && customerId == null)
         {
-            var userId = User.FindFirstValue(
-                ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userId, out var parsedUserId))
-            {
-                return Unauthorized();
-            }
-
-            var user = await _context.Users
-                .FirstOrDefaultAsync(
-                    u => u.Id == parsedUserId);
-
-            if (user == null || user.CustomerId == null)
-            {
-                return NotFound();
-            }
-
-            query = query.Where(
-                v => v.CustomerId == user.CustomerId);
+            return NotFound();
         }
 
-        var vehicle = await query
-            .Select(v => new VehicleDto
-            {
-                Id = v.Id,
-                PlateNumber = v.PlateNumber,
-                Make = v.Make,
-                Model = v.Model,
-                Year = v.Year,
-                Status = v.Status,
-                CustomerId = v.CustomerId
-            })
-            .FirstOrDefaultAsync();
+        var vehicle = await _vehicleService
+            .GetVehicleAsync(id, customerId);
 
         if (vehicle == null)
         {
@@ -116,98 +64,86 @@ public class VehiclesController : ControllerBase
         return vehicle;
     }
 
-    [Authorize(Roles = "Admin,Receptionist")]
+    [Authorize(Roles = "Admin,Receptionist,Customer")]
     [HttpPost]
-    public async Task<ActionResult<VehicleDto>> CreateVehicle(CreateVehicleDto dto)
+    public async Task<ActionResult<VehicleDto>> CreateVehicle(
+    CreateVehicleDto dto)
     {
-        var customerExists = await _context.Customers
-        .AnyAsync(customer => customer.Id == dto.CustomerId);
+        var vehicle = await _vehicleService
+            .CreateVehicleAsync(dto);
 
-        if (!customerExists)
+        if (vehicle == null)
         {
             return BadRequest("Customer does not exist!");
         }
-
-        var vehicle = new Vehicle
-        {
-            PlateNumber = dto.PlateNumber,
-            Make = dto.Make,
-            Model = dto.Model,
-            Year = dto.Year,
-            CustomerId = dto.CustomerId,
-            Status = "active",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        _context.Vehicles.Add(vehicle);
-
-        await _context.SaveChangesAsync();
-
-        var vehicleDto = new VehicleDto
-        {
-            Id = vehicle.Id,
-            PlateNumber = vehicle.PlateNumber,
-            Make = vehicle.Make,
-            Model = vehicle.Model,
-            Year = vehicle.Year,
-            CustomerId = vehicle.CustomerId,
-            Status = vehicle.Status
-        };
 
         return CreatedAtAction(
             nameof(GetVehicle),
             new { id = vehicle.Id },
-            vehicleDto
-        );
+            vehicle);
     }
 
-    [Authorize(Roles = "Admin,Receptionist")]
+    [Authorize(Roles = "Admin,Receptionist,Customer")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateVehicle(int id, UpdateVehicleDto dto)
+    public async Task<IActionResult> UpdateVehicle(
+    int id,
+    UpdateVehicleDto dto)
     {
-        var existingVehicle = await _context.Vehicles.FindAsync(id);
+        var customerId = _currentUser.IsCustomer
+            ? _currentUser.CustomerId
+            : null;
 
-        if (existingVehicle == null)
+        if (_currentUser.IsCustomer && customerId == null)
         {
             return NotFound();
         }
 
-        var customerExists = await _context.Customers
-        .AnyAsync(customer => customer.Id == dto.CustomerId);
-
-        if (!customerExists)
+        try
         {
-            return BadRequest("Customer does not exist!");
+            var updated = await _vehicleService
+                .UpdateVehicleAsync(
+                    id,
+                    dto,
+                    customerId,
+                    _currentUser.IsAdmin);
+
+            if (!updated)
+            {
+                return BadRequest(
+                    "Vehicle could not be updated.");
+            }
+
+            return NoContent();
         }
-
-        existingVehicle.PlateNumber = dto.PlateNumber;
-        existingVehicle.Make = dto.Make;
-        existingVehicle.Model = dto.Model;
-        existingVehicle.Year = dto.Year;
-        existingVehicle.CustomerId = dto.CustomerId;
-        existingVehicle.Status = dto.Status;
-        existingVehicle.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
-
-        return NoContent();
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Customer")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteVehicle(int id)
     {
-        var vehicle = await _context.Vehicles.FindAsync(id);
+        var customerId = _currentUser.IsCustomer
+            ? _currentUser.CustomerId
+            : null;
 
-        if (vehicle == null)
+        if (_currentUser.IsCustomer && customerId == null)
         {
             return NotFound();
         }
 
-        _context.Vehicles.Remove(vehicle);
+        var deleted = await _vehicleService
+            .DeleteVehicleAsync(
+                id,
+                customerId,
+                _currentUser.IsAdmin);
 
-        await _context.SaveChangesAsync();
+        if (!deleted)
+        {
+            return NotFound();
+        }
 
         return NoContent();
     }

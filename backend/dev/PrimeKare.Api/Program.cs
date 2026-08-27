@@ -6,6 +6,7 @@ using Microsoft.OpenApi;
 using System.Text;
 using PrimeKare.Api.Models;
 using PrimeKare.Api.Data;
+using PrimeKare.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,10 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 //register IPasswordHasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();

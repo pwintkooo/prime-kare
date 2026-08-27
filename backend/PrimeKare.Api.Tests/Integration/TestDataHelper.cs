@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.Models;
 using Microsoft.Extensions.DependencyInjection;
