@@ -39,3 +39,7 @@ dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
 
 //install Firebase Admin SDK
 dotnet add package FirebaseAdmin
+
+//install Azure
+dotnet add package Azure.Storage.Blobs
+dotnet add package Azure.Identity

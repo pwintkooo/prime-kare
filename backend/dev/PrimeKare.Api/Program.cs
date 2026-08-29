@@ -59,7 +59,8 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
-builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
+//builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
+builder.Services.AddScoped<IAzureBlobStorageService, AzureBlobStorageService>();
 
 //register IPasswordHasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();

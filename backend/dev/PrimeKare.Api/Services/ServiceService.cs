@@ -8,14 +8,14 @@ namespace PrimeKare.Api.Services;
 public class ServiceService : IServiceService
 {
     private readonly AppDbContext _context;
-    private readonly IFirebaseStorageService _firebaseStorageService;
+    private readonly IAzureBlobStorageService _azureBlobStorageService;
 
     public ServiceService(
         AppDbContext context,
-        IFirebaseStorageService firebaseStorageService)
+        IAzureBlobStorageService azureBlobStorageService)
     {
         _context = context;
-        _firebaseStorageService = firebaseStorageService;
+        _azureBlobStorageService = azureBlobStorageService;
     }
 
     public async Task<List<ServiceDto>> GetServicesAsync()
@@ -68,7 +68,7 @@ public class ServiceService : IServiceService
             await using var stream =
                 dto.Image.OpenReadStream();
 
-            imageUrl = await _firebaseStorageService
+            imageUrl = await _azureBlobStorageService
                 .UploadImageAsync(
                     stream,
                     dto.Image.FileName,
@@ -131,7 +131,7 @@ public class ServiceService : IServiceService
         {
             if (!string.IsNullOrWhiteSpace(service.ImageUrl))
             {
-                await _firebaseStorageService
+                await _azureBlobStorageService
                     .DeleteImageAsync(service.ImageUrl);
             }
 
@@ -139,7 +139,7 @@ public class ServiceService : IServiceService
                 dto.Image.OpenReadStream();
 
             service.ImageUrl =
-                await _firebaseStorageService.UploadImageAsync(
+                await _azureBlobStorageService.UploadImageAsync(
                     stream,
                     dto.Image.FileName,
                     dto.Image.ContentType);
@@ -162,7 +162,7 @@ public class ServiceService : IServiceService
 
         if (!string.IsNullOrWhiteSpace(service.ImageUrl))
         {
-            await _firebaseStorageService
+            await _azureBlobStorageService
                 .DeleteImageAsync(service.ImageUrl);
         }
 

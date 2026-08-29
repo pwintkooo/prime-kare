@@ -1,11 +1,11 @@
-namespace PrimeKare.Api.Services;
+// namespace PrimeKare.Api.Services;
 
-public interface IFirebaseStorageService
-{
-    Task<string> UploadImageAsync(
-        Stream fileStream,
-        string fileName,
-        string contentType);
+// public interface IFirebaseStorageService
+// {
+//     Task<string> UploadImageAsync(
+//         Stream fileStream,
+//         string fileName,
+//         string contentType);
 
-    Task DeleteImageAsync(string fileName);
-}
+//     Task DeleteImageAsync(string fileName);
+// }

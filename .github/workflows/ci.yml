@@ -10,7 +10,6 @@ on:
       - main
 
 jobs:
-
   frontend_build:
     runs-on: ubuntu-latest
 
@@ -31,7 +30,6 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-
   backend_build:
     runs-on: ubuntu-latest
 
@@ -51,9 +49,9 @@ jobs:
       - name: Build
         working-directory: backend/dev/PrimeKare.Api
         run: dotnet build --no-restore
-  
+
   backend_test:
-    needs: 
+    needs:
       - frontend_build
       - backend_build
     runs-on: ubuntu-latest
@@ -67,9 +65,15 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Create Firebase credentials
+        working-directory: backend/dev/PrimeKare.Api
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > firebase-service-account.json
+
       - name: Run backend tests
         working-directory: backend/PrimeKare.Api.Tests
         env:
           UseInMemoryDatabase: "true"
           Jwt__Key: ${{ secrets.JWT_KEY }}
+          Firebase__CredentialPath: ../dev/PrimeKare.Api/firebase-service-account.json
         run: dotnet test
