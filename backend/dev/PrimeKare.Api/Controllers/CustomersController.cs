@@ -27,7 +27,9 @@ public class CustomersController : ControllerBase
             Name = customer.Name,
             Phone = customer.Phone,
             Email = customer.Email,
-            Status = "active"
+            Status = "active",
+            CreatedAt = customer.CreatedAt,
+            UpdatedAt = customer.UpdatedAt
         })
         .ToListAsync();
 
@@ -50,7 +52,9 @@ public class CustomersController : ControllerBase
             Name = customer.Name,
             Phone = customer.Phone,
             Email = customer.Email,
-            Status = customer.Status
+            Status = customer.Status,
+            CreatedAt = customer.CreatedAt,
+            UpdatedAt = customer.UpdatedAt
         };
 
         return customerDto;

@@ -10,5 +10,9 @@ public class CustomerDto
 
     public string Email { get; set; } = string.Empty;
 
-    public string Status {get; set;} = "active";
+    public string Status { get; set; } = "active";
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
 }

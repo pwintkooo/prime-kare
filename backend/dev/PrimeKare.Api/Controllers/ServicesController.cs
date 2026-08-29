@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PrimeKare.Api.Data;
-using PrimeKare.Api.Models;
 using PrimeKare.Api.DTOs.Services;
+using PrimeKare.Api.Services;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -10,27 +8,19 @@ namespace PrimeKare.Api.Controllers;
 [Route("api/[controller]")]
 public class ServicesController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IServiceService _serviceService;
 
-    public ServicesController(AppDbContext context)
+    public ServicesController(
+        IServiceService serviceService)
     {
-        _context = context;
+        _serviceService = serviceService;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ServiceDto>>> GetServices()
     {
-        var services = await _context.Services
-        .Select(service => new ServiceDto
-        {
-            Id = service.Id,
-            Name = service.Name,
-            Description = service.Description,
-            Price = service.Price,
-            EstimatedMinutes = service.EstimatedMinutes,
-            IsActive = service.IsActive
-        })
-        .ToListAsync();
+        var services = await _serviceService
+            .GetServicesAsync();
 
         return services;
     }
@@ -38,79 +28,43 @@ public class ServicesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ServiceDto>> GetService(int id)
     {
-        var service = await _context.Services.FindAsync(id);
+        var service = await _serviceService
+            .GetServiceAsync(id);
 
         if (service == null)
         {
             return NotFound();
         }
 
-        var serviceDto = new ServiceDto
-        {
-            Id = service.Id,
-            Name = service.Name,
-            Description = service.Description,
-            Price = service.Price,
-            EstimatedMinutes = service.EstimatedMinutes,
-            IsActive = service.IsActive
-        };
-
-        return serviceDto;
+        return service;
     }
 
     [HttpPost]
-    public async Task<ActionResult<ServiceDto>> CreateService(CreateServiceDto dto)
+    public async Task<ActionResult<ServiceDto>> CreateService(
+        [FromForm] CreateServiceDto dto)
     {
-        var service = new Service
-        {
-            Name = dto.Name,
-            Description = dto.Description,
-            Price = dto.Price,
-            EstimatedMinutes = dto.EstimatedMinutes,
-            IsActive = dto.IsActive,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        _context.Services.Add(service);
-
-        await _context.SaveChangesAsync();
-
-        var serviceDto = new ServiceDto
-        {
-            Id = service.Id,
-            Name = service.Name,
-            Description = service.Description,
-            Price = service.Price,
-            EstimatedMinutes = service.EstimatedMinutes,
-            IsActive = service.IsActive
-        };
+        var service = await _serviceService
+            .CreateServiceAsync(dto);
 
         return CreatedAtAction(
             nameof(GetService),
             new { id = service.Id },
-            serviceDto
+            service
         );
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateService(int id, UpdateServiceDto dto)
+    public async Task<IActionResult> UpdateService(
+        int id,
+        [FromForm] UpdateServiceDto dto)
     {
-        var existingService = await _context.Services.FindAsync(id);
+        var updated = await _serviceService
+            .UpdateServiceAsync(id, dto);
 
-        if (existingService == null)
+        if (!updated)
         {
             return NotFound();
         }
-
-        existingService.Name = dto.Name;
-        existingService.Description = dto.Description;
-        existingService.Price = dto.Price;
-        existingService.EstimatedMinutes = dto.EstimatedMinutes;
-        existingService.IsActive = dto.IsActive;
-        existingService.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
 
         return NoContent();
     }
@@ -118,16 +72,13 @@ public class ServicesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteService(int id)
     {
-        var service = await _context.Services.FindAsync(id);
+        var deleted = await _serviceService
+            .DeleteServiceAsync(id);
 
-        if (service == null)
+        if (!deleted)
         {
             return NotFound();
         }
-
-        _context.Services.Remove(service);
-
-        await _context.SaveChangesAsync();
 
         return NoContent();
     }

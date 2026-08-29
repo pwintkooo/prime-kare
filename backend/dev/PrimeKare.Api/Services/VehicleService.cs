@@ -36,7 +36,9 @@ public class VehicleService : IVehicleService
                 Model = v.Model,
                 Year = v.Year,
                 Status = v.Status,
-                CustomerId = v.CustomerId
+                CustomerId = v.CustomerId,
+                CreatedAt = v.CreatedAt,
+                UpdatedAt = v.UpdatedAt
             })
             .ToListAsync();
     }
@@ -64,7 +66,9 @@ public class VehicleService : IVehicleService
                 Model = v.Model,
                 Year = v.Year,
                 Status = v.Status,
-                CustomerId = v.CustomerId
+                CustomerId = v.CustomerId,
+                CreatedAt = v.CreatedAt,
+                UpdatedAt = v.UpdatedAt
             })
             .FirstOrDefaultAsync();
     }

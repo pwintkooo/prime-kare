@@ -35,4 +35,7 @@ rmdir /s /q obj
 dotnet restore
 
 //install JWT
-dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer  
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+
+//install Firebase Admin SDK
+dotnet add package FirebaseAdmin

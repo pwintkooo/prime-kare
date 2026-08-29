@@ -54,9 +54,12 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-builder.Services.AddScoped<IVehicleService, VehicleService>();
+//register service
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IServiceService, ServiceService>();
+builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
 
 //register IPasswordHasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();

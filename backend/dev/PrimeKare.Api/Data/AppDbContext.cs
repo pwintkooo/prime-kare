@@ -35,10 +35,12 @@ public class AppDbContext : DbContext
             {
                 Id = 1,
                 Name = "Oil Change",
+                Slug = "oil-change",
                 Description = "Engine oil and oil filter replacement.",
                 Price = 89.90m,
                 EstimatedMinutes = 45,
                 IsActive = true,
+                ImageUrl = null,
                 CreatedAt = seedDate,
                 UpdatedAt = seedDate
             },
@@ -46,10 +48,12 @@ public class AppDbContext : DbContext
             {
                 Id = 2,
                 Name = "Brake Service",
+                Slug = "brake-service",
                 Description = "Brake inspection, repair and replacement.",
                 Price = 150.00m,
                 EstimatedMinutes = 90,
                 IsActive = true,
+                ImageUrl = null,
                 CreatedAt = seedDate,
                 UpdatedAt = seedDate
             },
@@ -57,10 +61,12 @@ public class AppDbContext : DbContext
             {
                 Id = 3,
                 Name = "Engine Diagnostics",
+                Slug = "engine-diagnostics",
                 Description = "Computerized engine diagnostics and inspection.",
                 Price = 120.00m,
                 EstimatedMinutes = 60,
                 IsActive = true,
+                ImageUrl = null,
                 CreatedAt = seedDate,
                 UpdatedAt = seedDate
             },
@@ -68,10 +74,12 @@ public class AppDbContext : DbContext
             {
                 Id = 4,
                 Name = "Tyre Service",
+                Slug = "tyre-service",
                 Description = "Tyre inspection, replacement and balancing.",
                 Price = 80.00m,
                 EstimatedMinutes = 45,
                 IsActive = true,
+                ImageUrl = null,
                 CreatedAt = seedDate,
                 UpdatedAt = seedDate
             },
@@ -79,10 +87,12 @@ public class AppDbContext : DbContext
             {
                 Id = 5,
                 Name = "Battery Replacement",
+                Slug = "battery-replacement",
                 Description = "Battery testing and replacement service.",
                 Price = 180.00m,
                 EstimatedMinutes = 30,
                 IsActive = true,
+                ImageUrl = null,
                 CreatedAt = seedDate,
                 UpdatedAt = seedDate
             },
@@ -90,10 +100,12 @@ public class AppDbContext : DbContext
             {
                 Id = 6,
                 Name = "Air Conditioning",
+                Slug = "air-conditioning",
                 Description = "Air conditioning inspection and servicing.",
                 Price = 100.00m,
                 EstimatedMinutes = 60,
                 IsActive = true,
+                ImageUrl = null,
                 CreatedAt = seedDate,
                 UpdatedAt = seedDate
             }

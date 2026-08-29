@@ -14,5 +14,9 @@ public class VehicleDto
 
     public string Status { get; set; } = "active";
 
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
+
     public int CustomerId { get; set; }
 }

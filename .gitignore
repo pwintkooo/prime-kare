@@ -52,6 +52,7 @@ yarn-error.log*
 **/.vs/
 **/*.user
 **/*.suo
+/backend/dev/PrimeKare.Api/firebase-service-account.json
 
 # ==========================================
 # Test results
