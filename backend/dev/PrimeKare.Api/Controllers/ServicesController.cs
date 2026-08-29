@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using PrimeKare.Api.DTOs.Services;
 using PrimeKare.Api.Services;
 
@@ -39,6 +40,7 @@ public class ServicesController : ControllerBase
         return service;
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<ServiceDto>> CreateService(
         [FromForm] CreateServiceDto dto)
@@ -53,6 +55,7 @@ public class ServicesController : ControllerBase
         );
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateService(
         int id,
@@ -69,6 +72,7 @@ public class ServicesController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteService(int id)
     {

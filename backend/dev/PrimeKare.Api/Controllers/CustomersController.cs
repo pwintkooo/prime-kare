@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.Models;
 using PrimeKare.Api.DTOs.Customers;
@@ -17,6 +18,7 @@ public class CustomersController : ControllerBase
         _context = context;
     }
 
+    [Authorize(Roles = "Admin,Receptionist,Mechanic")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CustomerDto>>> GetCustomers()
     {
@@ -36,6 +38,7 @@ public class CustomersController : ControllerBase
         return customers;
     }
 
+    [Authorize(Roles = "Admin,Receptionist,Mechanic")]
     [HttpGet("{id}")]
     public async Task<ActionResult<CustomerDto>> GetCustomer(int id)
     {
@@ -60,6 +63,7 @@ public class CustomersController : ControllerBase
         return customerDto;
     }
 
+    [Authorize(Roles = "Admin,Receptionist,Mechanic,Customer")]
     [HttpPost]
     public async Task<ActionResult<CustomerDto>> CreateCustomer(CreateCustomerDto dto)
     {
@@ -93,6 +97,7 @@ public class CustomersController : ControllerBase
         );
     }
 
+    [Authorize(Roles = "Admin,Receptionist,Mechanic,Customer")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCustomer(int id, UpdateCustomerDto dto)
     {
@@ -114,6 +119,7 @@ public class CustomersController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCustomer(int id)
     {
