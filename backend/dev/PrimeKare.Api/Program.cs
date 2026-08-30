@@ -56,9 +56,11 @@ builder.Services.AddSwaggerGen(options =>
 
 //register service
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
 //builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
 builder.Services.AddScoped<IAzureBlobStorageService, AzureBlobStorageService>();
 

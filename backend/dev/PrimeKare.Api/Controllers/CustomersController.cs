@@ -1,9 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using PrimeKare.Api.Data;
-using PrimeKare.Api.Models;
+using Microsoft.AspNetCore.Mvc;
 using PrimeKare.Api.DTOs.Customers;
+using PrimeKare.Api.Services;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -11,128 +9,86 @@ namespace PrimeKare.Api.Controllers;
 [Route("api/[controller]")]
 public class CustomersController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly ICustomerService _customerService;
 
-    public CustomersController(AppDbContext context)
+    public CustomersController(
+        ICustomerService customerService)
     {
-        _context = context;
+        _customerService = customerService;
     }
 
     [Authorize(Roles = "Admin,Receptionist,Mechanic")]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<CustomerDto>>> GetCustomers()
+    public async Task<ActionResult<IEnumerable<CustomerDto>>>
+        GetCustomers()
     {
-        var customers = await _context.Customers
-        .Select(customer => new CustomerDto
-        {
-            Id = customer.Id,
-            Name = customer.Name,
-            Phone = customer.Phone,
-            Email = customer.Email,
-            Status = "active",
-            CreatedAt = customer.CreatedAt,
-            UpdatedAt = customer.UpdatedAt
-        })
-        .ToListAsync();
+        var customers = await _customerService
+            .GetCustomersAsync();
 
-        return customers;
+        return Ok(customers);
     }
 
     [Authorize(Roles = "Admin,Receptionist,Mechanic")]
     [HttpGet("{id}")]
-    public async Task<ActionResult<CustomerDto>> GetCustomer(int id)
+    public async Task<ActionResult<CustomerDto>>
+        GetCustomer(int id)
     {
-        var customer = await _context.Customers.FindAsync(id);
+        var customer = await _customerService
+            .GetCustomerAsync(id);
 
         if (customer == null)
         {
             return NotFound();
         }
 
-        var customerDto = new CustomerDto
-        {
-            Id = customer.Id,
-            Name = customer.Name,
-            Phone = customer.Phone,
-            Email = customer.Email,
-            Status = customer.Status,
-            CreatedAt = customer.CreatedAt,
-            UpdatedAt = customer.UpdatedAt
-        };
-
-        return customerDto;
+        return Ok(customer);
     }
 
-    [Authorize(Roles = "Admin,Receptionist,Mechanic,Customer")]
+    [Authorize(Roles = "Admin,Receptionist")]
     [HttpPost]
-    public async Task<ActionResult<CustomerDto>> CreateCustomer(CreateCustomerDto dto)
+    public async Task<ActionResult<CustomerDto>>
+        CreateCustomer(CreateCustomerDto dto)
     {
-        var customer = new Customer
-        {
-            Name = dto.Name,
-            Phone = dto.Phone,
-            Email = dto.Email,
-            Status = "active",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        _context.Customers.Add(customer);
-
-        await _context.SaveChangesAsync();
-
-        var customerDto = new CustomerDto
-        {
-            Id = customer.Id,
-            Name = customer.Name,
-            Phone = customer.Phone,
-            Email = customer.Email,
-            Status = customer.Status
-        };
+        var customer = await _customerService
+            .CreateCustomerAsync(dto);
 
         return CreatedAtAction(
             nameof(GetCustomer),
             new { id = customer.Id },
-            customerDto
+            customer
         );
     }
 
-    [Authorize(Roles = "Admin,Receptionist,Mechanic,Customer")]
+    [Authorize(Roles = "Admin,Receptionist,Customer")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCustomer(int id, UpdateCustomerDto dto)
+    public async Task<IActionResult>
+        UpdateCustomer(
+            int id,
+            UpdateCustomerDto dto)
     {
-        var existingCustomer = await _context.Customers.FindAsync(id);
+        var updated = await _customerService
+            .UpdateCustomerAsync(id, dto);
 
-        if (existingCustomer == null)
+        if (!updated)
         {
             return NotFound();
         }
-
-        existingCustomer.Name = dto.Name;
-        existingCustomer.Phone = dto.Phone;
-        existingCustomer.Email = dto.Email;
-        existingCustomer.Status = dto.Status;
-        existingCustomer.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
 
         return NoContent();
     }
 
     [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteCustomer(int id)
+    public async Task<IActionResult>
+        DeleteCustomer(int id)
     {
-        var customer = await _context.Customers.FindAsync(id);
+        var deleted = await _customerService
+            .DeleteCustomerAsync(id);
 
-        if (customer == null)
+        if (!deleted)
         {
             return NotFound();
         }
-
-        _context.Customers.Remove(customer);
-
-        await _context.SaveChangesAsync();
 
         return NoContent();
     }

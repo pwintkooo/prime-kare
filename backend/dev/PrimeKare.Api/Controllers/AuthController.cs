@@ -1,13 +1,6 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Auth;
-using PrimeKare.Api.Models;
+using PrimeKare.Api.Services;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -15,114 +8,46 @@ namespace PrimeKare.Api.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly AppDbContext _context;
-    private readonly IPasswordHasher<User> _passwordHasher;
-    private readonly IConfiguration _configuration;
+    private readonly IAuthService _authService;
 
-    public AuthController(
-        AppDbContext context,
-        IPasswordHasher<User> passwordHasher,
-        IConfiguration configuration)
+    public AuthController(IAuthService authService)
     {
-        _context = context;
-        _passwordHasher = passwordHasher;
-        _configuration = configuration;
+        _authService = authService;
     }
 
     [HttpPost("sign-up")]
-    public async Task<IActionResult> SignUp(SignUpDto request)
+    public async Task<IActionResult> SignUp(
+        SignUpDto request)
     {
-        var existingUser = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
-
-        if (existingUser != null)
+        try
         {
-            return Conflict("User already exists.");
+            var result = await _authService
+                .SignUpAsync(request);
+
+            return Created("", result);
         }
-
-        var user = new User
+        catch (InvalidOperationException ex)
         {
-            Email = request.Email,
-            Role = "Customer",
-            CustomerId = request.CustomerId,
-            Status = "active",
-            CreatedAt = DateTime.UtcNow
-        };
-
-        user.PasswordHash = _passwordHasher.HashPassword(
-            user,
-            request.Password
-        );
-
-        _context.Users.Add(user);
-
-        await _context.SaveChangesAsync();
-
-        return Created("", new
-        {
-            user.Id,
-            user.Email,
-            user.Role,
-            user.Status,
-            user.CreatedAt,
-            user.CustomerId
-        });
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpPost("sign-in")]
-    public async Task<IActionResult> Login(LoginDto request)
+    public async Task<IActionResult> SignIn(
+        SignInDto request)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
+        var token = await _authService
+            .SignInAsync(request);
 
-        if (user == null)
+        if (token == null)
         {
-            return Unauthorized("Invalid email or password.");
+            return Unauthorized(
+                "Invalid email or password.");
         }
-
-        var passwordResult = _passwordHasher.VerifyHashedPassword(
-            user,
-            user.PasswordHash,
-            request.Password
-        );
-
-        if (passwordResult == PasswordVerificationResult.Failed)
-        {
-            return Unauthorized("Invalid email or password.");
-        }
-
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role)
-        };
-
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(
-                _configuration["Jwt:Key"]!
-            )
-        );
-
-        var credentials = new SigningCredentials(
-            key,
-            SecurityAlgorithms.HmacSha256
-        );
-
-        var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"],
-            audience: _configuration["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddHours(2),
-            signingCredentials: credentials
-        );
-
-        var tokenString = new JwtSecurityTokenHandler()
-            .WriteToken(token);
 
         return Ok(new
         {
-            token = tokenString
+            token
         });
     }
 }
