@@ -1,53 +1,56 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { getServices } from "@/lib/api/Services";
 
-const services = [
-  {
-    title: "Oil Change",
-    description:
-      "Keep your engine running smoothly with regular oil and filter changes.",
-    image: "/images/home/oil-change.jpg",
-    href: "/services/oil-change",
-  },
-  {
-    title: "Brake Service",
-    description:
-      "Professional brake inspection, maintenance, and replacement.",
-    image: "/images/home/brake-service.jpg",
-    href: "/services/brake-service",
-  },
-  {
-    title: "Engine Diagnostics",
-    description:
-      "Advanced diagnostics to identify engine and vehicle problems.",
-    image: "/images/home/engine-diagnostics.jpg",
-    href: "/services/engine-diagnostics",
-  },
-  {
-    title: "Tyre Service",
-    description:
-      "Tyre inspection, replacement, balancing, and wheel alignment.",
-    image: "/images/home/tyre-service.jpg",
-    href: "/services/tyre-service",
-  },
-  {
-    title: "Battery Service",
-    description:
-      "Battery testing, replacement, and electrical system checks.",
-    image: "/images/home/battery-service.jpg",
-    href: "/services/battery-service",
-  },
-  {
-    title: "Air Conditioning",
-    description:
-      "Keep your vehicle cool and comfortable with professional AC service.",
-    image: "/images/home/air-conditioning.jpg",
-    href: "/services/air-conditioning",
-  },
-];
+// const services = [
+//   {
+//     title: "Oil Change",
+//     description:
+//       "Keep your engine running smoothly with regular oil and filter changes.",
+//     image: "/images/home/oil-change.jpg",
+//     href: "/services/oil-change",
+//   },
+//   {
+//     title: "Brake Service",
+//     description:
+//       "Professional brake inspection, maintenance, and replacement.",
+//     image: "/images/home/brake-service.jpg",
+//     href: "/services/brake-service",
+//   },
+//   {
+//     title: "Engine Diagnostics",
+//     description:
+//       "Advanced diagnostics to identify engine and vehicle problems.",
+//     image: "/images/home/engine-diagnostics.jpg",
+//     href: "/services/engine-diagnostics",
+//   },
+//   {
+//     title: "Tyre Service",
+//     description:
+//       "Tyre inspection, replacement, balancing, and wheel alignment.",
+//     image: "/images/home/tyre-service.jpg",
+//     href: "/services/tyre-service",
+//   },
+//   {
+//     title: "Battery Service",
+//     description:
+//       "Battery testing, replacement, and electrical system checks.",
+//     image: "/images/home/battery-service.jpg",
+//     href: "/services/battery-service",
+//   },
+//   {
+//     title: "Air Conditioning",
+//     description:
+//       "Keep your vehicle cool and comfortable with professional AC service.",
+//     image: "/images/home/air-conditioning.jpg",
+//     href: "/services/air-conditioning",
+//   },
+// ];
 
-export default function Services() {
+export default async function Services() {
+  const services = await getServices();
+
   return (
     <section className="bg-slate-950 py-24 sm:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -109,14 +112,15 @@ export default function Services() {
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
           {services.map((service) => (
             <Link
-              key={service.title}
-              href={service.href}
+              key={service.id}
+              href={`/services/${service.slug}`}
               className="group relative overflow-hidden rounded-3xl"
             >
               <div className="relative aspect-video">
                 <Image
-                  src={service.image}
-                  alt={service.title}
+                  src={service.imageUrl ?? "/images/services/service-placeholder.jpeg"}
+                  alt={service.name}
+                  loading="eager"
                   fill
                   sizes="(max-width: 640px) 100vw, 50vw"
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -130,7 +134,7 @@ export default function Services() {
                   <div className="flex items-end justify-between gap-6">
                     <div>
                       <h3 className="text-1xl font-bold text-white sm:text-2xl">
-                        {service.title}
+                        {service.name}
                       </h3>
 
                       <p className="mt-2 max-w-md text-sm leading-6 text-slate-200">
