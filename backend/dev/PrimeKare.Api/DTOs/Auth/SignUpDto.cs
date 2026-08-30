@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 namespace PrimeKare.Api.DTOs.Auth;
 
-public class RegisterDto
+public class SignUpDto
 {
     [Required]
     [EmailAddress]

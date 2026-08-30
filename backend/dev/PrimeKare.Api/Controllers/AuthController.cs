@@ -29,8 +29,8 @@ public class AuthController : ControllerBase
         _configuration = configuration;
     }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterDto request)
+    [HttpPost("sign-up")]
+    public async Task<IActionResult> SignUp(SignUpDto request)
     {
         var existingUser = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == request.Email);
@@ -69,7 +69,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    [HttpPost("login")]
+    [HttpPost("sign-in")]
     public async Task<IActionResult> Login(LoginDto request)
     {
         var user = await _context.Users

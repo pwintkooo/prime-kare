@@ -18,7 +18,7 @@ export default function Navbar() {
         <Navigation />
 
         <div className="hidden lg:flex items-center gap-3">
-          <Link href="/login">
+          <Link href="/sign-in">
             <Button variant="outline">Login</Button>
           </Link>
 
