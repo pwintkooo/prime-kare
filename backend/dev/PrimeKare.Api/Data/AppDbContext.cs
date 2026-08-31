@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Vehicle> Vehicles { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Booking> Bookings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,6 +30,24 @@ public class AppDbContext : DbContext
             2026, 8, 20, 0, 0, 0,
             DateTimeKind.Utc
         );
+
+        modelBuilder.Entity<Booking>()
+            .HasOne(b => b.Customer)
+            .WithMany(c => c.Bookings)
+            .HasForeignKey(b => b.CustomerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Booking>()
+            .HasOne(b => b.Vehicle)
+            .WithMany(v => v.Bookings)
+            .HasForeignKey(b => b.VehicleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Booking>()
+            .HasOne(b => b.Service)
+            .WithMany(s => s.Bookings)
+            .HasForeignKey(b => b.ServiceId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Service>().HasData(
             new Service

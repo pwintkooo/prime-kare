@@ -133,6 +133,14 @@ public class AuthService : IAuthService
                 user.Role)
         };
 
+        if (user.CustomerId.HasValue)
+        {
+            claims.Add(
+                new Claim(
+                    "CustomerId",
+                    user.CustomerId.Value.ToString()));
+        }
+
         var jwtKey = _configuration["Jwt:Key"];
 
         if (string.IsNullOrWhiteSpace(jwtKey))

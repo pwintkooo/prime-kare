@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 using PrimeKare.Api.Data;
 
 namespace PrimeKare.Api.Services;
@@ -7,14 +6,12 @@ namespace PrimeKare.Api.Services;
 public class CurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly AppDbContext _context;
 
     public CurrentUserService(
         IHttpContextAccessor httpContextAccessor,
         AppDbContext context)
     {
         _httpContextAccessor = httpContextAccessor;
-        _context = context;
     }
 
     public int? UserId
@@ -49,17 +46,19 @@ public class CurrentUserService : ICurrentUserService
     {
         get
         {
-            if (!IsCustomer || UserId == null)
+            if (!IsCustomer)
             {
                 return null;
             }
 
-            var user = _context.Users
-                .AsNoTracking()
-                .FirstOrDefault(u =>
-                    u.Id == UserId.Value);
+            var customerId = _httpContextAccessor
+                .HttpContext?
+                .User
+                .FindFirstValue("CustomerId");
 
-            return user?.CustomerId;
+            return int.TryParse(customerId, out var id)
+                ? id
+                : null;
         }
     }
 }

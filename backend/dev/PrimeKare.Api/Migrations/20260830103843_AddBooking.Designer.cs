@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PrimeKare.Api.Data;
@@ -11,9 +12,11 @@ using PrimeKare.Api.Data;
 namespace PrimeKare.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260830103843_AddBooking")]
+    partial class AddBooking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,8 +33,8 @@ namespace PrimeKare.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateOnly>("BookingDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<TimeSpan>("BookingTime")
                         .HasColumnType("interval");
@@ -41,9 +44,6 @@ namespace PrimeKare.Api.Migrations
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
@@ -86,9 +86,6 @@ namespace PrimeKare.Api.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -134,9 +131,6 @@ namespace PrimeKare.Api.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -163,7 +157,6 @@ namespace PrimeKare.Api.Migrations
                             Description = "Engine oil and oil filter replacement.",
                             EstimatedMinutes = 45,
                             IsActive = true,
-                            IsDeleted = false,
                             Name = "Oil Change",
                             Price = 89.90m,
                             Slug = "oil-change",
@@ -176,7 +169,6 @@ namespace PrimeKare.Api.Migrations
                             Description = "Brake inspection, repair and replacement.",
                             EstimatedMinutes = 90,
                             IsActive = true,
-                            IsDeleted = false,
                             Name = "Brake Service",
                             Price = 150.00m,
                             Slug = "brake-service",
@@ -189,7 +181,6 @@ namespace PrimeKare.Api.Migrations
                             Description = "Computerized engine diagnostics and inspection.",
                             EstimatedMinutes = 60,
                             IsActive = true,
-                            IsDeleted = false,
                             Name = "Engine Diagnostics",
                             Price = 120.00m,
                             Slug = "engine-diagnostics",
@@ -202,7 +193,6 @@ namespace PrimeKare.Api.Migrations
                             Description = "Tyre inspection, replacement and balancing.",
                             EstimatedMinutes = 45,
                             IsActive = true,
-                            IsDeleted = false,
                             Name = "Tyre Service",
                             Price = 80.00m,
                             Slug = "tyre-service",
@@ -215,7 +205,6 @@ namespace PrimeKare.Api.Migrations
                             Description = "Battery testing and replacement service.",
                             EstimatedMinutes = 30,
                             IsActive = true,
-                            IsDeleted = false,
                             Name = "Battery Replacement",
                             Price = 180.00m,
                             Slug = "battery-replacement",
@@ -228,7 +217,6 @@ namespace PrimeKare.Api.Migrations
                             Description = "Air conditioning inspection and servicing.",
                             EstimatedMinutes = 60,
                             IsActive = true,
-                            IsDeleted = false,
                             Name = "Air Conditioning",
                             Price = 100.00m,
                             Slug = "air-conditioning",
@@ -253,9 +241,6 @@ namespace PrimeKare.Api.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -292,9 +277,6 @@ namespace PrimeKare.Api.Migrations
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Make")
                         .IsRequired()

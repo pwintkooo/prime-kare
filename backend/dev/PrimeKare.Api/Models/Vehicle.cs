@@ -13,6 +13,8 @@ public class Vehicle
     public int Year { get; set; }
 
     public string Status { get; set; } = "active";
+    
+    public bool IsDeleted { get; set; } = false;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -23,4 +25,6 @@ public class Vehicle
 
     // Navigation Property
     public Customer Customer { get; set; } = null!;
+
+    public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }
