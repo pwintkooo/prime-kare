@@ -16,6 +16,11 @@ export interface SignUpResponse {
   customerPhone: string;
 }
 
+export interface SignInRequest {
+  email: string;
+  password: string;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function SignUp(request: SignUpRequest): Promise<SignUpResponse> {
@@ -33,6 +38,27 @@ export async function SignUp(request: SignUpRequest): Promise<SignUpResponse> {
 
         throw new Error(
             message || "Failed to create account."
+        );
+    }
+
+    return response.json();
+}
+
+export async function SignIn(request: SignInRequest) {
+    const response = await fetch(`${API_URL}/api/auth/sign-in`, 
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(request)
+    });
+
+    if (!response.ok) {
+        const message = await response.text();
+
+        throw new Error(
+            message || "Failed to sign in."
         );
     }
 
