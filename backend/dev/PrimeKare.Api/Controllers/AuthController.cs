@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using FluentValidation;
 using PrimeKare.Api.DTOs.Auth;
 using PrimeKare.Api.Services;
 
@@ -21,14 +22,32 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var result = await _authService
-                .SignUpAsync(request);
+            var user = await _authService.SignUpAsync(request);
 
-            return Created("", result);
+            return Created("", new
+            {
+                user.Id,
+                user.Email,
+                user.Role,
+                user.Status,
+                user.CreatedAt,
+                user.CustomerId
+            });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new
+            {
+                message = "Validation failed.",
+                errors = ex.Errors.Select(e => e.ErrorMessage)
+            });
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(ex.Message);
+            return Conflict(new
+            {
+                message = ex.Message
+            });
         }
     }
 

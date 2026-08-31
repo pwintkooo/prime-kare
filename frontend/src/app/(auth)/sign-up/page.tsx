@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import { SignUp } from "@/lib/api/Auth";
+import PasswordRequirements from "@/components/auth/PasswordRequirements";
+import ConfirmPassword from "@/components/auth/ConfirmPassword";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -15,10 +17,27 @@ export default function SignUpPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const passwordRequirements = {
+    minLength: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+  };
+
+  const isStrongPassword = Object.values(passwordRequirements).every(Boolean);
+
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     setError("");
+
+    if (!isStrongPassword) {
+      setError(
+        "Password must be at least 8 characters and contain an uppercase letter, lowercase letter, number, and special character.",
+      );
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -154,7 +173,7 @@ export default function SignUpPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
-                  required                
+                  required
                 />
               </div>
 
@@ -202,6 +221,8 @@ export default function SignUpPage() {
                 />
               </div>
 
+              <PasswordRequirements password={password} />
+
               {/* Confirm Password */}
               <div>
                 <label
@@ -223,6 +244,11 @@ export default function SignUpPage() {
                   required
                 />
               </div>
+
+              <ConfirmPassword
+                password={password}
+                confirmPassword={confirmPassword}
+              />
 
               {/* Terms */}
               <div className="flex items-start gap-3">

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using FluentValidation;
 using System.Text;
 using PrimeKare.Api.Models;
 using PrimeKare.Api.Data;
@@ -79,6 +80,9 @@ builder.Services.AddScoped<IAzureBlobStorageService, AzureBlobStorageService>();
 
 //register IPasswordHasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+//register Fluentvalidation
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 //configure JWT authentication
 var jwtKey = builder.Configuration["Jwt:Key"]

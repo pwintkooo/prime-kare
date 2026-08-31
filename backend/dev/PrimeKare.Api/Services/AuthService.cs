@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using FluentValidation;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Auth;
 using PrimeKare.Api.Models;
@@ -15,20 +16,34 @@ public class AuthService : IAuthService
     private readonly AppDbContext _context;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IConfiguration _configuration;
+    private readonly IValidator<SignUpDto> _signUpValidator;
 
     public AuthService(
         AppDbContext context,
         IPasswordHasher<User> passwordHasher,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IValidator<SignUpDto> signUpValidator)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _configuration = configuration;
+        _signUpValidator = signUpValidator;
     }
 
     public async Task<SignUpResponseDto> SignUpAsync(
         SignUpDto request)
     {
+        var validationResult =
+    await _signUpValidator.ValidateAsync(request);
+
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .Select(e => e.ErrorMessage)
+                .ToList();
+
+            throw new ValidationException(validationResult.Errors);
+        }
         // 1. Check if email already exists
         var existingUser = await _context.Users
             .FirstOrDefaultAsync(

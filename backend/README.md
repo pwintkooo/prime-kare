@@ -43,3 +43,7 @@ dotnet add package FirebaseAdmin
 //install Azure
 dotnet add package Azure.Storage.Blobs
 dotnet add package Azure.Identity
+
+//install FluentValidation
+dotnet add package FluentValidation
+dotnet add package FluentValidation.DependencyInjectionExtensions
