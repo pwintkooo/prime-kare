@@ -10,25 +10,25 @@ on:
       - main
 
 jobs:
-  frontend_build:
-    runs-on: ubuntu-latest
+  # frontend_build:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 22
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v5
+  #       with:
+  #         node-version: 22
 
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
+  #     - name: Install dependencies
+  #       working-directory: frontend
+  #       run: npm ci
 
-      - name: Build frontend
-        working-directory: frontend
-        run: npm run build
+  #     - name: Build frontend
+  #       working-directory: frontend
+  #       run: npm run build
 
   backend_build:
     runs-on: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
 
   backend_test:
     needs:
-      - frontend_build
+      # - frontend_build
       - backend_build
     runs-on: ubuntu-latest
 

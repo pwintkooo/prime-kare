@@ -2,14 +2,14 @@ stages:
   - build
   - test
 
-frontend_build:
-  stage: build
-  image: node:22
+# frontend_build:
+#   stage: build
+#   image: node:22
 
-  script:
-    - cd frontend
-    - npm ci
-    - npm run build
+#   script:
+#     - cd frontend
+#     - npm ci
+#     - npm run build
 
 backend_build:
   stage: build

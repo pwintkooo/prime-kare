@@ -93,7 +93,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetVehicles_AsCustomer_ReturnsNotFound()
+    public async Task GetVehicles_AsCustomer_ReturnsOK()
     {
         await TestDataHelper.CreateCleanDatabase(_factory);
 
@@ -102,13 +102,14 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             _configuration,
             1,
             "PK@example.com",
-            "Customer");
+            "Customer",
+            1);
 
         // Act
         var response = await _client.GetAsync("/api/vehicles");
 
         // Assert
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         // var content = await response.Content.ReadAsStringAsync();
 
@@ -193,7 +194,8 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             _configuration,
             1,
             "PK1@example.com",
-            "Customer");
+            "Customer",
+            1);
 
         var response = await _client.GetAsync(
         "/api/vehicles");
@@ -257,7 +259,8 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             _configuration,
             1,
             "PK@example.com",
-            "Customer");
+            "Customer",
+            1);
 
         var response = await _client.GetAsync(
         "/api/vehicles/1");
@@ -311,7 +314,8 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             _configuration,
             1,
             "PK@example.com",
-            "Customer");
+            "Customer",
+            1);
 
         var response = await _client.GetAsync(
         "/api/vehicles/2");

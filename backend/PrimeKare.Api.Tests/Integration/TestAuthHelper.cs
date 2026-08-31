@@ -13,29 +13,38 @@ public static class TestAuthHelper
     private const string JwtAudience = "PrimeKare.Frontend";
 
     public static string GenerateToken(
-        IConfiguration configuration,
-        int userId,
-        string email,
-        string role)
+    IConfiguration configuration,
+    int userId,
+    string email,
+    string role,
+    int? customerId = null)
     {
         var jwtKey = configuration["Jwt:Key"]
             ?? throw new InvalidOperationException(
                 "JWT key is not configured.");
 
-        var claims = new[]
+        var claims = new List<Claim>
+    {
+        new Claim(
+            ClaimTypes.NameIdentifier,
+            userId.ToString()),
+
+        new Claim(
+            ClaimTypes.Email,
+            email),
+
+        new Claim(
+            ClaimTypes.Role,
+            role)
+    };
+
+        if (customerId.HasValue)
         {
-            new Claim(
-                ClaimTypes.NameIdentifier,
-                userId.ToString()),
-
-            new Claim(
-                ClaimTypes.Email,
-                email),
-
-            new Claim(
-                ClaimTypes.Role,
-                role)
-        };
+            claims.Add(
+                new Claim(
+                    "CustomerId",
+                    customerId.Value.ToString()));
+        }
 
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtKey));
@@ -56,17 +65,19 @@ public static class TestAuthHelper
     }
 
     public static void AuthenticateAs(
-        HttpClient client,
-        IConfiguration configuration,
-        int userId,
-        string email,
-        string role)
+    HttpClient client,
+    IConfiguration configuration,
+    int userId,
+    string email,
+    string role,
+    int? customerId = null)
     {
-        var token =  GenerateToken(
+        var token = GenerateToken(
             configuration,
             userId,
             email,
-            role);
+            role,
+            customerId);
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue(
