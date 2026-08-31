@@ -54,6 +54,18 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+//add the cors service
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 //register service
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -101,6 +113,8 @@ builder.Services
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+app.UseCors("Frontend");
 
 // Seed initial database data (e.g., default admin user)
 using (var scope = app.Services.CreateScope())

@@ -6,6 +6,7 @@ export interface Service {
     price: number;
     estimatedMinutes: number;
     isActive: boolean;
+    isDeleted: boolean;
     imageUrl: string | null;
     createdAt: string;
     updatedAt: string;
