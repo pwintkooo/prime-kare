@@ -1,60 +1,32 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { getServices } from "@/lib/api/Services";
 
-// const services = [
-//   {
-//     title: "Oil Change",
-//     description:
-//       "Keep your engine running smoothly with regular oil and filter changes.",
-//     image: "/images/home/oil-change.jpg",
-//     href: "/services/oil-change",
-//   },
-//   {
-//     title: "Brake Service",
-//     description:
-//       "Professional brake inspection, maintenance, and replacement.",
-//     image: "/images/home/brake-service.jpg",
-//     href: "/services/brake-service",
-//   },
-//   {
-//     title: "Engine Diagnostics",
-//     description:
-//       "Advanced diagnostics to identify engine and vehicle problems.",
-//     image: "/images/home/engine-diagnostics.jpg",
-//     href: "/services/engine-diagnostics",
-//   },
-//   {
-//     title: "Tyre Service",
-//     description:
-//       "Tyre inspection, replacement, balancing, and wheel alignment.",
-//     image: "/images/home/tyre-service.jpg",
-//     href: "/services/tyre-service",
-//   },
-//   {
-//     title: "Battery Service",
-//     description:
-//       "Battery testing, replacement, and electrical system checks.",
-//     image: "/images/home/battery-service.jpg",
-//     href: "/services/battery-service",
-//   },
-//   {
-//     title: "Air Conditioning",
-//     description:
-//       "Keep your vehicle cool and comfortable with professional AC service.",
-//     image: "/images/home/air-conditioning.jpg",
-//     href: "/services/air-conditioning",
-//   },
-// ];
+export default function Services() {
+  const {
+    data: services,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["services"],
+    queryFn: getServices,
+  });
 
-export default async function Services() {
-  const services = await getServices();
+  if (isLoading) {
+    return <p>Loading services...</p>;
+  }
+
+  if (error) {
+    return <p>Failed to load services.</p>;
+  }
 
   return (
     <section className="bg-slate-950 py-24 sm:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-
         {/* Header */}
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
@@ -64,9 +36,7 @@ export default async function Services() {
           <h2 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl">
             Professional care for
             <br />
-            <span className="text-slate-400">
-              every journey.
-            </span>
+            <span className="text-slate-400">every journey.</span>
           </h2>
         </div>
 
@@ -99,9 +69,9 @@ export default async function Services() {
                 </h3>
 
                 <p className="hidden sm:block mt-4 max-w-xl text-sm leading-6 text-slate-200 sm:text-base">
-                  From regular maintenance to unexpected repairs,
-                  our experienced technicians provide dependable
-                  service to keep you moving.
+                  From regular maintenance to unexpected repairs, our
+                  experienced technicians provide dependable service to keep you
+                  moving.
                 </p>
               </div>
             </div>
@@ -110,7 +80,7 @@ export default async function Services() {
 
         {/* Service Grid */}
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          {services.map((service) => (
+          {services?.map((service) => (
             <Link
               key={service.id}
               href={`/services/${service.slug}`}
@@ -118,7 +88,10 @@ export default async function Services() {
             >
               <div className="relative aspect-video">
                 <Image
-                  src={service.imageUrl ?? "/images/services/service-placeholder.jpeg"}
+                  src={
+                    service.imageUrl ??
+                    "/images/services/service-placeholder.jpeg"
+                  }
                   alt={service.name}
                   loading="eager"
                   fill
@@ -162,7 +135,6 @@ export default async function Services() {
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
-
       </div>
     </section>
   );

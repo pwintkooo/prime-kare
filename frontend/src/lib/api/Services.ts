@@ -1,25 +1,21 @@
+import { apiClient } from "./client";
+
 export interface Service {
-    id: number;
-    name: string;
-    slug: string;
-    description: string;
-    price: number;
-    estimatedMinutes: number;
-    isActive: boolean;
-    isDeleted: boolean;
-    imageUrl: string | null;
-    createdAt: string;
-    updatedAt: string;
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  estimatedMinutes: number;
+  isActive: boolean;
+  isDeleted: boolean;
+  imageUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 export async function getServices(): Promise<Service[]> {
-    const response = await fetch(`${API_URL}/api/services`);
+  const response = await apiClient.get<Service[]>("/api/services");
 
-    if (!response.ok) {
-        throw new Error("Failed to fetch services");
-    }
-
-    return response.json();
+  return response.data;
 }

@@ -1,3 +1,5 @@
+import { apiClient } from "./client";
+
 export interface SignUpRequest {
   name: string;
   email: string;
@@ -24,43 +26,25 @@ export interface SignInRequest {
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function SignUp(request: SignUpRequest): Promise<SignUpResponse> {
-    const response = await fetch(`${API_URL}/api/auth/sign-up`, 
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(request)
-    });
+  const response = await fetch(`${API_URL}/api/auth/sign-up`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  });
 
-    if (!response.ok) {
-        const message = await response.text();
+  if (!response.ok) {
+    const errorData = await response.json();
 
-        throw new Error(
-            message || "Failed to create account."
-        );
-    }
+    throw new Error(errorData.message || "Failed to create account.");
+  }
 
-    return response.json();
+  return response.json();
 }
 
 export async function SignIn(request: SignInRequest) {
-    const response = await fetch(`${API_URL}/api/auth/sign-in`, 
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(request)
-    });
+  const response = await apiClient.post("/api/auth/sign-in", request);
 
-    if (!response.ok) {
-        const message = await response.text();
-
-        throw new Error(
-            message || "Failed to sign in."
-        );
-    }
-
-    return response.json();
+  return response.data;
 }

@@ -1,72 +1,66 @@
 "use client";
 
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { SignUp } from "@/lib/api/Auth";
 import PasswordRequirements from "@/components/auth/PasswordRequirements";
 import ConfirmPassword from "@/components/auth/ConfirmPassword";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { signUpSchema, SignUpFormData } from "@/lib/validations/auth";
 
 export default function SignUpPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [terms, setTerms] = useState(false);
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const [serverError, setServerError] = useState("");
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      terms: false,
+    },
+  });
 
-  const passwordRequirements = {
-    minLength: password.length >= 8,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /[0-9]/.test(password),
-    special: /[^A-Za-z0-9]/.test(password),
-  };
+  const password =
+    useWatch({
+      control,
+      name: "password",
+    }) ?? "";
 
-  const isStrongPassword = Object.values(passwordRequirements).every(Boolean);
+  const confirmPassword =
+    useWatch({
+      control,
+      name: "confirmPassword",
+    }) ?? "";
 
-  const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    setError("");
-
-    if (!isStrongPassword) {
-      setError(
-        "Password must be at least 8 characters and contain an uppercase letter, lowercase letter, number, and special character.",
-      );
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    if (!terms) {
-      setError("You must agree to the Terms of Service and Privacy Policy.");
-      return;
-    }
+  const onSubmit = async (data: SignUpFormData) => {
+    setServerError("");
 
     try {
-      setIsLoading(true);
-
       const response = await SignUp({
-        name,
-        email,
-        phone,
-        password,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
       });
 
-      console.log("Accont created:", response);
-      window.location.href = "/sign-in";
+      console.log("Account created:", response);
+
+      router.push("/sign-in");
     } catch (error) {
-      setError(
+      setServerError(
         error instanceof Error ? error.message : "Something went wrong.",
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -132,7 +126,7 @@ export default function SignUpPage() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
               {/* Full Name */}
               <div>
                 <label
@@ -144,16 +138,20 @@ export default function SignUpPage() {
 
                 <input
                   id="name"
-                  name="name"
                   type="text"
                   autoComplete="name"
                   placeholder="John Tan"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  {...register("name")}
                   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                   required
                 />
               </div>
+
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.name.message}
+                </p>
+              )}
 
               {/* Email */}
               <div>
@@ -166,16 +164,20 @@ export default function SignUpPage() {
 
                 <input
                   id="email"
-                  name="email"
                   type="email"
                   autoComplete="email"
                   placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...register("email")}
                   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                   required
                 />
               </div>
+
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.email.message}
+                </p>
+              )}
 
               {/* Phone */}
               <div>
@@ -188,16 +190,20 @@ export default function SignUpPage() {
 
                 <input
                   id="phone"
-                  name="phone"
                   type="tel"
                   autoComplete="tel"
                   placeholder="+65 9123 4567"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  {...register("phone")}
                   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                   required
                 />
               </div>
+
+              {errors.phone && (
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.phone.message}
+                </p>
+              )}
 
               {/* Password */}
               <div>
@@ -210,18 +216,22 @@ export default function SignUpPage() {
 
                 <input
                   id="password"
-                  name="password"
                   type="password"
                   autoComplete="new-password"
                   placeholder="Create a password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register("password")}
                   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                   required
                 />
               </div>
 
               <PasswordRequirements password={password} />
+
+              {errors.password && (
+                <p className="text-sm text-red-400">
+                  {errors.password.message}
+                </p>
+              )}
 
               {/* Confirm Password */}
               <div>
@@ -234,12 +244,10 @@ export default function SignUpPage() {
 
                 <input
                   id="confirmPassword"
-                  name="confirmPassword"
                   type="password"
                   autoComplete="new-password"
                   placeholder="Confirm your password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  {...register("confirmPassword")}
                   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                   required
                 />
@@ -254,10 +262,8 @@ export default function SignUpPage() {
               <div className="flex items-start gap-3">
                 <input
                   id="terms"
-                  name="terms"
                   type="checkbox"
-                  checked={terms}
-                  onChange={(e) => setTerms(e.target.checked)}
+                  {...register("terms")}
                   className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-400"
                   required
                 />
@@ -284,18 +290,23 @@ export default function SignUpPage() {
                 </label>
               </div>
 
-              {error && (
+              {errors.terms && (
+                <p className="text-sm text-red-400">{errors.terms.message}</p>
+              )}
+
+              {serverError && (
                 <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                  {error}
+                  {serverError}
                 </div>
               )}
 
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+                disabled={isSubmitting}
+                className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-950"
               >
-                {isLoading ? "Creating account..." : "Create account"}
+                {isSubmitting ? "Creating account..." : "Create account"}
               </button>
             </form>
 
