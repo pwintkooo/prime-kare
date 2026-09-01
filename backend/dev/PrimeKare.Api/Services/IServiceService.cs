@@ -8,6 +8,8 @@ public interface IServiceService
 
     Task<ServiceDto?> GetServiceAsync(int id);
 
+    Task<ServiceDto?> GetServiceBySlugAsync(string slug);
+
     Task<ServiceDto> CreateServiceAsync(CreateServiceDto dto);
 
     Task<bool> UpdateServiceAsync(int id, UpdateServiceDto dto);

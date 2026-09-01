@@ -19,3 +19,15 @@ export async function getServices(): Promise<Service[]> {
 
   return response.data;
 }
+
+export async function getServiceById(id: number): Promise<Service> {
+  const response = await apiClient.get<Service>(`/api/services/${id}`);
+
+  return response.data;
+}
+
+export async function getServiceBySlug(slug: string): Promise<Service> {
+  const response = await apiClient.get<Service>(`/api/services/${slug}`);
+
+  return response.data;
+}

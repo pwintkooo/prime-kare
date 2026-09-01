@@ -40,7 +40,27 @@ public class ServiceService : IServiceService
     public async Task<ServiceDto?> GetServiceAsync(int id)
     {
         return await _context.Services
-            .Where(service => service.Id == id)
+            .Where(service => service.Id == id && service.IsActive && !service.IsDeleted)
+            .Select(service => new ServiceDto
+            {
+                Id = service.Id,
+                Name = service.Name,
+                Slug = service.Slug,
+                Description = service.Description,
+                Price = service.Price,
+                EstimatedMinutes = service.EstimatedMinutes,
+                IsActive = service.IsActive,
+                ImageUrl = service.ImageUrl,
+                CreatedAt = service.CreatedAt,
+                UpdatedAt = service.UpdatedAt
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<ServiceDto?> GetServiceBySlugAsync(string slug)
+    {
+        return await _context.Services
+            .Where(service => service.Slug == slug && service.IsActive && !service.IsDeleted)
             .Select(service => new ServiceDto
             {
                 Id = service.Id,

@@ -26,11 +26,25 @@ public class ServicesController : ControllerBase
         return services;
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<ServiceDto>> GetService(int id)
     {
         var service = await _serviceService
             .GetServiceAsync(id);
+
+        if (service == null)
+        {
+            return NotFound();
+        }
+
+        return service;
+    }
+
+    [HttpGet("{slug}")]
+    public async Task<ActionResult<ServiceDto>> GetServiceBySlug(string slug)
+    {
+        var service = await _serviceService
+            .GetServiceBySlugAsync(slug);
 
         if (service == null)
         {
