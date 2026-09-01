@@ -71,6 +71,7 @@ public class AuthService : IAuthService
         // 3. Create User
         var user = new User
         {
+            Name = request.Name,
             Email = request.Email,
             Role = "Customer",
             Status = "active",
@@ -93,6 +94,7 @@ public class AuthService : IAuthService
         return new SignUpResponseDto
         {
             Id = user.Id,
+            Name = user.Name,
             Email = user.Email,
             Role = user.Role,
             Status = user.Status,
@@ -103,7 +105,7 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<string?> SignInAsync(
+    public async Task<SignInResponseDto?> SignInAsync(
         SignInDto request)
     {
         var user = await _context.Users
@@ -181,7 +183,17 @@ public class AuthService : IAuthService
             signingCredentials: credentials
         );
 
-        return new JwtSecurityTokenHandler()
-            .WriteToken(token);
+        return new SignInResponseDto
+        {
+            Token = new JwtSecurityTokenHandler().WriteToken(token),
+
+            User = new UserDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role
+            }
+        };
     }
 }

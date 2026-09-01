@@ -55,18 +55,15 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> SignIn(
         SignInDto request)
     {
-        var token = await _authService
+        var response = await _authService
             .SignInAsync(request);
 
-        if (token == null)
+        if (response == null)
         {
             return Unauthorized(
                 "Invalid email or password.");
         }
 
-        return Ok(new
-        {
-            token
-        });
+        return Ok(response);
     }
 }

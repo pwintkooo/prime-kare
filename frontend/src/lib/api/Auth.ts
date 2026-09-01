@@ -23,6 +23,18 @@ export interface SignInRequest {
   password: string;
 }
 
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface SignInResponse {
+  token: string;
+  user: User;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function SignUp(request: SignUpRequest): Promise<SignUpResponse> {
@@ -43,8 +55,20 @@ export async function SignUp(request: SignUpRequest): Promise<SignUpResponse> {
   return response.json();
 }
 
-export async function SignIn(request: SignInRequest) {
-  const response = await apiClient.post("/api/auth/sign-in", request);
+export async function SignIn(request: SignInRequest): Promise<SignInResponse> {
+  const response = await fetch(`${API_URL}/api/auth/sign-in`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  });
 
-  return response.data;
+  if (!response.ok) {
+    const message = await response.text();
+
+    throw new Error(message || "Failed to sign in.");
+  }
+
+  return response.json();
 }

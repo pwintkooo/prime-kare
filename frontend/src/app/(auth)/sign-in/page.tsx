@@ -3,35 +3,45 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { SignIn } from "@/lib/api/Auth";
+import { useAuthStore } from "@/store/authStore";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { signInSchema, SignInFormData } from "@/lib/validations/auth";
 
 export default function SignInPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const login = useAuthStore((state) => state.login);
+  const router = useRouter();
+  const [serverError, setServerError] = useState("");
 
-  const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInFormData>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (data: SignInFormData) => {
+    setServerError("");
 
     try {
-      setIsLoading(true);
-
       const response = await SignIn({
-        email,
-        password,
+        email: data.email,
+        password: data.password,
       });
 
-      console.log("Sign in:", response);
-      console.log("Token:", response.token);
-
-      window.location.href = "/";
+      login(response.user, response.token);
+      router.push("/");
     } catch (error) {
-      setError(
+      setServerError(
         error instanceof Error ? error.message : "Something went wrong.",
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -97,7 +107,7 @@ export default function SignInPage() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
               {/* Email */}
               <div>
                 <label
@@ -109,16 +119,20 @@ export default function SignInPage() {
 
                 <input
                   id="email"
-                  name="email"
                   type="email"
                   autoComplete="email"
                   placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...register("email")}
                   required
                   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                 />
               </div>
+
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.email.message}
+                </p>
+              )}
 
               {/* Password */}
               <div>
@@ -140,15 +154,19 @@ export default function SignInPage() {
 
                 <input
                   id="password"
-                  name="password"
                   type="password"
                   autoComplete="current-password"
                   placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register("password")}
                   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                 />
               </div>
+
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-400">
+                  {errors.password.message}
+                </p>
+              )}
 
               {/* Remember me */}
               <div className="flex items-center gap-3">
@@ -164,19 +182,19 @@ export default function SignInPage() {
                 </label>
               </div>
 
-              {error && (
+              {serverError && (
                 <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                  {error}
+                  {serverError}
                 </div>
               )}
 
               {/* Submit */}
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isLoading ? "Signing in..." : "Sign in"}
+                {isSubmitting ? "Signing in..." : "Sign in"}
               </button>
             </form>
 

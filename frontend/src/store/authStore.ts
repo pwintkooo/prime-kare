@@ -1,45 +1,47 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { User } from "@/lib/api/Auth";
 
 interface AuthState {
+  user: User | null;
   token: string | null;
-  name: string | null;
-  role: string | null;
+  hydrated: boolean;
 
-  setAuth: (
-    token: string,
-    name: string,
-    role: string
-  ) => void;
-
+  login: (user: User, token: string) => void;
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  token: null,
-  name: null,
-  role: null,
-
-  setAuth: (token, name, role) => {
-    set({
-      token,
-      name,
-      role,
-    });
-
-    localStorage.setItem("token", token);
-    localStorage.setItem("name", name);
-    localStorage.setItem("role", role);
-  },
-
-  logout: () => {
-    set({
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
       token: null,
-      name: null,
-      role: null,
-    });
+      hydrated: false,
 
-    localStorage.removeItem("token");
-    localStorage.removeItem("name");
-    localStorage.removeItem("role");
-  },
-}));
+      login: (user, token) => {
+        set({
+          user,
+          token,
+        });
+      },
+
+      logout: () => {
+        set({
+          user: null,
+          token: null,
+        });
+      },
+    }),
+    {
+      name: "primekare-auth",
+      skipHydration: true,
+      onRehydrateStorage: () => {
+        return () => {
+          useAuthStore.setState({
+            hydrated: true,
+          });
+        };
+      }
+    }
+  )
+);

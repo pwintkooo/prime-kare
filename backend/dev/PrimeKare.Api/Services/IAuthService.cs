@@ -6,5 +6,5 @@ public interface IAuthService
 {
     Task<SignUpResponseDto> SignUpAsync(SignUpDto request);
 
-    Task<string?> SignInAsync(SignInDto request);
+    Task<SignInResponseDto?> SignInAsync(SignInDto request);
 }

@@ -12,9 +12,7 @@ export const signUpSchema = z
       .min(1, "Email is required")
       .email("Please enter a valid email address"),
 
-    phone: z
-      .string()
-      .min(8, "Phone number must be at least 8 characters"),
+    phone: z.string().min(8, "Phone number must be at least 8 characters"),
 
     password: z
       .string()
@@ -22,18 +20,13 @@ export const signUpSchema = z
       .regex(/[A-Z]/, "Must contain an uppercase letter")
       .regex(/[a-z]/, "Must contain a lowercase letter")
       .regex(/[0-9]/, "Must contain a number")
-      .regex(
-        /[^A-Za-z0-9]/,
-        "Must contain a special character",
-      ),
+      .regex(/[^A-Za-z0-9]/, "Must contain a special character"),
 
     confirmPassword: z.string(),
 
-    terms: z
-      .boolean()
-      .refine((value) => value === true, {
-        message: "You must agree to the Terms of Service and Privacy Policy.",
-      }),
+    terms: z.boolean().refine((value) => value === true, {
+      message: "You must agree to the Terms of Service and Privacy Policy.",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -41,3 +34,14 @@ export const signUpSchema = z
   });
 
 export type SignUpFormData = z.infer<typeof signUpSchema>;
+
+export const signInSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required.")
+    .email("Please enter a valid email address."),
+
+  password: z.string().min(1, "Password is required."),
+});
+
+export type SignInFormData = z.infer<typeof signInSchema>;
