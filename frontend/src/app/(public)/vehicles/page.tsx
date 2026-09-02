@@ -6,6 +6,7 @@ import { Car, Plus, CalendarDays, Pencil, ChevronRight } from "lucide-react";
 
 import { getVehicles } from "@/lib/api/Vehicles";
 import { Button } from "@/components/ui/button";
+import { VehiclesSkeleton } from "@/components/skeletons/VehiclesSkeleton";
 
 export default function VehiclesPage() {
   const {
@@ -18,22 +19,7 @@ export default function VehiclesPage() {
   });
 
   if (isLoading) {
-    return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-7xl px-6 py-12">
-          <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-200" />
-
-          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="h-56 animate-pulse rounded-2xl bg-white shadow-sm"
-              />
-            ))}
-          </div>
-        </div>
-      </main>
-    );
+    return <VehiclesSkeleton />;
   }
 
   if (isError) {

@@ -8,6 +8,7 @@ using PrimeKare.Api.DTOs.Vehicles;
 using PrimeKare.Api.Models;
 using PrimeKare.Api.Services;
 using Moq;
+using PrimeKare.Api.Tests.Helper;
 
 namespace PrimeKare.Api.Tests.Controllers;
 
@@ -28,16 +29,7 @@ public class VehiclesControllerTests
         //arrange
         using var context = CreateDbContext();
 
-        var customer = new Customer
-        {
-            Id = 1,
-            Name = "PK",
-            Phone = "1234",
-            Email = "PK@gmail.com"
-        };
-
-        context.Customers.Add(customer);
-        await context.SaveChangesAsync();
+        var customer = await TestDataHelper.AddCustomer(context);
 
         var vehicleService = new VehicleService(context);
         var currentUser = new Mock<ICurrentUserService>();
@@ -52,7 +44,6 @@ public class VehiclesControllerTests
             Make = "Toyota",
             Model = "Camry",
             Year = 2024,
-            CustomerId = 1
         };
 
         //act
@@ -87,8 +78,7 @@ public class VehiclesControllerTests
             PlateNumber = "SLA1234A",
             Make = "Toyota",
             Model = "Camry",
-            Year = 2024,
-            CustomerId = 1
+            Year = 2024
         };
 
         var result = await controller.CreateVehicle(dto);
@@ -232,13 +222,7 @@ public class VehiclesControllerTests
         //arrange
         using var context = CreateDbContext();
 
-        var customer = new Customer
-        {
-            Id = 1,
-            Name = "PK",
-            Phone = "1234",
-            Email = "PK@gmail.com"
-        };
+        var customer = await TestDataHelper.AddCustomer(context);
 
         var vehicle = new Vehicle
         {
@@ -249,8 +233,7 @@ public class VehiclesControllerTests
             Year = 2024,
             CustomerId = 1
         };
-
-        context.Customers.Add(customer);
+        
         context.Vehicles.Add(vehicle);
         await context.SaveChangesAsync();
 
@@ -266,8 +249,7 @@ public class VehiclesControllerTests
             PlateNumber = "SLB5678B",
             Make = "Honda",
             Model = "Civic",
-            Year = 2025,
-            CustomerId = 1
+            Year = 2025
         };
 
         //act

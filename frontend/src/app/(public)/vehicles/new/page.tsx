@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 export default function NewVehiclePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [serverError, setServerError] = useState("");
 
   const {
     register,
@@ -48,7 +47,6 @@ export default function NewVehiclePage() {
   });
 
   const onSubmit = (data: CreateVehicleFormData) => {
-    setServerError("");
     createMutation.mutate(data);
   };
 
@@ -140,9 +138,7 @@ export default function NewVehiclePage() {
           {/* API Error */}
           {createMutation.isError && (
             <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-              {createMutation.error instanceof Error
-                ? createMutation.error.message
-                : "Failed to create vehicle."}
+              {createMutation.error.message}
             </div>
           )}
 

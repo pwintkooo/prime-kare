@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace PrimeKare.Api.Tests.Integration;
+namespace PrimeKare.Api.Tests.Helper;
 
 public class CustomWebApplicationFactory
     : WebApplicationFactory<Program>

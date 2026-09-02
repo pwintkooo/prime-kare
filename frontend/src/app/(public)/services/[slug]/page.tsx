@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 
 import { getServiceBySlug } from "@/lib/api/Services";
+import { IndividualServiceSkeleton } from "@/components/skeletons/IndividualServiceSkeleton";
 
 export default function ServiceDetailsPage() {
   const params = useParams<{ slug: string }>();
@@ -22,23 +23,7 @@ export default function ServiceDetailsPage() {
   });
 
   if (isLoading) {
-    return (
-      <main className="min-h-screen bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-20 sm:px-8">
-          <div className="h-6 w-32 animate-pulse rounded bg-slate-200" />
-
-          <div className="mt-8 grid gap-12 lg:grid-cols-2">
-            <div className="h-112.5 animate-pulse rounded-2xl bg-slate-200" />
-
-            <div className="space-y-6">
-              <div className="h-10 w-3/4 animate-pulse rounded bg-slate-200" />
-              <div className="h-24 w-full animate-pulse rounded bg-slate-200" />
-              <div className="h-16 w-1/2 animate-pulse rounded bg-slate-200" />
-            </div>
-          </div>
-        </div>
-      </main>
-    );
+    return <IndividualServiceSkeleton />;
   }
 
   if (isError || !service) {

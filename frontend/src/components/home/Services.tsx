@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getServices } from "@/lib/api/Services";
+import { HomeServicesSkeleton } from "../skeletons/HomeServicesSkeleton";
 
 export default function Services() {
   const {
@@ -17,7 +18,7 @@ export default function Services() {
   });
 
   if (isLoading) {
-    return <p>Loading services...</p>;
+    return <HomeServicesSkeleton />;
   }
 
   if (error) {

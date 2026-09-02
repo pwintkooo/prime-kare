@@ -1,4 +1,6 @@
+import axios from "axios";
 import { apiClient } from "./client";
+import { ApiError } from "./apiError";
 
 export interface Vehicle {
   id: number;
@@ -34,7 +36,24 @@ export async function getVehicle(id: number): Promise<Vehicle> {
 export async function createVehicle(
   request: CreateVehicleRequest,
 ): Promise<Vehicle> {
-  const response = await apiClient.post<Vehicle>("/api/vehicles", request);
+  try {
+    const response = await apiClient.post<Vehicle>("/api/vehicles", request);
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 409) {
+        throw new ApiError(
+          "A vehicle with this plate number already exists.",
+          409,
+        );
+      }
+
+      if (error.response?.status === 400) {
+        throw new ApiError("Please check the vehicle information.", 400);
+      }
+    }
+
+    throw error;
+  }
 }

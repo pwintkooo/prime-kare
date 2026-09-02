@@ -2,7 +2,7 @@ using PrimeKare.Api.Data;
 using PrimeKare.Api.Models;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace PrimeKare.Api.Tests.Integration;
+namespace PrimeKare.Api.Tests.Helper;
 
 public static class TestDataHelper
 {

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Net.Http.Headers;
 
-namespace PrimeKare.Api.Tests.Integration;
+namespace PrimeKare.Api.Tests.Helper;
 
 public static class TestAuthHelper
 {

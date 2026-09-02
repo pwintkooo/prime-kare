@@ -4,6 +4,7 @@ using PrimeKare.Api.DTOs.Vehicles;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PrimeKare.Api.Models;
+using PrimeKare.Api.Tests.Helper;
 
 namespace PrimeKare.Api.Tests.Integration;
 
@@ -362,8 +363,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "SLA1234A",
             Make = "Toyota",
             Model = "Camry",
-            Year = 2024,
-            CustomerId = 1
+            Year = 2024
         };
 
         var response = await _client.PostAsJsonAsync(
@@ -402,8 +402,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "SLA1234A",
             Make = "Toyota",
             Model = "Camry",
-            Year = 2024,
-            CustomerId = 1
+            Year = 2024
         };
 
         var response = await _client.PostAsJsonAsync(
@@ -433,8 +432,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "SLA1234A",
             Make = "Toyota",
             Model = "Camry",
-            Year = 2024,
-            CustomerId = 1
+            Year = 2024
         };
 
         //Act1
@@ -491,8 +489,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "SLA1234A",
             Make = "Toyota",
             Model = "Camry",
-            Year = 2024,
-            CustomerId = 1
+            Year = 2024
         };
 
         var createResponse = await _client.PostAsJsonAsync(
@@ -516,8 +513,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "SLB5678B",
             Make = "Honda",
             Model = "Civic",
-            Year = 2025,
-            CustomerId = 1
+            Year = 2025
         };
 
         var updateResponse = await _client.PutAsJsonAsync(
@@ -564,8 +560,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "",
             Make = "Toyota",
             Model = "Camry",
-            Year = 2024,
-            CustomerId = 1
+            Year = 2024
         };
 
         var createResponse = await _client.PostAsJsonAsync(
@@ -599,8 +594,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "SLA1234A",
             Make = "Toyota",
             Model = "Camry",
-            Year = 2024,
-            CustomerId = 1
+            Year = 2024
         };
 
         var createResponse = await _client.PostAsJsonAsync(
@@ -624,8 +618,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "SLB5678B",
             Make = "",
             Model = "Civic",
-            Year = 2025,
-            CustomerId = 1
+            Year = 2025
         };
 
         var updateResponse = await _client.PutAsJsonAsync(
@@ -654,8 +647,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "SLB5678B",
             Make = "Honda",
             Model = "Civic",
-            Year = 2025,
-            CustomerId = 1
+            Year = 2025
         };
 
         var updateResponse = await _client.PutAsJsonAsync(
@@ -685,8 +677,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "SLA1234A",
             Make = "Toyota",
             Model = "Camry",
-            Year = 2024,
-            CustomerId = 1
+            Year = 2024
         };
 
         var createResponse = await _client.PostAsJsonAsync(
@@ -732,8 +723,7 @@ public class VehiclesApiTests : IClassFixture<CustomWebApplicationFactory>
             PlateNumber = "SLA1234A",
             Make = "Toyota",
             Model = "Camry",
-            Year = 2024,
-            CustomerId = 1
+            Year = 2024
         };
 
         var createResponse = await _client.PostAsJsonAsync(
