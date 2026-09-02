@@ -12,7 +12,8 @@ public interface IVehicleService
         int? customerId = null);
 
     Task<VehicleDto?> CreateVehicleAsync(
-        CreateVehicleDto dto);
+        CreateVehicleDto dto,
+        int customerId);
 
     Task<bool> UpdateVehicleAsync(
         int id,
@@ -24,4 +25,7 @@ public interface IVehicleService
         int id,
         int? customerId = null,
         bool isAdmin = false);
+
+    Task<VehicleDto?> AdminCreateVehicleAsync(
+        AdminCreateVehicleDto dto);
 }

@@ -1,5 +1,3 @@
-import { apiClient } from "./client";
-
 export interface SignUpRequest {
   name: string;
   email: string;

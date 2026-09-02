@@ -74,10 +74,11 @@ public class VehicleService : IVehicleService
     }
 
     public async Task<VehicleDto?> CreateVehicleAsync(
-        CreateVehicleDto dto)
+        CreateVehicleDto dto,
+        int customerId)
     {
         var customerExists = await _context.Customers
-            .AnyAsync(c => c.Id == dto.CustomerId);
+            .AnyAsync(c => c.Id == customerId);
 
         if (!customerExists)
         {
@@ -90,7 +91,7 @@ public class VehicleService : IVehicleService
             Make = dto.Make,
             Model = dto.Model,
             Year = dto.Year,
-            CustomerId = dto.CustomerId,
+            CustomerId = customerId,
             Status = "active",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -138,7 +139,7 @@ public class VehicleService : IVehicleService
         }
 
         var customerExists = await _context.Customers
-            .AnyAsync(c => c.Id == dto.CustomerId);
+            .AnyAsync(c => c.Id == customerId);
 
         if (!customerExists)
         {
@@ -149,7 +150,6 @@ public class VehicleService : IVehicleService
         vehicle.Make = dto.Make;
         vehicle.Model = dto.Model;
         vehicle.Year = dto.Year;
-        vehicle.CustomerId = dto.CustomerId;
         vehicle.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -189,5 +189,44 @@ public class VehicleService : IVehicleService
         await _context.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<VehicleDto?> AdminCreateVehicleAsync(
+        AdminCreateVehicleDto dto)
+    {
+        var customerExists = await _context.Customers
+            .AnyAsync(c => c.Id == dto.CustomerId);
+
+        if (!customerExists)
+        {
+            return null;
+        }
+
+        var vehicle = new Vehicle
+        {
+            PlateNumber = dto.PlateNumber,
+            Make = dto.Make,
+            Model = dto.Model,
+            Year = dto.Year,
+            CustomerId = dto.CustomerId,
+            Status = "active",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Vehicles.Add(vehicle);
+
+        await _context.SaveChangesAsync();
+
+        return new VehicleDto
+        {
+            Id = vehicle.Id,
+            PlateNumber = vehicle.PlateNumber,
+            Make = vehicle.Make,
+            Model = vehicle.Model,
+            Year = vehicle.Year,
+            Status = vehicle.Status,
+            CustomerId = vehicle.CustomerId
+        };
     }
 }

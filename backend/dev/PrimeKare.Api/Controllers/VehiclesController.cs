@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using PrimeKare.Api.DTOs.Vehicles;
 using PrimeKare.Api.Services;
+using System.Security.Claims;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -64,13 +65,22 @@ public class VehiclesController : ControllerBase
         return vehicle;
     }
 
-    [Authorize(Roles = "Admin,Receptionist,Customer")]
+    [Authorize(Roles = "Customer")]
     [HttpPost]
     public async Task<ActionResult<VehicleDto>> CreateVehicle(
     CreateVehicleDto dto)
     {
+        var customerId = _currentUser.CustomerId;
+
+        if (customerId == null)
+        {
+            return Unauthorized();
+        }
+
         var vehicle = await _vehicleService
-            .CreateVehicleAsync(dto);
+            .CreateVehicleAsync(
+                dto,
+                customerId.Value);
 
         if (vehicle == null)
         {
@@ -148,13 +158,22 @@ public class VehiclesController : ControllerBase
         return NoContent();
     }
 
-    // [Authorize(Roles = "Admin")]
-    // [HttpGet("admin-test")]
-    // public IActionResult AdminTest()
-    // {
-    //     return Ok(new
-    //     {
-    //         message = "You are an Admin."
-    //     });
-    // }
+    [Authorize(Roles = "Admin,Receptionist")]
+    [HttpPost("admin")]
+    public async Task<ActionResult<VehicleDto>> AdminCreateVehicle(
+    AdminCreateVehicleDto dto)
+    {
+        var vehicle = await _vehicleService
+            .AdminCreateVehicleAsync(dto);
+
+        if (vehicle == null)
+        {
+            return BadRequest("Customer does not exist!");
+        }
+
+        return CreatedAtAction(
+            nameof(GetVehicle),
+            new { id = vehicle.Id },
+            vehicle);
+    }
 }

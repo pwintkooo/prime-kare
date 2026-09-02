@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PrimeKare.Api.DTOs.Vehicles;
 
-public class UpdateVehicleDto
+public class AdminCreateVehicleDto
 {
     [Required]
     [MaxLength(20)]
@@ -18,4 +18,7 @@ public class UpdateVehicleDto
 
     [Range(1900, 2100)]
     public int Year { get; set; }
+
+    [Required]
+    public int CustomerId { get; set; }
 }
