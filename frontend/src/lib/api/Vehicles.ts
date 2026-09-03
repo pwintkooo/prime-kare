@@ -21,6 +21,13 @@ export interface CreateVehicleRequest {
   year: number;
 }
 
+export interface UpdateVehicleRequest {
+  plateNumber: string;
+  make: string;
+  model: string;
+  year: number;
+}
+
 export async function getVehicles(): Promise<Vehicle[]> {
   const response = await apiClient.get<Vehicle[]>("/api/vehicles");
 
@@ -56,4 +63,32 @@ export async function createVehicle(
 
     throw error;
   }
+}
+
+export async function updateVehicle(
+  id: number,
+  request: UpdateVehicleRequest,
+): Promise<void> {
+  try {
+    await apiClient.put(`/api/vehicles/${id}`, request);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 409) {
+        throw new ApiError(
+          "A vehicle with this plate number already exists.",
+          409,
+        );
+      }
+
+      if (error.response?.status === 400) {
+        throw new ApiError("Please check the vehicle information.", 400);
+      }
+    }
+
+    throw error;
+  }
+}
+
+export async function deleteVehicle(id: number): Promise<void> {
+  await apiClient.delete<Vehicle>(`/api/vehicles/${id}`);
 }

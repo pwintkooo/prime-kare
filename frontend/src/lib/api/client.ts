@@ -33,6 +33,13 @@ apiClient.interceptors.response.use(
 
     switch (status) {
       case 401:
+        useAuthStore.getState().logout();
+        if (
+          typeof window !== "undefined" &&
+          window.location.pathname !== "/sign-in"
+        ) {
+          window.location.href = "/sign-in";
+        }
         return Promise.reject(new ApiError("Please log in again.", 401));
 
       case 403:
@@ -45,10 +52,7 @@ apiClient.interceptors.response.use(
 
       case 404:
         return Promise.reject(
-          new ApiError(
-            "The requested Resource was not found.",
-            404,
-          ),
+          new ApiError("The requested Resource was not found.", 404),
         );
 
       case 500:
