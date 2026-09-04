@@ -33,14 +33,9 @@ apiClient.interceptors.response.use(
 
     switch (status) {
       case 401:
-        useAuthStore.getState().logout();
-        if (
-          typeof window !== "undefined" &&
-          window.location.pathname !== "/sign-in"
-        ) {
-          window.location.href = "/sign-in";
-        }
-        return Promise.reject(new ApiError("Please log in again.", 401));
+        useAuthStore.getState().showSessionExpired();
+
+        return Promise.reject(new ApiError("Your session has expired.", 401));
 
       case 403:
         return Promise.reject(

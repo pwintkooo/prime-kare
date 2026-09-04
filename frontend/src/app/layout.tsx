@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import QueryProvider from "@/providers/QueryProvider";
 import AuthHydration from "@/providers/AuthHydration";
+import SessionExpiredDialog from "@/components/auth/SessionExpiredDialog";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,6 +36,8 @@ export default function RootLayout({
           <QueryProvider>
             <AuthHydration />
             {children}
+
+            <SessionExpiredDialog />
           </QueryProvider>
         </TooltipProvider>
       </body>

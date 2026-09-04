@@ -25,15 +25,19 @@ export default function UserMenu() {
 
   if (!user) return null;
 
-  const firstName =
-    user.name.split(" ")[0].charAt(0).toUpperCase() +
-    user.name.split(" ")[0].slice(1);
+  const initials = user.name
+    .trim()
+    .split(/\s+/)
+    .map((name) => name.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition hover:bg-slate-100">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 font-semibold text-white">
-          {firstName}
+          {initials}
         </div>
       </DropdownMenuTrigger>
 
