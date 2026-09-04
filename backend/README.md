@@ -47,3 +47,5 @@ dotnet add package Azure.Identity
 //install FluentValidation
 dotnet add package FluentValidation
 dotnet add package FluentValidation.DependencyInjectionExtensions
+
+dotnet add package Microsoft.AspNetCore.Authentication.Google

@@ -5,7 +5,7 @@ public class User
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string PasswordHash { get; set; } = string.Empty;
+    public string? PasswordHash { get; set; } = string.Empty;
     public string Role { get; set; } = "Customer";
     public string Status { get; set; } = "active";
     public bool IsDeleted { get; set; } = false;
@@ -13,4 +13,5 @@ public class User
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public int? CustomerId { get; set; }
     public Customer? Customer { get; set; }
+    public ICollection<ExternalLogin> ExternalLogins { get; set; } = new List<ExternalLogin>();
 }

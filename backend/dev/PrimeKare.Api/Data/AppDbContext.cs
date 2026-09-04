@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Vehicle> Vehicles { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Booking> Bookings { get; set; }
+    public DbSet<ExternalLogin> ExternalLogins { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,6 +49,21 @@ public class AppDbContext : DbContext
             .WithMany(s => s.Bookings)
             .HasForeignKey(b => b.ServiceId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ExternalLogin>()
+        .HasOne(e => e.User)
+        .WithMany(u => u.ExternalLogins)
+        .HasForeignKey(e => e.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+        //prevent dup Google account
+        modelBuilder.Entity<ExternalLogin>()
+        .HasIndex(e => new
+        {
+            e.Provider,
+            e.ProviderUserId
+        })
+        .IsUnique();
 
         modelBuilder.Entity<Service>().HasData(
             new Service
