@@ -8,29 +8,84 @@ namespace PrimeKare.Api.Services;
 public class BookingService : IBookingService
 {
     private readonly AppDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public BookingService(AppDbContext context)
+    public BookingService(
+        AppDbContext context,
+        ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
-    public async Task<IEnumerable<BookingDto>> GetBookingsAsync(
-        int? customerId = null,
-        bool isAdmin = false)
+    private async Task<bool> HasBookingConflictAsync(
+    DateOnly bookingDate,
+    TimeSpan bookingTime,
+    int serviceId,
+    int? excludeBookingId = null)
+    {
+        var service = await _context.Services
+            .FirstOrDefaultAsync(s =>
+                s.Id == serviceId &&
+                s.IsActive &&
+                !s.IsDeleted);
+
+        if (service == null)
+        {
+            throw new KeyNotFoundException(
+                "Service not found.");
+        }
+
+        var newBookingEnd = bookingTime.Add(
+            TimeSpan.FromMinutes(
+                service.EstimatedMinutes));
+
+        var bookings = await _context.Bookings
+            .Where(b =>
+                b.BookingDate == bookingDate &&
+                !b.IsDeleted &&
+                (
+                    b.Status == "pending" ||
+                    b.Status == "confirmed" ||
+                    b.Status == "in_progress"
+                ) &&
+                (excludeBookingId == null ||
+                 b.Id != excludeBookingId))
+            .Select(b => new
+            {
+                b.Id,
+                b.BookingTime,
+                EstimatedMinutes = b.Service.EstimatedMinutes
+            })
+            .ToListAsync();
+
+        return bookings.Any(b =>
+        {
+            var existingBookingEnd = b.BookingTime.Add(
+                TimeSpan.FromMinutes(
+                    b.EstimatedMinutes));
+
+            return bookingTime < existingBookingEnd &&
+                   newBookingEnd > b.BookingTime;
+        });
+    }
+
+    public async Task<IEnumerable<BookingDto>> GetBookingsAsync()
     {
         var query = _context.Bookings
-            .AsQueryable();
+            .Where(b => !b.IsDeleted);
 
-        if (isAdmin)
+        if (_currentUser.IsCustomer)
         {
-            query = query.Where(b => !b.IsDeleted);
-        }
-        else if (customerId.HasValue)
-        {
+            var customerId = _currentUser.CustomerId;
+
+            if (!customerId.HasValue)
+            {
+                return [];
+            }
+
             query = query.Where(b =>
-                b.CustomerId == customerId.Value &&
-                b.Status != "cancelled" &&
-                !b.IsDeleted);
+                b.CustomerId == customerId.Value);
         }
 
         return await query
@@ -62,28 +117,27 @@ public class BookingService : IBookingService
             .ToListAsync();
     }
 
-    public async Task<BookingDto?> GetBookingAsync(
-        int id,
-        int? customerId = null,
-        bool isAdmin = false)
+    public async Task<BookingDto?> GetBookingAsync(int id)
     {
         var query = _context.Bookings
-            .Where(b => b.Id == id);
-
-        if (isAdmin)
-        {
-            query = query.Where(b => !b.IsDeleted);
-        }
-        else if (customerId.HasValue)
-        {
-            query = query.Where(b =>
-                b.CustomerId == customerId.Value &&
-                b.Status != "cancelled" &&
+            .Where(b =>
+                b.Id == id &&
                 !b.IsDeleted);
+
+        if (_currentUser.IsCustomer)
+        {
+            var customerId = _currentUser.CustomerId;
+
+            if (!customerId.HasValue)
+            {
+                return null;
+            }
+
+            query = query.Where(b =>
+                b.CustomerId == customerId.Value);
         }
 
         return await query
-            .Where(b => b.Id == id)
             .Select(b => new BookingDto
             {
                 Id = b.Id,
@@ -113,20 +167,27 @@ public class BookingService : IBookingService
     }
 
     public async Task<BookingDto> CreateBookingAsync(
-        CreateBookingDto dto)
+    CreateBookingDto dto)
     {
-        var customerExists = await _context.Customers
-            .AnyAsync(c => c.Id == dto.CustomerId);
-
-        if (!customerExists)
+        if (!_currentUser.IsCustomer)
         {
-            throw new KeyNotFoundException(
-                "Customer not found.");
+            throw new UnauthorizedAccessException(
+                "Only customers can create bookings.");
+        }
+
+        var customerId = _currentUser.CustomerId;
+
+        if (!customerId.HasValue)
+        {
+            throw new UnauthorizedAccessException(
+                "Customer account is not associated with a customer.");
         }
 
         var vehicle = await _context.Vehicles
             .FirstOrDefaultAsync(v =>
-                v.Id == dto.VehicleId);
+                v.Id == dto.VehicleId &&
+                v.Status == "active" &&
+                !v.IsDeleted);
 
         if (vehicle == null)
         {
@@ -134,24 +195,32 @@ public class BookingService : IBookingService
                 "Vehicle not found.");
         }
 
-        if (vehicle.CustomerId != dto.CustomerId)
-        {
-            throw new InvalidOperationException(
-                "Vehicle does not belong to the customer.");
-        }
+        var service = await _context.Services
+            .FirstOrDefaultAsync(s =>
+                s.Id == dto.ServiceId &&
+                s.IsActive &&
+                !s.IsDeleted);
 
-        var serviceExists = await _context.Services
-            .AnyAsync(s => s.Id == dto.ServiceId);
-
-        if (!serviceExists)
+        if (service == null)
         {
             throw new KeyNotFoundException(
                 "Service not found.");
         }
 
+        var hasConflict = await HasBookingConflictAsync(
+            dto.BookingDate,
+            dto.BookingTime,
+            dto.ServiceId);
+
+        if (hasConflict)
+        {
+            throw new InvalidOperationException(
+                "The selected time is not available.");
+        }
+
         var booking = new Booking
         {
-            CustomerId = dto.CustomerId,
+            CustomerId = customerId.Value,
             VehicleId = dto.VehicleId,
             ServiceId = dto.ServiceId,
 
@@ -173,28 +242,85 @@ public class BookingService : IBookingService
     }
 
     public async Task<bool> UpdateBookingAsync(
-        int id,
-        UpdateBookingDto dto,
-        int? customerId = null,
-        bool isAdmin = false)
+    int id,
+    UpdateBookingDto dto)
     {
         var booking = await _context.Bookings
-            .FirstOrDefaultAsync(b => b.Id == id);
+            .FirstOrDefaultAsync(b =>
+                b.Id == id &&
+                !b.IsDeleted);
 
         if (booking == null)
         {
-            throw new KeyNotFoundException("Booking not found.");
+            throw new KeyNotFoundException(
+                "Booking not found.");
         }
 
-        if (customerId.HasValue &&
-            booking.CustomerId != customerId.Value)
+        if (!_currentUser.IsCustomer &&
+        !_currentUser.IsReceptionist &&
+        !_currentUser.IsAdmin)
         {
-            return false;
+            throw new UnauthorizedAccessException(
+                "You are not allowed to update this booking.");
         }
 
-        if (booking.Status != "pending" && !isAdmin)
+        // Customer can only update their own booking
+        if (_currentUser.IsCustomer)
         {
-            return false;
+            var customerId = _currentUser.CustomerId;
+
+            if (!customerId.HasValue ||
+                booking.CustomerId != customerId.Value)
+            {
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to modify this booking.");
+            }
+
+            // Customer can only modify pending bookings
+            if (booking.Status != "pending")
+            {
+                throw new InvalidOperationException(
+                    "Only pending bookings can be modified.");
+            }
+        }
+
+        // Validate vehicle
+        var vehicle = await _context.Vehicles
+            .FirstOrDefaultAsync(v =>
+                v.Id == dto.VehicleId &&
+                v.Status == "active" &&
+                !v.IsDeleted);
+
+        if (vehicle == null)
+        {
+            throw new KeyNotFoundException(
+                "Vehicle not found.");
+        }
+
+        // Validate service
+        var serviceExists = await _context.Services
+            .AnyAsync(s =>
+                s.Id == dto.ServiceId &&
+                s.IsActive &&
+                !s.IsDeleted);
+
+        if (!serviceExists)
+        {
+            throw new KeyNotFoundException(
+                "Service not found.");
+        }
+
+        // Check appointment availability
+        var hasConflict = await HasBookingConflictAsync(
+            dto.BookingDate,
+            dto.BookingTime,
+            dto.ServiceId,
+            id);
+
+        if (hasConflict)
+        {
+            throw new InvalidOperationException(
+                "The selected time is not available.");
         }
 
         booking.VehicleId = dto.VehicleId;
@@ -202,7 +328,6 @@ public class BookingService : IBookingService
         booking.BookingDate = dto.BookingDate;
         booking.BookingTime = dto.BookingTime;
         booking.Notes = dto.Notes;
-        booking.Status = dto.Status;
         booking.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -210,39 +335,108 @@ public class BookingService : IBookingService
         return true;
     }
 
-    public async Task<bool> DeleteBookingAsync(
-        int id,
-        int? customerId = null,
-        bool isAdmin = false)
+    public async Task<bool> UpdateBookingStatusAsync(
+    int id,
+    UpdateBookingStatusDto dto)
     {
         var booking = await _context.Bookings
-            .FirstOrDefaultAsync(b => b.Id == id);
+            .FirstOrDefaultAsync(b =>
+                b.Id == id &&
+                !b.IsDeleted);
 
         if (booking == null)
         {
-            return false;
+            throw new KeyNotFoundException(
+                "Booking not found.");
         }
 
-        if (customerId.HasValue &&
-            booking.CustomerId != customerId.Value)
+        var newStatus = dto.Status.Trim().ToLower();
+
+        if (string.IsNullOrWhiteSpace(newStatus))
         {
             return false;
         }
 
-        if (!isAdmin && booking.Status != "pending")
+        var currentStatus = booking.Status;
+
+        // Customer
+        if (_currentUser.IsCustomer)
         {
-            return false;
+            if (booking.CustomerId != _currentUser.CustomerId)
+            {
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to modify this booking.");
+            }
+
+            if (currentStatus != "pending" &&
+                currentStatus != "confirmed")
+            {
+                return false;
+            }
+
+            if (newStatus != "cancelled")
+            {
+                return false;
+            }
         }
 
-        if (isAdmin)
+        // Receptionist
+        else if (_currentUser.IsReceptionist)
         {
-            booking.IsDeleted = true;
+            var allowed = currentStatus switch
+            {
+                "pending" =>
+                    newStatus == "confirmed" ||
+                    newStatus == "cancelled",
+
+                "confirmed" =>
+                    newStatus == "cancelled",
+
+                _ => false
+            };
+
+            if (!allowed)
+            {
+                throw new InvalidOperationException(
+                    "Invalid booking status transition.");
+            }
         }
+
+        // Mechanic
+        else if (_currentUser.IsMechanic)
+        {
+            if (currentStatus != "in_progress" ||
+                newStatus != "completed")
+            {
+                return false;
+            }
+        }
+
+        // Admin
+        else if (_currentUser.IsAdmin)
+        {
+            var allowedStatuses = new[]
+            {
+            "pending",
+            "confirmed",
+            "in_progress",
+            "completed",
+            "cancelled",
+            "no_show"
+        };
+
+            if (!allowedStatuses.Contains(newStatus))
+            {
+                return false;
+            }
+        }
+
         else
         {
-            booking.Status = "cancelled";
+            return false;
         }
 
+        booking.Status = newStatus;
         booking.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

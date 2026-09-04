@@ -2,8 +2,6 @@ namespace PrimeKare.Api.DTOs.Bookings;
 
 public class CreateBookingDto
 {
-    public int CustomerId { get; set; }
-
     public int VehicleId { get; set; }
 
     public int ServiceId { get; set; }

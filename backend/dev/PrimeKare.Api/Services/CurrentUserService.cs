@@ -8,8 +8,7 @@ public class CurrentUserService : ICurrentUserService
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public CurrentUserService(
-        IHttpContextAccessor httpContextAccessor,
-        AppDbContext context)
+        IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
     }
@@ -41,6 +40,18 @@ public class CurrentUserService : ICurrentUserService
             .HttpContext?
             .User
             .IsInRole("Admin") == true;
+
+    public bool IsReceptionist =>
+        _httpContextAccessor
+            .HttpContext?
+            .User
+            .IsInRole("Receptionist") == true;
+
+    public bool IsMechanic =>
+        _httpContextAccessor
+            .HttpContext?
+            .User
+            .IsInRole("Mechanic") == true;
 
     public int? CustomerId
     {

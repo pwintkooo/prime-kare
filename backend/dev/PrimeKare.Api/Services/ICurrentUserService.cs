@@ -9,4 +9,8 @@ public interface ICurrentUserService
     bool IsCustomer { get; }
 
     bool IsAdmin { get; }
+
+    bool IsReceptionist { get; }
+
+    bool IsMechanic { get; }
 }

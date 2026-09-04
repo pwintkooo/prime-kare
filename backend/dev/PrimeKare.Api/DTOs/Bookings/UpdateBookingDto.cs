@@ -11,8 +11,5 @@ public class UpdateBookingDto
     public TimeSpan BookingTime { get; set; }
 
     public string? Notes { get; set; }
-
-    public string Status { get; set; } = string.Empty;
     
-    public int CustomerId { get; set; }
 }

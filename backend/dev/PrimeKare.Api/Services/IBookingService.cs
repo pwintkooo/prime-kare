@@ -4,25 +4,18 @@ namespace PrimeKare.Api.Services;
 
 public interface IBookingService
 {
-    Task<IEnumerable<BookingDto>> GetBookingsAsync(
-        int? customerId = null,
-        bool isAdmin = false);
+    Task<IEnumerable<BookingDto>> GetBookingsAsync();
 
-    Task<BookingDto?> GetBookingAsync(
-        int id,
-        int? customerId = null,
-        bool isAdmin = false);
+    Task<BookingDto?> GetBookingAsync(int id);
 
     Task<BookingDto> CreateBookingAsync(
         CreateBookingDto dto);
 
     Task<bool> UpdateBookingAsync(
         int id,
-        UpdateBookingDto dto,
-        int? customerId = null,
-        bool isAdmin = false);
+        UpdateBookingDto dto);
 
-    Task<bool> DeleteBookingAsync(int id,
-        int? customerId = null,
-        bool isAdmin = false);
+    Task<bool> UpdateBookingStatusAsync(
+        int id,
+        UpdateBookingStatusDto dto);
 }
