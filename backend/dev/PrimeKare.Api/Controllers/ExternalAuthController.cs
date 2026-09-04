@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using PrimeKare.Api.Services;
+using PrimeKare.Api.DTOs.Auth;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -47,7 +48,7 @@ public class ExternalAuthController : ControllerBase
 
         try
         {
-            var code =
+            var authResult =
                 await _externalAuthService.HandleGoogleLoginAsync(
                     result.Principal);
 
@@ -61,7 +62,8 @@ public class ExternalAuthController : ControllerBase
 
             return Redirect(
                 $"{frontendUrl}/auth/google/callback" +
-                $"?code={Uri.EscapeDataString(code)}"
+                $"?code={Uri.EscapeDataString(authResult.Code)}" +
+                $"&type={Uri.EscapeDataString(authResult.Type)}"
             );
         }
         catch (InvalidOperationException ex)
@@ -89,6 +91,31 @@ public class ExternalAuthController : ControllerBase
         {
             return Unauthorized(
                 "Invalid or expired authorization code.");
+        }
+
+        return Ok(response);
+    }
+
+    [HttpPost("link/verify")]
+    public async Task<IActionResult> VerifyAndLinkGoogle(
+    [FromBody] VerifyExternalLinkDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Code) ||
+            string.IsNullOrWhiteSpace(request.Password))
+        {
+            return BadRequest(
+                "Authorization code and password are required.");
+        }
+
+        var response =
+            await _externalAuthService.VerifyAndLinkGoogleAsync(
+                request.Code,
+                request.Password);
+
+        if (response == null)
+        {
+            return Unauthorized(
+                "Invalid authorization code or password.");
         }
 
         return Ok(response);

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Auth;
 using PrimeKare.Api.Models;
@@ -11,13 +12,16 @@ public class ExternalAuthService : IExternalAuthService
 {
     private readonly AppDbContext _context;
     private readonly IAuthService _authService;
+    private readonly IPasswordHasher<User> _passwordHasher;
 
     public ExternalAuthService(
         AppDbContext context,
-        IAuthService authService)
+        IAuthService authService,
+        IPasswordHasher<User> passwordHasher)
     {
         _context = context;
         _authService = authService;
+        _passwordHasher = passwordHasher;
     }
 
     private static string GenerateAuthCode()
@@ -27,8 +31,8 @@ public class ExternalAuthService : IExternalAuthService
         );
     }
 
-    public async Task<string> HandleGoogleLoginAsync(
-        ClaimsPrincipal principal)
+    public async Task<ExternalAuthResult> HandleGoogleLoginAsync(
+    ClaimsPrincipal principal)
     {
         var googleUserId = principal.FindFirstValue(
             ClaimTypes.NameIdentifier);
@@ -47,25 +51,52 @@ public class ExternalAuthService : IExternalAuthService
                 "Google account information is incomplete.");
         }
 
+        // 1. Check whether this Google account is already linked
         var externalLogin = await _context.ExternalLogins
             .Include(e => e.User)
             .FirstOrDefaultAsync(e =>
                 e.Provider == "Google" &&
                 e.ProviderUserId == googleUserId);
 
-        // Google account is not linked to PrimeKare yet
-        if (externalLogin == null)
+        if (externalLogin != null)
         {
-            var existingUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == email);
+            var user = externalLogin.User;
 
-            if (existingUser != null)
+            if (user.Status != "active")
             {
-                throw new InvalidOperationException(
-                    "An account with this email already exists. " +
-                    "Please sign in using your existing login method.");
+                throw new UnauthorizedAccessException(
+                    "User account is not active.");
             }
 
+            var code = GenerateAuthCode();
+
+            var authCode = new ExternalAuthCode
+            {
+                Code = code,
+                UserId = user.Id,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(2),
+                IsUsed = false
+            };
+
+            _context.ExternalAuthCodes.Add(authCode);
+
+            await _context.SaveChangesAsync();
+
+            return new ExternalAuthResult
+            {
+                Code = code,
+                Type = "login"
+            };
+        }
+
+        // 2. Google isn't linked.
+        // Check whether a PrimeKare account already uses this email.
+        var existingUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        // 3. No existing account → create a new PrimeKare account
+        if (existingUser == null)
+        {
             var customer = new Customer
             {
                 Name = name,
@@ -113,33 +144,38 @@ public class ExternalAuthService : IExternalAuthService
 
             await _context.SaveChangesAsync();
 
-            return code;
+            return new ExternalAuthResult
+            {
+                Code = code,
+                Type = "login"
+            };
+
         }
 
-        // Google account is already linked to PrimeKare
-        var user = externalLogin.User;
+        // 4. Existing PrimeKare account but Google isn't linked.
+        // Create a temporary request to link Google after
+        // the user proves ownership of the existing account.
+        var linkCode = GenerateAuthCode();
 
-        if (user.Status != "active")
+        var linkRequest = new ExternalLinkRequest
         {
-            throw new UnauthorizedAccessException(
-                "User account is not active.");
-        }
-
-        var existingCode = GenerateAuthCode();
-
-        var existingAuthCode = new ExternalAuthCode
-        {
-            Code = existingCode,
-            UserId = user.Id,
+            Code = linkCode,
+            UserId = existingUser.Id,
+            Provider = "Google",
+            ProviderUserId = googleUserId,
             ExpiresAt = DateTime.UtcNow.AddMinutes(2),
             IsUsed = false
         };
 
-        _context.ExternalAuthCodes.Add(existingAuthCode);
+        _context.ExternalLinkRequests.Add(linkRequest);
 
         await _context.SaveChangesAsync();
 
-        return existingCode;
+        return new ExternalAuthResult
+        {
+            Code = linkCode,
+            Type = "link"
+        };
     }
 
     public async Task<SignInResponseDto?> ExchangeCodeAsync(
@@ -165,6 +201,71 @@ public class ExternalAuthService : IExternalAuthService
             return null;
 
         authCode.IsUsed = true;
+
+        await _context.SaveChangesAsync();
+
+        return _authService.CreateSignInResponse(user);
+    }
+
+    public async Task<SignInResponseDto?> VerifyAndLinkGoogleAsync(
+    string code,
+    string password)
+    {
+        var linkRequest = await _context.ExternalLinkRequests
+            .Include(r => r.User)
+            .FirstOrDefaultAsync(r =>
+                r.Code == code);
+
+        if (linkRequest == null)
+            return null;
+
+        if (linkRequest.IsUsed)
+            return null;
+
+        if (linkRequest.ExpiresAt <= DateTime.UtcNow)
+            return null;
+
+        var user = linkRequest.User;
+
+        if (user.Status != "active")
+            return null;
+
+        if (string.IsNullOrWhiteSpace(user.PasswordHash))
+            return null;
+
+        // Verify the password of the existing PrimeKare account
+        var passwordResult = _passwordHasher.VerifyHashedPassword(
+            user,
+            user.PasswordHash,
+            password
+        );
+
+        if (passwordResult == PasswordVerificationResult.Failed)
+            return null;
+
+        // Make sure this Google account hasn't been linked
+        // to another PrimeKare account while this request was pending.
+        var existingExternalLogin =
+            await _context.ExternalLogins
+                .FirstOrDefaultAsync(e =>
+                    e.Provider == linkRequest.Provider &&
+                    e.ProviderUserId == linkRequest.ProviderUserId);
+
+        if (existingExternalLogin != null)
+            return null;
+
+        // Link Google to the existing PrimeKare account
+        var externalLogin = new ExternalLogin
+        {
+            UserId = user.Id,
+            Provider = linkRequest.Provider,
+            ProviderUserId = linkRequest.ProviderUserId
+        };
+
+        _context.ExternalLogins.Add(externalLogin);
+
+        // Prevent the same link request from being used again
+        linkRequest.IsUsed = true;
 
         await _context.SaveChangesAsync();
 

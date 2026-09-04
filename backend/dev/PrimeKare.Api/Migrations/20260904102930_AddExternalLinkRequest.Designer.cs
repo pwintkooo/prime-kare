@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PrimeKare.Api.Data;
@@ -11,9 +12,11 @@ using PrimeKare.Api.Data;
 namespace PrimeKare.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260904102930_AddExternalLinkRequest")]
+    partial class AddExternalLinkRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,45 +141,6 @@ namespace PrimeKare.Api.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ExternalAuthCodes");
-                });
-
-            modelBuilder.Entity("PrimeKare.Api.Models.ExternalLinkRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Provider")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProviderUserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ExternalLinkRequests");
                 });
 
             modelBuilder.Entity("PrimeKare.Api.Models.ExternalLogin", b =>
@@ -454,17 +418,6 @@ namespace PrimeKare.Api.Migrations
                 });
 
             modelBuilder.Entity("PrimeKare.Api.Models.ExternalAuthCode", b =>
-                {
-                    b.HasOne("PrimeKare.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("PrimeKare.Api.Models.ExternalLinkRequest", b =>
                 {
                     b.HasOne("PrimeKare.Api.Models.User", "User")
                         .WithMany()

@@ -5,9 +5,14 @@ namespace PrimeKare.Api.Services;
 
 public interface IExternalAuthService
 {
-    Task<string> HandleGoogleLoginAsync(
+    Task<ExternalAuthResult> HandleGoogleLoginAsync(
         ClaimsPrincipal principal);
 
     Task<SignInResponseDto?> ExchangeCodeAsync(
         string code);
+
+    Task<SignInResponseDto?> VerifyAndLinkGoogleAsync(
+        string code,
+        string password
+    );
 }

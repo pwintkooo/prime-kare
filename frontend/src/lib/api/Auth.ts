@@ -97,3 +97,18 @@ export async function exchangeExternalAuthCode(
 
   return response.data;
 }
+
+export async function verifyAndLinkGoogle(
+  code: string,
+  password: string,
+): Promise<ExternalAuthResponse> {
+  const response = await apiClient.post<ExternalAuthResponse>(
+    "/api/external-auth/link/verify",
+    {
+      code,
+      password,
+    },
+  );
+
+  return response.data;
+}

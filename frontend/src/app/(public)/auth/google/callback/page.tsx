@@ -12,35 +12,58 @@ export default function GoogleCallbackPage() {
   const login = useAuthStore((state) => state.login);
 
   const code = searchParams.get("code");
+  const type = searchParams.get("type");
 
   useEffect(() => {
-    if (!code) {
+    if (!code || !type) {
       return;
     }
 
-    const exchangeCode = async () => {
-      try {
-        const response = await exchangeExternalAuthCode(code);
+    if (type === "link") {
+      router.replace(`/auth/google/link?code=${encodeURIComponent(code)}`);
 
-        login(response.user, response.token);
+      return;
+    }
 
-        router.replace("/");
-      } catch {
-        router.replace("/login?error=google");
-      }
-    };
+    if (type === "login") {
+      const exchangeCode = async () => {
+        try {
+          const response = await exchangeExternalAuthCode(code);
 
-    exchangeCode();
-  }, [code, login, router]);
+          login(response.user, response.token);
 
-  if (!code) {
+          router.replace("/");
+        } catch {
+          router.replace("/login?error=google");
+        }
+      };
+
+      exchangeCode();
+    }
+  }, [code, type, login, router]);
+
+  if (!code || !type) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <h1 className="text-xl font-semibold">Sign-in failed</h1>
 
           <p className="mt-2 text-muted-foreground">
-            Google authentication code is missing.
+            Google authentication information is missing.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (type !== "login" && type !== "link") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold">Sign-in failed</h1>
+
+          <p className="mt-2 text-muted-foreground">
+            Invalid authentication request.
           </p>
         </div>
       </div>
@@ -49,7 +72,9 @@ export default function GoogleCallbackPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <p>Signing you in...</p>
+      <p>
+        {type === "link" ? "Preparing account linking..." : "Signing you in..."}
+      </p>
     </div>
   );
 }

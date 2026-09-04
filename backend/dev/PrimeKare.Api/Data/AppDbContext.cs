@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<ExternalLogin> ExternalLogins { get; set; }
     public DbSet<ExternalAuthCode> ExternalAuthCodes { get; set; }
+    public DbSet<ExternalLinkRequest> ExternalLinkRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,6 +74,16 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ExternalAuthCode>()
+            .HasIndex(e => e.Code)
+            .IsUnique();
+
+        modelBuilder.Entity<ExternalLinkRequest>()
+            .HasOne(e => e.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ExternalLinkRequest>()
             .HasIndex(e => e.Code)
             .IsUnique();
 
