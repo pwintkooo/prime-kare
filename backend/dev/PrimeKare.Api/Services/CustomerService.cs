@@ -22,7 +22,7 @@ public class CustomerService : ICustomerService
                 Id = customer.Id,
                 Name = customer.Name,
                 Email = customer.Email,
-                Phone = customer.Phone,
+                Phone = customer.Phone ?? "",
                 Status = customer.Status,
                 CreatedAt = customer.CreatedAt,
                 UpdatedAt = customer.UpdatedAt
@@ -45,7 +45,7 @@ public class CustomerService : ICustomerService
             Id = customer.Id,
             Name = customer.Name,
             Email = customer.Email,
-            Phone = customer.Phone,
+            Phone = customer.Phone ?? "",
             Status = customer.Status,
             CreatedAt = customer.CreatedAt,
             UpdatedAt = customer.UpdatedAt

@@ -4,12 +4,14 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { SignUp } from "@/lib/api/Auth";
 import PasswordRequirements from "@/components/auth/PasswordRequirements";
 import ConfirmPassword from "@/components/auth/ConfirmPassword";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signUpSchema, SignUpFormData } from "@/lib/validations/auth";
+import { SignInWithGoogle } from "@/lib/api/Auth";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -309,6 +311,41 @@ export default function SignUpPage() {
                 {isSubmitting ? "Creating account..." : "Create account"}
               </button>
             </form>
+
+            <div className="my-6 flex items-center gap-4">
+              <div className="h-px flex-1 bg-slate-800" />
+              <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                Or continue with
+              </span>
+              <div className="h-px flex-1 bg-slate-800" />
+            </div>
+
+            <button
+              type="button"
+              onClick={SignInWithGoogle}
+              className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:border-slate-600 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="#4285F4"
+                  d="M21.35 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.42Z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 21.5c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.5Z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M6.54 13.59a5.86 5.86 0 0 1 0-3.18V7.88H3.3a9.5 9.5 0 0 0 0 8.24l3.24-2.53Z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 6.38c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.84 3.48 14.63 2.5 12 2.5a9.74 9.74 0 0 0-8.7 5.38l3.24 2.53C7.31 8.1 9.46 6.38 12 6.38Z"
+                />
+              </svg>
+
+              <span>Continue with Google</span>
+            </button>
 
             {/* Sign In */}
             <p className="mt-8 text-center text-sm text-slate-400">

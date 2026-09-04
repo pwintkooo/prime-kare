@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<ExternalLogin> ExternalLogins { get; set; }
+    public DbSet<ExternalAuthCode> ExternalAuthCodes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,19 +52,29 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ExternalLogin>()
-        .HasOne(e => e.User)
-        .WithMany(u => u.ExternalLogins)
-        .HasForeignKey(e => e.UserId)
-        .OnDelete(DeleteBehavior.Cascade);
+            .HasOne(e => e.User)
+            .WithMany(u => u.ExternalLogins)
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         //prevent dup Google account
         modelBuilder.Entity<ExternalLogin>()
-        .HasIndex(e => new
-        {
-            e.Provider,
-            e.ProviderUserId
-        })
-        .IsUnique();
+            .HasIndex(e => new
+            {
+                e.Provider,
+                e.ProviderUserId
+            })
+            .IsUnique();
+
+        modelBuilder.Entity<ExternalAuthCode>()
+            .HasOne(e => e.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ExternalAuthCode>()
+            .HasIndex(e => e.Code)
+            .IsUnique();
 
         modelBuilder.Entity<Service>().HasData(
             new Service

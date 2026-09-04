@@ -1,3 +1,5 @@
+import { apiClient } from "./client";
+
 export interface SignUpRequest {
   name: string;
   email: string;
@@ -29,6 +31,11 @@ export interface User {
 }
 
 export interface SignInResponse {
+  token: string;
+  user: User;
+}
+
+export interface ExternalAuthResponse {
   token: string;
   user: User;
 }
@@ -69,4 +76,24 @@ export async function SignIn(request: SignInRequest): Promise<SignInResponse> {
   }
 
   return response.json();
+}
+
+export function SignInWithGoogle() {
+  window.location.href = `${API_URL}/api/external-auth/google`;
+}
+
+export async function exchangeExternalAuthCode(
+  code: string,
+): Promise<ExternalAuthResponse> {
+  const response = await apiClient.post<ExternalAuthResponse>(
+    "/api/external-auth/exchange",
+    code,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
+
+  return response.data;
 }

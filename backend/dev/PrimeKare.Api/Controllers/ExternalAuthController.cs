@@ -1,11 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
-using PrimeKare.Api.Data;
 using PrimeKare.Api.Services;
-using PrimeKare.Api.Models;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -14,12 +10,14 @@ namespace PrimeKare.Api.Controllers;
 public class ExternalAuthController : ControllerBase
 {
     private readonly IExternalAuthService _externalAuthService;
+    private readonly IConfiguration _configuration;
 
     public ExternalAuthController(
-        IExternalAuthService ExternalAuthService
-    )
+        IExternalAuthService externalAuthService,
+        IConfiguration configuration)
     {
-        _externalAuthService = ExternalAuthService;
+        _externalAuthService = externalAuthService;
+        _configuration = configuration;
     }
 
     [HttpGet("google")]
@@ -49,11 +47,22 @@ public class ExternalAuthController : ControllerBase
 
         try
         {
-            var response =
+            var code =
                 await _externalAuthService.HandleGoogleLoginAsync(
                     result.Principal);
 
-            return Ok(response);
+            var frontendUrl = _configuration["FrontendUrl"];
+
+            if (string.IsNullOrWhiteSpace(frontendUrl))
+            {
+                throw new InvalidOperationException(
+                    "FrontendUrl is not configured.");
+            }
+
+            return Redirect(
+                $"{frontendUrl}/auth/google/callback" +
+                $"?code={Uri.EscapeDataString(code)}"
+            );
         }
         catch (InvalidOperationException ex)
         {
@@ -63,5 +72,25 @@ public class ExternalAuthController : ControllerBase
         {
             return Unauthorized(ex.Message);
         }
+    }
+
+    [HttpPost("exchange")]
+    public async Task<IActionResult> ExchangeCode(
+        [FromBody] string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return BadRequest(
+                "Authorization code is required.");
+
+        var response =
+            await _externalAuthService.ExchangeCodeAsync(code);
+
+        if (response == null)
+        {
+            return Unauthorized(
+                "Invalid or expired authorization code.");
+        }
+
+        return Ok(response);
     }
 }

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Auth;
@@ -19,8 +20,15 @@ public class ExternalAuthService : IExternalAuthService
         _authService = authService;
     }
 
-    public async Task<SignInResponseDto> HandleGoogleLoginAsync(
-    ClaimsPrincipal principal)
+    private static string GenerateAuthCode()
+    {
+        return Convert.ToBase64String(
+            RandomNumberGenerator.GetBytes(32)
+        );
+    }
+
+    public async Task<string> HandleGoogleLoginAsync(
+        ClaimsPrincipal principal)
     {
         var googleUserId = principal.FindFirstValue(
             ClaimTypes.NameIdentifier);
@@ -45,6 +53,7 @@ public class ExternalAuthService : IExternalAuthService
                 e.Provider == "Google" &&
                 e.ProviderUserId == googleUserId);
 
+        // Google account is not linked to PrimeKare yet
         if (externalLogin == null)
         {
             var existingUser = await _context.Users
@@ -87,15 +96,27 @@ public class ExternalAuthService : IExternalAuthService
                 User = newUser
             };
 
+            var code = GenerateAuthCode();
+
+            var authCode = new ExternalAuthCode
+            {
+                Code = code,
+                User = newUser,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(2),
+                IsUsed = false
+            };
+
             _context.Customers.Add(customer);
             _context.Users.Add(newUser);
             _context.ExternalLogins.Add(newExternalLogin);
+            _context.ExternalAuthCodes.Add(authCode);
 
             await _context.SaveChangesAsync();
 
-            return _authService.CreateSignInResponse(newUser);
+            return code;
         }
 
+        // Google account is already linked to PrimeKare
         var user = externalLogin.User;
 
         if (user.Status != "active")
@@ -103,6 +124,49 @@ public class ExternalAuthService : IExternalAuthService
             throw new UnauthorizedAccessException(
                 "User account is not active.");
         }
+
+        var existingCode = GenerateAuthCode();
+
+        var existingAuthCode = new ExternalAuthCode
+        {
+            Code = existingCode,
+            UserId = user.Id,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(2),
+            IsUsed = false
+        };
+
+        _context.ExternalAuthCodes.Add(existingAuthCode);
+
+        await _context.SaveChangesAsync();
+
+        return existingCode;
+    }
+
+    public async Task<SignInResponseDto?> ExchangeCodeAsync(
+        string code)
+    {
+        var authCode = await _context.ExternalAuthCodes
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c =>
+                c.Code == code);
+
+        if (authCode == null)
+            return null;
+
+        if (authCode.IsUsed)
+            return null;
+
+        if (authCode.ExpiresAt <= DateTime.UtcNow)
+            return null;
+
+        var user = authCode.User;
+
+        if (user.Status != "active")
+            return null;
+
+        authCode.IsUsed = true;
+
+        await _context.SaveChangesAsync();
 
         return _authService.CreateSignInResponse(user);
     }
