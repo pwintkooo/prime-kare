@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrimeKare.Api.DTOs.Bookings;
 using PrimeKare.Api.Services;
+using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -35,7 +36,10 @@ public class BookingsController : ControllerBase
 
         if (booking == null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                message = "Booking not found."
+            });
         }
 
         return Ok(booking);
@@ -58,22 +62,38 @@ public class BookingsController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (ConflictException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
         {
-            return Forbid();
+            return StatusCode(403, new
+            {
+                message = ex.Message
+            });
         }
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateBooking(
-    int id,
-    UpdateBookingDto dto)
+        int id,
+        UpdateBookingDto dto)
     {
         try
         {
@@ -85,22 +105,41 @@ public class BookingsController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(new
+            {
+                message = ex.Message
+            });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            if (ex.Message ==
+                "The selected time is not available.")
+            {
+                return Conflict(new
+                {
+                    message =
+                        "The selected time slot is no longer available."
+                });
+            }
+
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
         {
-            return Forbid();
+            return StatusCode(403, new
+            {
+                message = ex.Message
+            });
         }
     }
 
     [HttpPatch("{id}/status")]
     public async Task<IActionResult> UpdateBookingStatus(
-    int id,
-    UpdateBookingStatusDto dto)
+        int id,
+        UpdateBookingStatusDto dto)
     {
         try
         {
@@ -112,15 +151,24 @@ public class BookingsController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(new
+            {
+                message = ex.Message
+            });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
         {
-            return Forbid();
+            return StatusCode(403, new
+            {
+                message = ex.Message
+            });
         }
     }
 }

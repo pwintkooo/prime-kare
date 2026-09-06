@@ -34,6 +34,11 @@ public class AppDbContext : DbContext
             DateTimeKind.Utc
         );
 
+        modelBuilder.Entity<Vehicle>()
+            .HasIndex(v => v.PlateNumber)
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false AND \"Status\" = 'active'");
+
         modelBuilder.Entity<Booking>()
             .HasOne(b => b.Customer)
             .WithMany(c => c.Bookings)

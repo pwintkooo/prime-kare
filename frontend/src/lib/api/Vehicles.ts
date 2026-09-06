@@ -1,6 +1,4 @@
-import axios from "axios";
 import { apiClient } from "./client";
-import { ApiError } from "./apiError";
 
 export interface Vehicle {
   id: number;
@@ -43,50 +41,16 @@ export async function getVehicle(id: number): Promise<Vehicle> {
 export async function createVehicle(
   request: CreateVehicleRequest,
 ): Promise<Vehicle> {
-  try {
-    const response = await apiClient.post<Vehicle>("/api/vehicles", request);
+  const response = await apiClient.post<Vehicle>("/api/vehicles", request);
 
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 409) {
-        throw new ApiError(
-          "A vehicle with this plate number already exists.",
-          409,
-        );
-      }
-
-      if (error.response?.status === 400) {
-        throw new ApiError("Please check the vehicle information.", 400);
-      }
-    }
-
-    throw error;
-  }
+  return response.data;
 }
 
 export async function updateVehicle(
   id: number,
   request: UpdateVehicleRequest,
 ): Promise<void> {
-  try {
-    await apiClient.put(`/api/vehicles/${id}`, request);
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 409) {
-        throw new ApiError(
-          "A vehicle with this plate number already exists.",
-          409,
-        );
-      }
-
-      if (error.response?.status === 400) {
-        throw new ApiError("Please check the vehicle information.", 400);
-      }
-    }
-
-    throw error;
-  }
+  await apiClient.put(`/api/vehicles/${id}`, request);
 }
 
 export async function deleteVehicle(id: number): Promise<void> {

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Bookings;
 using PrimeKare.Api.Models;
+using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Services;
 
@@ -214,8 +215,8 @@ public class BookingService : IBookingService
 
         if (hasConflict)
         {
-            throw new InvalidOperationException(
-                "The selected time is not available.");
+            throw new ConflictException(
+                "The selected time slot is no longer available.");
         }
 
         var booking = new Booking
@@ -319,8 +320,8 @@ public class BookingService : IBookingService
 
         if (hasConflict)
         {
-            throw new InvalidOperationException(
-                "The selected time is not available.");
+            throw new ConflictException(
+                "The selected time slot is no longer available.");
         }
 
         booking.VehicleId = dto.VehicleId;
@@ -354,7 +355,8 @@ public class BookingService : IBookingService
 
         if (string.IsNullOrWhiteSpace(newStatus))
         {
-            return false;
+            throw new InvalidOperationException(
+                "Invalid booking status.");
         }
 
         var currentStatus = booking.Status;
@@ -371,12 +373,14 @@ public class BookingService : IBookingService
             if (currentStatus != "pending" &&
                 currentStatus != "confirmed")
             {
-                return false;
+                throw new InvalidOperationException(
+                    "This booking cannot be cancelled.");
             }
 
             if (newStatus != "cancelled")
             {
-                return false;
+                throw new InvalidOperationException(
+                    "Customers can only cancel bookings.");
             }
         }
 
@@ -408,7 +412,8 @@ public class BookingService : IBookingService
             if (currentStatus != "in_progress" ||
                 newStatus != "completed")
             {
-                return false;
+                throw new InvalidOperationException(
+                    "Mechanics can only mark in-progress bookings as completed.");
             }
         }
 
@@ -427,13 +432,15 @@ public class BookingService : IBookingService
 
             if (!allowedStatuses.Contains(newStatus))
             {
-                return false;
+                throw new InvalidOperationException(
+                    "Invalid booking status.");
             }
         }
 
         else
         {
-            return false;
+            throw new UnauthorizedAccessException(
+                "You are not allowed to modify this booking.");
         }
 
         booking.Status = newStatus;

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using PrimeKare.Api.DTOs.Vehicles;
 using PrimeKare.Api.Services;
-using System.Security.Claims;
+using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -32,7 +32,10 @@ public class VehiclesController : ControllerBase
 
         if (_currentUser.IsCustomer && customerId == null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                message = "Customer account not found."
+            });
         }
 
         var vehicles = await _vehicleService
@@ -51,7 +54,10 @@ public class VehiclesController : ControllerBase
 
         if (_currentUser.IsCustomer && customerId == null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                message = "Customer account not found."
+            });
         }
 
         var vehicle = await _vehicleService
@@ -59,7 +65,10 @@ public class VehiclesController : ControllerBase
 
         if (vehicle == null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                message = "Vehicle not found."
+            });
         }
 
         return vehicle;
@@ -68,36 +77,53 @@ public class VehiclesController : ControllerBase
     [Authorize(Roles = "Customer")]
     [HttpPost]
     public async Task<ActionResult<VehicleDto>> CreateVehicle(
-    CreateVehicleDto dto)
+        CreateVehicleDto dto)
     {
         var customerId = _currentUser.CustomerId;
 
         if (customerId == null)
         {
-            return Unauthorized();
+            return Unauthorized(new
+            {
+                message =
+                    "Customer account is not associated with a customer."
+            });
         }
 
-        var vehicle = await _vehicleService
-            .CreateVehicleAsync(
-                dto,
-                customerId.Value);
-
-        if (vehicle == null)
+        try
         {
-            return BadRequest("Customer does not exist!");
-        }
+            var vehicle = await _vehicleService
+                .CreateVehicleAsync(
+                    dto,
+                    customerId.Value);
 
-        return CreatedAtAction(
-            nameof(GetVehicle),
-            new { id = vehicle.Id },
-            vehicle);
+            if (vehicle == null)
+            {
+                return BadRequest(new
+                {
+                    message = "Customer does not exist."
+                });
+            }
+
+            return CreatedAtAction(
+                nameof(GetVehicle),
+                new { id = vehicle.Id },
+                vehicle);
+        }
+        catch (ConflictException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
     [Authorize(Roles = "Admin,Receptionist,Customer")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateVehicle(
-    int id,
-    UpdateVehicleDto dto)
+        int id,
+        UpdateVehicleDto dto)
     {
         var customerId = _currentUser.IsCustomer
             ? _currentUser.CustomerId
@@ -105,7 +131,10 @@ public class VehiclesController : ControllerBase
 
         if (_currentUser.IsCustomer && customerId == null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                message = "Customer account not found."
+            });
         }
 
         try
@@ -119,15 +148,34 @@ public class VehiclesController : ControllerBase
 
             if (!updated)
             {
-                return BadRequest(
-                    "Vehicle could not be updated.");
+                return BadRequest(new
+                {
+                    message = "Vehicle could not be updated."
+                });
             }
 
             return NoContent();
         }
-        catch (KeyNotFoundException)
+        catch (KeyNotFoundException ex)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new
+            {
+                message = ex.Message
+            });
+        }
+        catch (ConflictException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
         }
     }
 
@@ -141,7 +189,10 @@ public class VehiclesController : ControllerBase
 
         if (_currentUser.IsCustomer && customerId == null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                message = "Customer account not found."
+            });
         }
 
         var deleted = await _vehicleService
@@ -152,7 +203,10 @@ public class VehiclesController : ControllerBase
 
         if (!deleted)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                message = "Vehicle not found."
+            });
         }
 
         return NoContent();
@@ -161,19 +215,32 @@ public class VehiclesController : ControllerBase
     [Authorize(Roles = "Admin,Receptionist")]
     [HttpPost("admin")]
     public async Task<ActionResult<VehicleDto>> AdminCreateVehicle(
-    AdminCreateVehicleDto dto)
+        AdminCreateVehicleDto dto)
     {
-        var vehicle = await _vehicleService
-            .AdminCreateVehicleAsync(dto);
-
-        if (vehicle == null)
+        try
         {
-            return BadRequest("Customer does not exist!");
-        }
+            var vehicle = await _vehicleService
+                .AdminCreateVehicleAsync(dto);
 
-        return CreatedAtAction(
-            nameof(GetVehicle),
-            new { id = vehicle.Id },
-            vehicle);
+            if (vehicle == null)
+            {
+                return BadRequest(new
+                {
+                    message = "Customer does not exist."
+                });
+            }
+
+            return CreatedAtAction(
+                nameof(GetVehicle),
+                new { id = vehicle.Id },
+                vehicle);
+        }
+        catch (ConflictException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
+        }
     }
 }

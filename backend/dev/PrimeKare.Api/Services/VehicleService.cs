@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Vehicles;
 using PrimeKare.Api.Models;
+using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Services;
 
@@ -85,11 +86,27 @@ public class VehicleService : IVehicleService
             return null;
         }
 
+        var plateNumber = dto.PlateNumber
+            .Trim()
+            .ToUpperInvariant();
+
+        var exists = await _context.Vehicles
+            .AnyAsync(v =>
+                v.PlateNumber == plateNumber &&
+                !v.IsDeleted &&
+                v.Status == "active");
+
+        if (exists)
+        {
+            throw new ConflictException(
+                "A vehicle with this plate number already exists.");
+        }
+
         var vehicle = new Vehicle
         {
-            PlateNumber = dto.PlateNumber,
-            Make = dto.Make,
-            Model = dto.Model,
+            PlateNumber = plateNumber,
+            Make = dto.Make.Trim().ToUpperInvariant(),
+            Model = dto.Model.Trim().ToUpperInvariant(),
             Year = dto.Year,
             CustomerId = customerId,
             Status = "active",
@@ -114,41 +131,57 @@ public class VehicleService : IVehicleService
     }
 
     public async Task<bool> UpdateVehicleAsync(
-        int id,
-        UpdateVehicleDto dto,
-        int? customerId = null,
-        bool isAdmin = false)
+    int id,
+    UpdateVehicleDto dto,
+    int? customerId = null,
+    bool isAdmin = false)
     {
         var vehicle = await _context.Vehicles
             .FirstOrDefaultAsync(v => v.Id == id);
 
         if (vehicle == null)
         {
-            throw new KeyNotFoundException("Vehicle not found.");
+            throw new KeyNotFoundException(
+                "Vehicle not found.");
         }
 
         if (customerId.HasValue &&
             vehicle.CustomerId != customerId.Value)
         {
-            return false;
+            throw new UnauthorizedAccessException(
+                "You are not allowed to update this vehicle.");
         }
 
         if (vehicle.Status == "archived" && !isAdmin)
         {
-            return false;
+            throw new InvalidOperationException(
+                "Archived vehicles cannot be updated.");
         }
 
-        var customerExists = await _context.Customers
-            .AnyAsync(c => c.Id == customerId);
+        var plateNumber = dto.PlateNumber
+            .Trim()
+            .ToUpperInvariant();
 
-        if (!customerExists)
+        var exists = await _context.Vehicles
+            .AnyAsync(v =>
+                v.PlateNumber == plateNumber &&
+                v.Id != id &&
+                !v.IsDeleted &&
+                v.Status == "active");
+
+        if (exists)
         {
-            return false;
+            throw new ConflictException(
+                "A vehicle with this plate number already exists.");
         }
 
-        vehicle.PlateNumber = dto.PlateNumber;
-        vehicle.Make = dto.Make;
-        vehicle.Model = dto.Model;
+        vehicle.PlateNumber = plateNumber;
+        vehicle.Make = dto.Make
+            .Trim()
+            .ToUpperInvariant();
+        vehicle.Model = dto.Model
+            .Trim()
+            .ToUpperInvariant();
         vehicle.Year = dto.Year;
         vehicle.UpdatedAt = DateTime.UtcNow;
 
@@ -192,7 +225,7 @@ public class VehicleService : IVehicleService
     }
 
     public async Task<VehicleDto?> AdminCreateVehicleAsync(
-        AdminCreateVehicleDto dto)
+    AdminCreateVehicleDto dto)
     {
         var customerExists = await _context.Customers
             .AnyAsync(c => c.Id == dto.CustomerId);
@@ -202,11 +235,31 @@ public class VehicleService : IVehicleService
             return null;
         }
 
+        var plateNumber = dto.PlateNumber
+            .Trim()
+            .ToUpperInvariant();
+
+        var exists = await _context.Vehicles
+            .AnyAsync(v =>
+                v.PlateNumber == plateNumber &&
+                !v.IsDeleted &&
+                v.Status == "active");
+
+        if (exists)
+        {
+            throw new ConflictException(
+                "A vehicle with this plate number already exists.");
+        }
+
         var vehicle = new Vehicle
         {
-            PlateNumber = dto.PlateNumber,
-            Make = dto.Make,
-            Model = dto.Model,
+            PlateNumber = plateNumber,
+            Make = dto.Make
+                .Trim()
+                .ToUpperInvariant(),
+            Model = dto.Model
+                .Trim()
+                .ToUpperInvariant(),
             Year = dto.Year,
             CustomerId = dto.CustomerId,
             Status = "active",

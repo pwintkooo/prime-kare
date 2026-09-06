@@ -31,35 +31,16 @@ apiClient.interceptors.response.use(
 
     const status = error.response?.status;
 
-    switch (status) {
-      case 401:
-        useAuthStore.getState().showSessionExpired();
+    if (status === 401) {
+      useAuthStore.getState().showSessionExpired();
 
-        return Promise.reject(new ApiError("Your session has expired.", 401));
-
-      case 403:
-        return Promise.reject(
-          new ApiError(
-            "You don't have permission to perform this action.",
-            403,
-          ),
-        );
-
-      case 404:
-        return Promise.reject(
-          new ApiError("The requested Resource was not found.", 404),
-        );
-
-      case 500:
-        return Promise.reject(
-          new ApiError(
-            "Something went wrong on our server. Please try again later.",
-            500,
-          ),
-        );
-
-      default:
-        return Promise.reject(error);
+      return Promise.reject(new ApiError("Your session has expired.", 401));
     }
+
+    const message = error.response?.data?.message ?? "Something went wrong.";
+
+    return Promise.reject(
+      new ApiError(message, status ?? 0, error.response?.data),
+    );
   },
 );
