@@ -3,24 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 
-import { getServiceBySlug } from "@/lib/api/Services";
 import { IndividualServiceSkeleton } from "@/components/skeletons/IndividualServiceSkeleton";
+import { useServiceBySlug } from "@/hooks/use-services";
 
 export default function ServiceDetailsPage() {
   const params = useParams<{ slug: string }>();
 
-  const {
-    data: service,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["service", params.slug],
-    queryFn: () => getServiceBySlug(params.slug),
-    enabled: !!params.slug,
-  });
+  const { data: service, isLoading, isError } = useServiceBySlug(params.slug);
 
   if (isLoading) {
     return <IndividualServiceSkeleton />;

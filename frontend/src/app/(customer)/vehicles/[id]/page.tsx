@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { getVehicle, deleteVehicle } from "@/lib/api/Vehicles";
+import { deleteVehicle } from "@/api/vehicles";
 
 import { Button } from "@/components/ui/button";
 
 import { IndividualVehicleSkeleton } from "@/components/skeletons/IndividualVehicleSkeleton";
 import { DeleteVehicleDialog } from "@/components/vehicles/DeleteVehicleDialog";
+import { useVehicle } from "@/hooks/use-vehicles";
 
 export default function VehicleDetailsPage() {
   const params = useParams<{ id: string }>();
@@ -17,15 +18,7 @@ export default function VehicleDetailsPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  const {
-    data: vehicle,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["vehicle", id],
-    queryFn: () => getVehicle(id),
-    enabled: Number.isInteger(id) && id > 0,
-  });
+  const { data: vehicle, isLoading, isError } = useVehicle(id);
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteVehicle(id),

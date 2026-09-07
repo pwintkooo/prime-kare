@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { getVehicle, updateVehicle } from "@/lib/api/Vehicles";
+import { updateVehicle } from "@/api/vehicles";
 import {
   updateVehicleSchema,
   UpdateVehicleFormData,
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { EditVehicleSkeleton } from "@/components/skeletons/EditVehicleSkeleton";
+import { useVehicle } from "@/hooks/use-vehicles";
 
 export default function EditVehiclePage() {
   const params = useParams<{ id: string }>();
@@ -24,15 +25,7 @@ export default function EditVehiclePage() {
 
   const id = Number(params.id);
 
-  const {
-    data: vehicle,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["vehicle", id],
-    queryFn: () => getVehicle(id),
-    enabled: Number.isInteger(id) && id > 0,
-  });
+  const { data: vehicle, isLoading, isError } = useVehicle(id);
 
   const {
     register,

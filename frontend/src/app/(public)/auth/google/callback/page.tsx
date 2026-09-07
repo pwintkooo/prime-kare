@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { exchangeExternalAuthCode } from "@/lib/api/Auth";
+import { exchangeExternalAuthCode } from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
 
 export default function GoogleCallbackPage() {

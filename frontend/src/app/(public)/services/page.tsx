@@ -1,22 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
 import { Clock, ArrowRight } from "lucide-react";
 
-import { getServices } from "@/lib/api/Services";
 import { ServicesSkeleton } from "@/components/skeletons/ServicesSkeleton";
+import { useServices } from "@/hooks/use-services";
 
 export default function ServicesPage() {
-  const {
-    data: services = [],
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["services"],
-    queryFn: getServices,
-  });
+  const { data: services = [], isLoading, isError } = useServices();
 
   return (
     <main className="bg-white">

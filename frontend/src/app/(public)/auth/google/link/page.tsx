@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { verifyAndLinkGoogle } from "@/lib/api/Auth";
+import { verifyAndLinkGoogle } from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
 
 export default function GoogleLinkPage() {

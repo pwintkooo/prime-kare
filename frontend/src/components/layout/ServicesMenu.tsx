@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 
-import { getServices } from "@/lib/api/Services";
+import { getServices } from "@/api/services";
 
 interface ServicesMenuProps {
   isActive: boolean;

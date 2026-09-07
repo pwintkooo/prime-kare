@@ -1,22 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { Car, Plus, CalendarDays, Pencil, ChevronRight } from "lucide-react";
 
-import { getVehicles } from "@/lib/api/Vehicles";
 import { Button } from "@/components/ui/button";
 import { VehiclesSkeleton } from "@/components/skeletons/VehiclesSkeleton";
+import { useVehicles } from "@/hooks/use-vehicles";
 
 export default function VehiclesPage() {
-  const {
-    data: vehicles,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["vehicles"],
-    queryFn: getVehicles,
-  });
+  const { data: vehicles, isLoading, isError } = useVehicles();
 
   if (isLoading) {
     return <VehiclesSkeleton />;

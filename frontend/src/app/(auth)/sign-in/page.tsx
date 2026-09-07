@@ -4,12 +4,12 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SignIn } from "@/lib/api/Auth";
+import { SignIn } from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, SignInFormData } from "@/lib/validations/auth";
-import { SignInWithGoogle } from "@/lib/api/Auth";
+import { SignInWithGoogle } from "@/api/auth";
 import GuestOnly from "@/components/auth/GuestOnly";
 
 export default function SignInPage() {

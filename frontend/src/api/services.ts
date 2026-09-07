@@ -1,18 +1,5 @@
 import { apiClient } from "./client";
-
-export interface Service {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  estimatedMinutes: number;
-  isActive: boolean;
-  isDeleted: boolean;
-  imageUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Service } from "@/types/service";
 
 export async function getServices(): Promise<Service[]> {
   const response = await apiClient.get<Service[]>("/api/services");

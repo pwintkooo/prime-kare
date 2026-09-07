@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
-import { ApiError } from "@/lib/api/apiError";
+import { ApiError } from "@/api/apiError";
 
 export default function QueryProvider({
   children,

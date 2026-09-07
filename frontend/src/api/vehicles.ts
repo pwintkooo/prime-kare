@@ -1,30 +1,9 @@
 import { apiClient } from "./client";
-
-export interface Vehicle {
-  id: number;
-  plateNumber: string;
-  make: string;
-  model: string;
-  year: number;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  customerId: number;
-}
-
-export interface CreateVehicleRequest {
-  plateNumber: string;
-  make: string;
-  model: string;
-  year: number;
-}
-
-export interface UpdateVehicleRequest {
-  plateNumber: string;
-  make: string;
-  model: string;
-  year: number;
-}
+import {
+  Vehicle,
+  CreateVehicleRequest,
+  UpdateVehicleRequest,
+} from "@/types/vehicle";
 
 export async function getVehicles(): Promise<Vehicle[]> {
   const response = await apiClient.get<Vehicle[]>("/api/vehicles");

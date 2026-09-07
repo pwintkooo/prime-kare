@@ -16,7 +16,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 import { useAuthStore } from "@/store/authStore";
-import { getServices } from "@/lib/api/Services";
+import { getServices } from "@/api/services";
 
 const navItems = [
   { label: "Home", href: "/" },

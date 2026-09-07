@@ -41,7 +41,7 @@ export default function Hero() {
 
           <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:gap-4">
             <Link
-              href="/appointment"
+              href="/book-appointment"
               className="inline-flex items-center justify-center gap-3 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 sm:px-6 sm:py-3.5"
             >
               Request Appointment
