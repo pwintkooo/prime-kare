@@ -4,6 +4,7 @@ import {
   CreateBookingRequest,
   UpdateBookingRequest,
   UpdateBookingStatusRequest,
+  BookingAvailability,
 } from "@/types/booking";
 
 export async function getBookings(): Promise<Booking[]> {
@@ -38,4 +39,21 @@ export async function updateBookingStatus(
   id: number,
 ): Promise<void> {
   await apiClient.patch(`/api/bookings/${id}/status`, request);
+}
+
+export async function getBookingAvailability(
+  serviceId: number,
+  date: string,
+): Promise<BookingAvailability> {
+  const response = await apiClient.get<BookingAvailability>(
+    "/api/bookings/availability",
+    {
+      params: {
+        serviceId,
+        date,
+      },
+    },
+  );
+
+  return response.data;
 }

@@ -20,10 +20,10 @@ public class BookingService : IBookingService
     }
 
     private async Task<bool> HasBookingConflictAsync(
-    DateOnly bookingDate,
-    TimeSpan bookingTime,
-    int serviceId,
-    int? excludeBookingId = null)
+        DateOnly bookingDate,
+        TimeSpan bookingTime,
+        int serviceId,
+        int? excludeBookingId = null)
     {
         var service = await _context.Services
             .FirstOrDefaultAsync(s =>
@@ -168,7 +168,7 @@ public class BookingService : IBookingService
     }
 
     public async Task<BookingDto> CreateBookingAsync(
-    CreateBookingDto dto)
+        CreateBookingDto dto)
     {
         if (!_currentUser.IsCustomer)
         {
@@ -187,6 +187,7 @@ public class BookingService : IBookingService
         var vehicle = await _context.Vehicles
             .FirstOrDefaultAsync(v =>
                 v.Id == dto.VehicleId &&
+                v.CustomerId == customerId.Value &&
                 v.Status == "active" &&
                 !v.IsDeleted);
 
@@ -206,6 +207,27 @@ public class BookingService : IBookingService
         {
             throw new KeyNotFoundException(
                 "Service not found.");
+        }
+
+        var singaporeTimeZone =
+            TimeZoneInfo.FindSystemTimeZoneById(
+                "Singapore Standard Time");
+
+        var today = DateOnly.FromDateTime(
+            TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.UtcNow,
+                singaporeTimeZone));
+
+        if (dto.BookingDate < today)
+        {
+            throw new InvalidOperationException(
+                "Booking date cannot be in the past.");
+        }
+
+        if (dto.BookingDate.DayOfWeek == DayOfWeek.Sunday)
+        {
+            throw new InvalidOperationException(
+                "The workshop is closed on Sundays.");
         }
 
         var hasConflict = await HasBookingConflictAsync(
@@ -243,8 +265,8 @@ public class BookingService : IBookingService
     }
 
     public async Task<bool> UpdateBookingAsync(
-    int id,
-    UpdateBookingDto dto)
+        int id,
+        UpdateBookingDto dto)
     {
         var booking = await _context.Bookings
             .FirstOrDefaultAsync(b =>
@@ -258,14 +280,13 @@ public class BookingService : IBookingService
         }
 
         if (!_currentUser.IsCustomer &&
-        !_currentUser.IsReceptionist &&
-        !_currentUser.IsAdmin)
+            !_currentUser.IsReceptionist &&
+            !_currentUser.IsAdmin)
         {
             throw new UnauthorizedAccessException(
                 "You are not allowed to update this booking.");
         }
 
-        // Customer can only update their own booking
         if (_currentUser.IsCustomer)
         {
             var customerId = _currentUser.CustomerId;
@@ -277,7 +298,6 @@ public class BookingService : IBookingService
                     "You are not allowed to modify this booking.");
             }
 
-            // Customer can only modify pending bookings
             if (booking.Status != "pending")
             {
                 throw new InvalidOperationException(
@@ -285,10 +305,10 @@ public class BookingService : IBookingService
             }
         }
 
-        // Validate vehicle
         var vehicle = await _context.Vehicles
             .FirstOrDefaultAsync(v =>
                 v.Id == dto.VehicleId &&
+                v.CustomerId == booking.CustomerId &&
                 v.Status == "active" &&
                 !v.IsDeleted);
 
@@ -298,7 +318,6 @@ public class BookingService : IBookingService
                 "Vehicle not found.");
         }
 
-        // Validate service
         var serviceExists = await _context.Services
             .AnyAsync(s =>
                 s.Id == dto.ServiceId &&
@@ -311,7 +330,27 @@ public class BookingService : IBookingService
                 "Service not found.");
         }
 
-        // Check appointment availability
+        var singaporeTimeZone =
+            TimeZoneInfo.FindSystemTimeZoneById(
+                "Singapore Standard Time");
+
+        var today = DateOnly.FromDateTime(
+            TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.UtcNow,
+                singaporeTimeZone));
+
+        if (dto.BookingDate < today)
+        {
+            throw new InvalidOperationException(
+                "Booking date cannot be in the past.");
+        }
+
+        if (dto.BookingDate.DayOfWeek == DayOfWeek.Sunday)
+        {
+            throw new InvalidOperationException(
+                "The workshop is closed on Sundays.");
+        }
+
         var hasConflict = await HasBookingConflictAsync(
             dto.BookingDate,
             dto.BookingTime,
@@ -337,8 +376,8 @@ public class BookingService : IBookingService
     }
 
     public async Task<bool> UpdateBookingStatusAsync(
-    int id,
-    UpdateBookingStatusDto dto)
+        int id,
+        UpdateBookingStatusDto dto)
     {
         var booking = await _context.Bookings
             .FirstOrDefaultAsync(b =>
@@ -351,7 +390,9 @@ public class BookingService : IBookingService
                 "Booking not found.");
         }
 
-        var newStatus = dto.Status.Trim().ToLower();
+        var newStatus = dto.Status
+            .Trim()
+            .ToLower();
 
         if (string.IsNullOrWhiteSpace(newStatus))
         {
@@ -361,7 +402,6 @@ public class BookingService : IBookingService
 
         var currentStatus = booking.Status;
 
-        // Customer
         if (_currentUser.IsCustomer)
         {
             if (booking.CustomerId != _currentUser.CustomerId)
@@ -383,8 +423,6 @@ public class BookingService : IBookingService
                     "Customers can only cancel bookings.");
             }
         }
-
-        // Receptionist
         else if (_currentUser.IsReceptionist)
         {
             var allowed = currentStatus switch
@@ -405,8 +443,6 @@ public class BookingService : IBookingService
                     "Invalid booking status transition.");
             }
         }
-
-        // Mechanic
         else if (_currentUser.IsMechanic)
         {
             if (currentStatus != "in_progress" ||
@@ -416,19 +452,17 @@ public class BookingService : IBookingService
                     "Mechanics can only mark in-progress bookings as completed.");
             }
         }
-
-        // Admin
         else if (_currentUser.IsAdmin)
         {
             var allowedStatuses = new[]
             {
-            "pending",
-            "confirmed",
-            "in_progress",
-            "completed",
-            "cancelled",
-            "no_show"
-        };
+                "pending",
+                "confirmed",
+                "in_progress",
+                "completed",
+                "cancelled",
+                "no_show"
+            };
 
             if (!allowedStatuses.Contains(newStatus))
             {
@@ -436,7 +470,6 @@ public class BookingService : IBookingService
                     "Invalid booking status.");
             }
         }
-
         else
         {
             throw new UnauthorizedAccessException(
@@ -449,5 +482,97 @@ public class BookingService : IBookingService
         await _context.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<List<string>> GetAvailableTimesAsync(
+        int serviceId,
+        DateOnly date)
+    {
+        var service = await _context.Services
+            .FirstOrDefaultAsync(s =>
+                s.Id == serviceId &&
+                !s.IsDeleted &&
+                s.IsActive);
+
+        if (service == null)
+        {
+            throw new KeyNotFoundException(
+                "Service not found.");
+        }
+
+        if (date.DayOfWeek == DayOfWeek.Sunday)
+        {
+            return [];
+        }
+
+        var bookings = await _context.Bookings
+            .Where(b =>
+                b.BookingDate == date &&
+                !b.IsDeleted &&
+                (
+                    b.Status == "pending" ||
+                    b.Status == "confirmed" ||
+                    b.Status == "in_progress"
+                ))
+            .Select(b => new
+            {
+                b.BookingTime,
+                EstimatedMinutes = b.Service.EstimatedMinutes
+            })
+            .ToListAsync();
+
+        var availableTimes = new List<string>();
+
+        var openingTime = TimeSpan.FromHours(9);
+        var closingTime = TimeSpan.FromHours(17);
+
+        var lunchStart = TimeSpan.FromHours(12);
+        var lunchEnd = TimeSpan.FromHours(13);
+
+        var slotInterval = TimeSpan.FromHours(1);
+
+        var serviceDuration =
+            TimeSpan.FromMinutes(
+                service.EstimatedMinutes);
+
+        for (
+            var startTime = openingTime;
+            startTime + serviceDuration <= closingTime;
+            startTime += slotInterval)
+        {
+            var endTime =
+                startTime + serviceDuration;
+
+            var overlapsLunch =
+                startTime < lunchEnd &&
+                endTime > lunchStart;
+
+            if (overlapsLunch)
+            {
+                continue;
+            }
+
+            var hasConflict = bookings.Any(existing =>
+            {
+                var existingStart =
+                    existing.BookingTime;
+
+                var existingEnd =
+                    existingStart +
+                    TimeSpan.FromMinutes(
+                        existing.EstimatedMinutes);
+
+                return startTime < existingEnd &&
+                       endTime > existingStart;
+            });
+
+            if (!hasConflict)
+            {
+                availableTimes.Add(
+                    startTime.ToString(@"hh\:mm"));
+            }
+        }
+
+        return availableTimes;
     }
 }

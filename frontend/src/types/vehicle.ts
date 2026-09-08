@@ -5,6 +5,7 @@ export interface Vehicle {
   model: string;
   year: number;
   status: string;
+  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
   customerId: number;

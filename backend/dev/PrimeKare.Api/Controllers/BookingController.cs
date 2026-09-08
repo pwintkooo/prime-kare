@@ -92,8 +92,8 @@ public class BookingsController : ControllerBase
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateBooking(
-        int id,
-        UpdateBookingDto dto)
+    int id,
+    UpdateBookingDto dto)
     {
         try
         {
@@ -110,18 +110,15 @@ public class BookingsController : ControllerBase
                 message = ex.Message
             });
         }
+        catch (ConflictException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
+        }
         catch (InvalidOperationException ex)
         {
-            if (ex.Message ==
-                "The selected time is not available.")
-            {
-                return Conflict(new
-                {
-                    message =
-                        "The selected time slot is no longer available."
-                });
-            }
-
             return BadRequest(new
             {
                 message = ex.Message
@@ -166,6 +163,34 @@ public class BookingsController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, new
+            {
+                message = ex.Message
+            });
+        }
+    }
+
+    [HttpGet("availability")]
+    public async Task<IActionResult> GetAvailability(
+    [FromQuery] int serviceId,
+    [FromQuery] DateOnly date)
+    {
+        try
+        {
+            var availableTimes =
+                await _bookingService.GetAvailableTimesAsync(
+                    serviceId,
+                    date);
+
+            return Ok(new BookingAvailabilityDto
+            {
+                Date = date,
+                ServiceId = serviceId,
+                AvailableTimes = availableTimes
+            });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
             {
                 message = ex.Message
             });

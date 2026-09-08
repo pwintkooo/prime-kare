@@ -36,3 +36,17 @@ export interface UpdateBookingRequest {
 export interface UpdateBookingStatusRequest {
   status: string;
 }
+
+export interface BookingAvailability {
+  date: string;
+  serviceId: number;
+  availableTimes: string[];
+}
+
+export interface CreateBookingFormErrors {
+  vehicleId?: string;
+  serviceId?: string;
+  bookingDate?: string;
+  bookingTime?: string;
+  notes?: string;
+}

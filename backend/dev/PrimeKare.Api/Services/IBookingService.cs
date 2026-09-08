@@ -18,4 +18,8 @@ public interface IBookingService
     Task<bool> UpdateBookingStatusAsync(
         int id,
         UpdateBookingStatusDto dto);
+
+    Task<List<string>> GetAvailableTimesAsync(
+        int serviceId,
+        DateOnly date);
 }

@@ -25,7 +25,8 @@ public class VehicleService : IVehicleService
         {
             query = query.Where(v =>
                 v.CustomerId == customerId.Value &&
-                v.Status == "active");
+                v.Status == "active" &&
+                !v.IsDeleted);
         }
 
         return await query
@@ -37,6 +38,7 @@ public class VehicleService : IVehicleService
                 Model = v.Model,
                 Year = v.Year,
                 Status = v.Status,
+                IsDeleted = v.IsDeleted,
                 CustomerId = v.CustomerId,
                 CreatedAt = v.CreatedAt,
                 UpdatedAt = v.UpdatedAt
@@ -55,7 +57,8 @@ public class VehicleService : IVehicleService
         {
             query = query.Where(v =>
                 v.CustomerId == customerId.Value &&
-                v.Status == "active");
+                v.Status == "active" &&
+                !v.IsDeleted);
         }
 
         return await query
@@ -126,6 +129,7 @@ public class VehicleService : IVehicleService
             Model = vehicle.Model,
             Year = vehicle.Year,
             Status = vehicle.Status,
+            IsDeleted = vehicle.IsDeleted,
             CustomerId = vehicle.CustomerId
         };
     }

@@ -13,6 +13,8 @@ public class VehicleDto
     public int Year { get; set; }
 
     public string Status { get; set; } = "active";
+    
+    public bool IsDeleted { get; set; } = false;
 
     public DateTime CreatedAt { get; set; }
 
