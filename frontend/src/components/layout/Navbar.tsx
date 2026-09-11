@@ -30,7 +30,7 @@ export default function Navbar() {
           ) : user ? (
             <>
               <UserMenu />
-              <Link href="/dashboard/bookings">
+              <Link href="/book-appointment">
                 <Button>Book Appointment</Button>
               </Link>
             </>

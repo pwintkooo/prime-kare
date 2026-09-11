@@ -65,7 +65,7 @@ export default function UserMenu() {
           My Vehicles
         </DropdownMenuItem>
 
-        <DropdownMenuItem onClick={() => router.push("/appointments")}>
+        <DropdownMenuItem onClick={() => router.push("/dashboard/bookings")}>
           <CalendarDays />
           Appointments
         </DropdownMenuItem>

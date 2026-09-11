@@ -19,43 +19,20 @@ import { createBooking } from "@/api/booking";
 import { useBookingAvailability } from "@/hooks/use-booking-availability";
 import { createBookingSchema } from "@/lib/validations/booking";
 import { CreateBookingFormErrors } from "@/types/booking";
+import { useServiceBySlug } from "@/hooks/use-services";
 
 export default function BookAppointmentPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const searchParams = useSearchParams();
-  const vehicleIdParam = Number(searchParams.get("vehicleId"));
-  const serviceIdParam = Number(searchParams.get("serviceId"));
+  const vehicleParam = searchParams.get("vehicle");
+  const serviceSlug = searchParams.get("service");
 
-  const initialVehicleId =
-    Number.isInteger(vehicleIdParam) && vehicleIdParam > 0
-      ? vehicleIdParam
-      : null;
-
-  const initialServiceId =
-    Number.isInteger(serviceIdParam) && serviceIdParam > 0
-      ? serviceIdParam
-      : null;
-
-  const [vehicleId, setVehicleId] = useState<number | null>(initialVehicleId);
-  const [serviceId, setServiceId] = useState<number | null>(initialServiceId);
   const [bookingDate, setBookingDate] = useState<string>("");
   const [bookingTime, setBookingTime] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [formErrors, setFormErrors] = useState<CreateBookingFormErrors>({});
-
-  const isWeekend = (date: string) => {
-    if (!date) return false;
-
-    const [year, month, day] = date.split("-").map(Number);
-
-    const selectedDate = new Date(year, month - 1, day);
-
-    const dayOfWeek = selectedDate.getDay();
-
-    return dayOfWeek === 0 || dayOfWeek === 6;
-  };
 
   const {
     data: vehicles,
@@ -63,11 +40,27 @@ export default function BookAppointmentPage() {
     isLoading: isLoadingVehicles,
   } = useVehicles();
 
+  const initialVehicle = vehicles?.find(
+    (vehicle) => vehicle.plateNumber === vehicleParam,
+  );
+
+  const initialVehicleId = initialVehicle?.id ?? null;
+
+  const [vehicleId, setVehicleId] = useState<number | null>(initialVehicleId);
+
   const {
     data: services,
     isError: isServicesError,
     isLoading: isLoadingServices,
   } = useServices();
+
+  const initialService = services?.find(
+    (service) => service.slug === serviceSlug,
+  );
+
+  const initialServiceId = initialService?.id ?? null;
+
+  const [serviceId, setServiceId] = useState<number | null>(initialServiceId);
 
   const {
     data: availability,
@@ -120,6 +113,18 @@ export default function BookAppointmentPage() {
       bookingTime: result.data.bookingTime,
       notes: result.data.notes.trim() || null,
     });
+  };
+
+  const isWeekend = (date: string) => {
+    if (!date) return false;
+
+    const [year, month, day] = date.split("-").map(Number);
+
+    const selectedDate = new Date(year, month - 1, day);
+
+    const dayOfWeek = selectedDate.getDay();
+
+    return dayOfWeek === 0 || dayOfWeek === 6;
   };
 
   return (
@@ -356,7 +361,7 @@ export default function BookAppointmentPage() {
               {createMutation.error.message}
             </div>
           )}
-          
+
           <div className="flex justify-end">
             <Button
               type="button"

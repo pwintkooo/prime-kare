@@ -1,6 +1,6 @@
 import { Skeleton } from "../ui/skeleton";
 
-export function IndividualServiceSkeleton() {
+export function ServiceDetailsSkeleton() {
   return (
     <main className="min-h-screen bg-white">
       <div className="mx-auto max-w-7xl px-6 py-20 sm:px-8">

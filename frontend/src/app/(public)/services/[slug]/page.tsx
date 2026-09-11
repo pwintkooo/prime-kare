@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 
-import { IndividualServiceSkeleton } from "@/components/skeletons/IndividualServiceSkeleton";
+import { ServiceDetailsSkeleton } from "@/components/skeletons/ServiceDetailsSkeleton";
 import { useServiceBySlug } from "@/hooks/use-services";
 
 export default function ServiceDetailsPage() {
@@ -14,7 +14,7 @@ export default function ServiceDetailsPage() {
   const { data: service, isLoading, isError } = useServiceBySlug(params.slug);
 
   if (isLoading) {
-    return <IndividualServiceSkeleton />;
+    return <ServiceDetailsSkeleton />;
   }
 
   if (isError || !service) {
@@ -122,7 +122,7 @@ export default function ServiceDetailsPage() {
               {/* CTA */}
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href={`/book?service=${service.slug}`}
+                  href={`/book-appointment?service=${service.slug}`}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-500"
                 >
                   Book This Service

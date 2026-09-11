@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useBookings } from "@/hooks/use-bookings";
 import { Button } from "@/components/ui/button";
-import { Plus, CalendarDays } from "lucide-react";
+import { Plus, CalendarDays, ArrowUpDown, ArrowDownUp } from "lucide-react";
 import { BookingCard } from "@/components/bookings/booking-card";
+import { BookingsDashboardSkeleton } from "@/components/skeletons/BookingsDashboardSkeleton";
 
 type BookingFilter = "all" | "upcoming" | "completed" | "cancelled";
 
@@ -18,6 +20,7 @@ const filterLabels: Record<BookingFilter, string> = {
 export default function BookingsPage() {
   const { data: bookings, isLoading, isError } = useBookings();
   const [filter, setFilter] = useState<BookingFilter>("all");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const filteredBookings = bookings?.filter((booking) => {
     if (filter === "all") {
@@ -39,20 +42,17 @@ export default function BookingsPage() {
     return true;
   });
 
+  const sortedBookings = filteredBookings
+    ? [...filteredBookings].sort((a, b) => {
+        const dateA = new Date(`${a.bookingDate}T${a.bookingTime}`).getTime();
+        const dateB = new Date(`${b.bookingDate}T${b.bookingTime}`).getTime();
+
+        return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+      })
+    : [];
+
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Bookings</h1>
-
-          <p className="text-muted-foreground">
-            Manage your vehicle service appointments.
-          </p>
-        </div>
-
-        <p className="text-muted-foreground">Loading bookings...</p>
-      </div>
-    );
+    return <BookingsDashboardSkeleton />;
   }
 
   if (isError) {
@@ -72,7 +72,7 @@ export default function BookingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -85,31 +85,48 @@ export default function BookingsPage() {
 
         <Button>
           <Plus />
-          Book a Service
+          <Link href={"/book-appointment"}>Book a Service</Link>
         </Button>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto border-b">
-        {[
-          { value: "all", label: "All" },
-          { value: "upcoming", label: "Upcoming" },
-          { value: "completed", label: "Completed" },
-          { value: "cancelled", label: "Cancelled" },
-        ].map((item) => (
-          <Button
-            key={item.value}
-            variant={filter === item.value ? "default" : "ghost"}
-            onClick={() => setFilter(item.value as BookingFilter)}
-            className="shrink-0"
-          >
-            {item.label}
-          </Button>
-        ))}
+      <div className="flex items-center justify-between gap-4 border-b">
+        <div className="flex gap-2 overflow-x-auto">
+          {[
+            { value: "all", label: "All" },
+            { value: "upcoming", label: "Upcoming" },
+            { value: "completed", label: "Completed" },
+            { value: "cancelled", label: "Cancelled" },
+          ].map((item) => (
+            <Button
+              key={item.value}
+              variant={filter === item.value ? "default" : "ghost"}
+              onClick={() => setFilter(item.value as BookingFilter)}
+              className="shrink-0"
+            >
+              {item.label}
+            </Button>
+          ))}
+        </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() =>
+            setSortOrder((current) => (current === "asc" ? "desc" : "asc"))
+          }
+          title={sortOrder === "asc" ? "Oldest first" : "Newest first"}
+        >
+          {sortOrder === "asc" ? (
+            <ArrowUpDown className="size-4" />
+          ) : (
+            <ArrowDownUp className="size-4" />
+          )}
+        </Button>
       </div>
 
-      {filteredBookings && filteredBookings.length > 0 ? (
+      {sortedBookings && sortedBookings.length > 0 ? (
         <div className="space-y-4">
-          {filteredBookings.map((booking) => (
+          {sortedBookings.map((booking) => (
             <BookingCard key={booking.id} booking={booking} />
           ))}
         </div>
@@ -130,13 +147,13 @@ export default function BookingsPage() {
           <h2 className="text-lg font-semibold">No bookings yet</h2>
 
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            You don&apos;t have any service bookings yet. Book a service for your
-            vehicle to get started.
+            You don&apos;t have any service bookings yet. Book a service for
+            your vehicle to get started.
           </p>
 
           <Button className="mt-6">
             <Plus />
-            Book a Service
+            <Link href={"/book-appointment"}>Book a Service</Link>
           </Button>
         </div>
       )}

@@ -8,7 +8,7 @@ import { deleteVehicle } from "@/api/vehicles";
 
 import { Button } from "@/components/ui/button";
 
-import { IndividualVehicleSkeleton } from "@/components/skeletons/IndividualVehicleSkeleton";
+import { VehicleDetailsSkeleton } from "@/components/skeletons/VehicleDetailsSkeleton";
 import { DeleteVehicleDialog } from "@/components/vehicles/DeleteVehicleDialog";
 import { useVehicle } from "@/hooks/use-vehicles";
 
@@ -47,7 +47,7 @@ export default function VehicleDetailsPage() {
   }
 
   if (isLoading) {
-    return <IndividualVehicleSkeleton />;
+    return <VehicleDetailsSkeleton />;
   }
 
   if (isError || !vehicle) {
@@ -86,6 +86,15 @@ export default function VehicleDetailsPage() {
           </div>
 
           <div className="flex gap-2">
+            <Button>
+              <Link
+                href={`/book-appointment?vehicle=${encodeURIComponent(
+                  vehicle.plateNumber,
+                )}`}
+              >
+                Book a Service
+              </Link>
+            </Button>
             <Button>
               <Link href={`/vehicles/${vehicle.id}/edit`}>Edit Vehicle</Link>
             </Button>
