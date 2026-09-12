@@ -19,7 +19,6 @@ import { createBooking } from "@/api/booking";
 import { useBookingAvailability } from "@/hooks/use-booking-availability";
 import { createBookingSchema } from "@/lib/validations/booking";
 import { CreateBookingFormErrors } from "@/types/booking";
-import { useServiceBySlug } from "@/hooks/use-services";
 
 export default function BookAppointmentPage() {
   const router = useRouter();

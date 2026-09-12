@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using PrimeKare.Api.Data;
 
 namespace PrimeKare.Api.Services;
 
