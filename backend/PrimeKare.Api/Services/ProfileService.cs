@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Profile;
 using PrimeKare.Api.Models;
+using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Services;
 
@@ -12,19 +13,24 @@ public class ProfileService : IProfileService
     private readonly AppDbContext _context;
     private readonly ICurrentUserService _currentUserService;
     private readonly IPasswordHasher<User> _passwordHasher;
-    private readonly IValidator<ChangePasswordDto>
-        _changePasswordValidator;
+    private readonly IValidator<ChangePasswordDto> _changePasswordValidator;
+    private readonly IValidator<UpdateProfileDto> _updateProfileValidator;
+    private readonly IValidator<ChangeEmailDto> _changeEmailValidator;
 
     public ProfileService(
         AppDbContext context,
         ICurrentUserService currentUserService,
         IPasswordHasher<User> passwordHasher,
-        IValidator<ChangePasswordDto> changePasswordValidator)
+        IValidator<ChangePasswordDto> changePasswordValidator,
+        IValidator<UpdateProfileDto> updateProfileValidator,
+        IValidator<ChangeEmailDto> changeEmailValidator)
     {
         _context = context;
         _currentUserService = currentUserService;
         _passwordHasher = passwordHasher;
         _changePasswordValidator = changePasswordValidator;
+        _updateProfileValidator = updateProfileValidator;
+        _changeEmailValidator = changeEmailValidator;
     }
 
     public async Task<ProfileDto> GetProfileAsync()
@@ -41,6 +47,9 @@ public class ProfileService : IProfileService
                 "User not found."
             );
         }
+
+        var isExternalAccount =
+            user.ExternalLogins.Any();
 
         string? phone = null;
 
@@ -65,6 +74,18 @@ public class ProfileService : IProfileService
                     user.PasswordHash
                 ),
 
+            CanChangePassword =
+                !isExternalAccount &&
+                !string.IsNullOrWhiteSpace(
+                    user.PasswordHash
+                ),
+
+            CanChangeEmail =
+                !isExternalAccount &&
+                !string.IsNullOrWhiteSpace(
+                    user.PasswordHash
+                ),
+
             ExternalProviders = user.ExternalLogins
                 .Select(login => login.Provider)
                 .ToList(),
@@ -74,6 +95,17 @@ public class ProfileService : IProfileService
     public async Task UpdateProfileAsync(
         UpdateProfileDto dto)
     {
+        var validationResult =
+            await _updateProfileValidator
+                .ValidateAsync(dto);
+
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(
+                validationResult.Errors
+            );
+        }
+
         var userId = GetCurrentUserId();
 
         var user = await _context.Users
@@ -104,7 +136,9 @@ public class ProfileService : IProfileService
             {
                 customer.Name = name;
                 customer.Phone =
-                    dto.Phone?.Trim();
+                    string.IsNullOrWhiteSpace(dto.Phone)
+                        ? null
+                        : dto.Phone.Trim();
 
                 customer.UpdatedAt =
                     DateTime.UtcNow;
@@ -131,6 +165,7 @@ public class ProfileService : IProfileService
         var userId = GetCurrentUserId();
 
         var user = await _context.Users
+            .Include(u => u.ExternalLogins)
             .FirstOrDefaultAsync(
                 u => u.Id == userId
             );
@@ -139,6 +174,13 @@ public class ProfileService : IProfileService
         {
             throw new KeyNotFoundException(
                 "User not found."
+            );
+        }
+
+        if (user.ExternalLogins.Any())
+        {
+            throw new InvalidOperationException(
+                "Password cannot be changed for an external login account."
             );
         }
 
@@ -172,6 +214,102 @@ public class ProfileService : IProfileService
             );
 
         user.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ChangeEmailAsync(
+        ChangeEmailDto dto)
+    {
+
+        var validationResult =
+            await _changeEmailValidator
+                .ValidateAsync(dto);
+
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(
+                validationResult.Errors
+            );
+        }
+
+        var userId = GetCurrentUserId();
+
+        var user = await _context.Users
+        .Include(u => u.ExternalLogins)
+        .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException(
+                "User not found."
+            );
+        }
+
+        if (user.ExternalLogins.Any())
+        {
+            throw new InvalidOperationException(
+                "Email cannot be changed for an external login account."
+            );
+        }
+
+        if (string.IsNullOrWhiteSpace(user.PasswordHash))
+        {
+            throw new InvalidOperationException(
+                "Password authentication is not available for this account."
+            );
+        }
+
+        var passwordResult =
+        _passwordHasher.VerifyHashedPassword(
+            user,
+            user.PasswordHash,
+            dto.CurrentPassword
+        );
+
+        if (passwordResult == PasswordVerificationResult.Failed)
+        {
+            throw new InvalidOperationException(
+                "Current password is incorrect."
+            );
+        }
+
+        var email = dto.NewEmail.Trim().ToLowerInvariant();
+
+        if (string.Equals(
+            email,
+            user.Email,
+            StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        "New email cannot be the same as the current email."
+                    );
+                }
+
+        var emailExists = await _context.Users
+        .AnyAsync(u => u.Email == email && u.Id != userId);
+
+        if (emailExists)
+        {
+            throw new ConflictException(
+                "Email is already in use."
+            );
+        }
+
+        user.Email = email;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        if (user.CustomerId != null)
+        {
+            var customer = await _context.Customers
+            .FirstOrDefaultAsync(c => c.Id == user.CustomerId.Value);
+
+            if (customer != null)
+            {
+                customer.Email = email;
+                customer.UpdatedAt = DateTime.UtcNow;
+            }
+        }
 
         await _context.SaveChangesAsync();
     }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrimeKare.Api.DTOs.Profile;
 using PrimeKare.Api.Services;
+using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -68,7 +69,7 @@ public class ProfileController : ControllerBase
         }
     }
 
-    [HttpPut("password")]
+    [HttpPut("change-password")]
     public async Task<IActionResult> ChangePassword(
         ChangePasswordDto dto)
     {
@@ -86,6 +87,37 @@ public class ProfileController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
+    }
+
+    [HttpPut("change-email")]
+    public async Task<IActionResult> ChangeEmail(
+        ChangeEmailDto dto)
+    {
+        try
+        {
+            await _profileService
+                .ChangeEmailAsync(dto);
+
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
+        catch (ConflictException ex)
+        {
+            return Conflict(new
             {
                 message = ex.Message
             });

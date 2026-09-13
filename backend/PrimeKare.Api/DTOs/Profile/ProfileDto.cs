@@ -14,5 +14,9 @@ public class ProfileDto
 
     public bool HasPassword { get; set; }
 
+    public bool CanChangePassword { get; set; }
+
+    public bool CanChangeEmail { get; set; }
+
     public List<string> ExternalProviders { get; set; } = [];
 }
