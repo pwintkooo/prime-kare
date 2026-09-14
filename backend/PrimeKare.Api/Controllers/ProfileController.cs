@@ -130,4 +130,34 @@ public class ProfileController : ControllerBase
             });
         }
     }
+
+    [HttpPatch("delete-account")]
+    public async Task<IActionResult> DeleteAccount()
+    {
+        try
+        {
+            await _profileService
+                .DeleteAccountAsync();
+
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
+    }
 }

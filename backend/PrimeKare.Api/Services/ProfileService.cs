@@ -280,14 +280,16 @@ public class ProfileService : IProfileService
             email,
             user.Email,
             StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new InvalidOperationException(
-                        "New email cannot be the same as the current email."
-                    );
-                }
+        {
+            throw new InvalidOperationException(
+                "New email cannot be the same as the current email."
+            );
+        }
 
         var emailExists = await _context.Users
-        .AnyAsync(u => u.Email == email && u.Id != userId);
+        .AnyAsync(u => 
+        u.Email == email && 
+        u.Id != userId);
 
         if (emailExists)
         {
@@ -314,6 +316,72 @@ public class ProfileService : IProfileService
         await _context.SaveChangesAsync();
     }
 
+    public async Task DeleteAccountAsync()
+    {
+        var userId = GetCurrentUserId();
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(
+                u => u.Id == userId
+            );
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException(
+                "User not found."
+            );
+        }
+
+        user.Status = "inactive";
+        user.UpdatedAt = DateTime.UtcNow;
+
+        if (user.CustomerId != null)
+        {
+            var customerId = user.CustomerId.Value;
+
+            var customer = await _context.Customers
+                .FirstOrDefaultAsync(
+                    c => c.Id == customerId
+                );
+
+            if (customer != null)
+            {
+                customer.Status = "inactive";
+
+                customer.UpdatedAt =
+                    DateTime.UtcNow;
+            }
+
+            var vehicles = await _context.Vehicles
+            .Where(v =>
+            v.CustomerId == customerId &&
+            v.Status == "active")
+            .ToListAsync();
+
+            foreach (var vehicle in vehicles)
+            {
+                vehicle.Status = "archived";
+                vehicle.UpdatedAt = DateTime.UtcNow;
+            }
+
+            var bookings = await _context.Bookings
+            .Where(b => 
+            b.CustomerId == customerId &&
+            (
+                b.Status == "pending" ||
+                b.Status == "confirmed"
+            )).ToListAsync();
+
+            foreach (var booking in bookings)
+            {
+                booking.Status = "cancelled";
+                booking.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
     private int GetCurrentUserId()
     {
         var userId =
@@ -326,4 +394,6 @@ public class ProfileService : IProfileService
 
         return userId.Value;
     }
+
+
 }

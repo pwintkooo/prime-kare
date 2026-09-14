@@ -55,15 +55,57 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> SignIn(
         SignInDto request)
     {
-        var response = await _authService
-            .SignInAsync(request);
 
-        if (response == null)
+        try
         {
-            return Unauthorized(
-                "Invalid email or password.");
-        }
+            var response = await _authService.SignInAsync(request);
 
-        return Ok(response);
+            return Ok(response);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
+    }
+
+    [HttpPost("reactivate")]
+    public async Task<ActionResult<SignInResponseDto>>
+    ReactivateAccount(
+        ReactivateAccountDto request)
+    {
+        try
+        {
+            var response =
+                await _authService
+                    .ReactivateAccountAsync(
+                        request
+                    );
+
+            return Ok(response);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
     }
 }

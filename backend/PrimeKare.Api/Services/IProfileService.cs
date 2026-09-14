@@ -11,4 +11,6 @@ public interface IProfileService
     Task ChangePasswordAsync(ChangePasswordDto dto);
 
     Task ChangeEmailAsync(ChangeEmailDto dto);
+
+    Task DeleteAccountAsync();
 }

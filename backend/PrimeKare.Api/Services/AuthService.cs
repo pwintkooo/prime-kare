@@ -103,35 +103,47 @@ public class AuthService : IAuthService
     }
 
     public async Task<SignUpResponseDto> SignUpAsync(
-        SignUpDto request)
+    SignUpDto request)
     {
         var validationResult =
-    await _signUpValidator.ValidateAsync(request);
+            await _signUpValidator
+                .ValidateAsync(request);
 
         if (!validationResult.IsValid)
         {
-            var errors = validationResult.Errors
-                .Select(e => e.ErrorMessage)
-                .ToList();
-
-            throw new ValidationException(validationResult.Errors);
+            throw new ValidationException(
+                validationResult.Errors
+            );
         }
-        // 1. Check if email already exists
-        var existingUser = await _context.Users
-            .FirstOrDefaultAsync(
-                u => u.Email == request.Email);
+
+        var email = request.Email
+            .Trim()
+            .ToLowerInvariant();
+
+        var existingUser =
+            await _context.Users
+                .FirstOrDefaultAsync(
+                    u => u.Email == email
+                );
 
         if (existingUser != null)
         {
+            if (existingUser.Status == "inactive")
+            {
+                throw new InvalidOperationException(
+                    "An account with this email already exists. Sign in to reactivate your account."
+                );
+            }
+
             throw new InvalidOperationException(
-                "User already exists.");
+                "User already exists."
+            );
         }
 
-        // 2. Create Customer
         var customer = new Customer
         {
-            Name = request.Name,
-            Email = request.Email,
+            Name = request.Name.Trim(),
+            Email = email,
             Phone = request.Phone,
             Status = "active",
             CreatedAt = DateTime.UtcNow,
@@ -140,11 +152,10 @@ public class AuthService : IAuthService
 
         _context.Customers.Add(customer);
 
-        // 3. Create User
         var user = new User
         {
-            Name = request.Name,
-            Email = request.Email,
+            Name = request.Name.Trim(),
+            Email = email,
             Role = "Customer",
             Status = "active",
             Customer = customer,
@@ -152,17 +163,16 @@ public class AuthService : IAuthService
             UpdatedAt = DateTime.UtcNow
         };
 
-        user.PasswordHash = _passwordHasher.HashPassword(
-            user,
-            request.Password
-        );
+        user.PasswordHash =
+            _passwordHasher.HashPassword(
+                user,
+                request.Password
+            );
 
         _context.Users.Add(user);
 
-        // 4. Save both
         await _context.SaveChangesAsync();
 
-        // 5. Return response
         return new SignUpResponseDto
         {
             Id = user.Id,
@@ -177,25 +187,35 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<SignInResponseDto?> SignInAsync(
+    public async Task<SignInResponseDto> SignInAsync(
         SignInDto request)
     {
+        var email = request.Email.Trim().ToLowerInvariant();
+
         var user = await _context.Users
             .FirstOrDefaultAsync(
-                u => u.Email == request.Email);
+                u => u.Email == email);
 
         if (user == null)
         {
-            return null;
+            throw new KeyNotFoundException(
+                "Account not found."
+            );
         }
 
-        if (user.Status != "active")
+        if (user.Status != "active" || user.IsDeleted)
         {
-            return null;
+            throw new InvalidOperationException(
+                "This account is not available for sign in."
+            );
         }
 
         if (string.IsNullOrWhiteSpace(user.PasswordHash))
-            return null;
+        {
+            throw new InvalidOperationException(
+                "Password sign in is not available for this account."
+            );
+        }
 
         var passwordResult =
             _passwordHasher.VerifyHashedPassword(
@@ -207,9 +227,81 @@ public class AuthService : IAuthService
         if (passwordResult ==
             PasswordVerificationResult.Failed)
         {
-            return null;
+            throw new InvalidOperationException(
+                "Password is incorrect"
+            );
         }
 
+        return CreateSignInResponse(user);
+    }
+
+    public async Task<SignInResponseDto> ReactivateAccountAsync(
+        ReactivateAccountDto request)
+    {
+        var email = request.Email.Trim().ToLowerInvariant();
+
+        var user = await _context.Users
+        .FirstOrDefaultAsync(u => 
+        u.Email == email);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException(
+                "Account not found."
+            );
+        }
+
+        if (user.IsDeleted)
+        {
+            throw new InvalidOperationException(
+                "This account cannot be activated."
+            );
+        }
+
+        if (user.Status == "active")
+        {
+            throw new InvalidOperationException(
+                "This account is already active."
+            );
+        }
+
+        if (string.IsNullOrWhiteSpace(user.PasswordHash))
+        {
+            throw new InvalidOperationException(
+                "This account cannot be reactivated using a password."
+            );
+        }
+
+        var passwordResult = _passwordHasher.VerifyHashedPassword(
+            user,
+            user.PasswordHash,
+            request.Password
+        );
+
+        if (passwordResult == PasswordVerificationResult.Failed)
+        {
+            throw new InvalidOperationException(
+                "Password is incorrect."
+            );
+        }
+
+        user.Status = "active";
+        user.UpdatedAt = DateTime.UtcNow;
+
+        if (user.CustomerId != null)
+        {
+            var customer = await _context.Customers
+            .FirstOrDefaultAsync(c => 
+            c.Id == user.CustomerId.Value);
+
+            if (customer != null)
+            {
+                customer.Status = "active";
+                customer.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        await _context.SaveChangesAsync();
         return CreateSignInResponse(user);
     }
 }
