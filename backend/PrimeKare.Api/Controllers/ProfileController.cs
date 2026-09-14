@@ -69,7 +69,7 @@ public class ProfileController : ControllerBase
         }
     }
 
-    [HttpPut("change-password")]
+    [HttpPatch("change-password")]
     public async Task<IActionResult> ChangePassword(
         ChangePasswordDto dto)
     {
@@ -100,7 +100,7 @@ public class ProfileController : ControllerBase
         }
     }
 
-    [HttpPut("change-email")]
+    [HttpPatch("change-email")]
     public async Task<IActionResult> ChangeEmail(
         ChangeEmailDto dto)
     {

@@ -3,7 +3,7 @@ export interface Profile {
   name: string;
   email: string;
   role: string;
-  phone?: string;
+  phone?: string | null;
   hasPassword: boolean;
   canChangePassword: boolean;
   canChangeEmail: boolean;
