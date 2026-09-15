@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useChangeEmail } from "@/hooks/use-profile";
 import { ApiError } from "@/api/apiError";
 
-import { changeEmailSchema, ChangeEmailFormData } from "@/lib/validations/profile";
+import { changeEmailSchema, ChangeEmailFormData } from "@/validations/profile";
 
 import { Button } from "@/components/ui/button";
 import {

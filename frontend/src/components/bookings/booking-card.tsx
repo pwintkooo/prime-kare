@@ -3,7 +3,7 @@ import { CalendarDays, Clock, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Booking } from "@/types/booking";
 import { BookingStatusBadge } from "./booking-status-badge";
-import { formatBookingDate, formatBookingTime } from "@/lib/formatters";
+import { formatBookingDate, formatBookingTime } from "@/utils/formatters";
 
 interface BookingCardProps {
   booking: Booking;

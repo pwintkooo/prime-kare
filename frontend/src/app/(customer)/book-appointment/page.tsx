@@ -17,7 +17,7 @@ import { useServices } from "@/hooks/use-services";
 import { useVehicles } from "@/hooks/use-vehicles";
 import { createBooking } from "@/api/booking";
 import { useBookingAvailability } from "@/hooks/use-booking-availability";
-import { createBookingSchema } from "@/lib/validations/booking";
+import { createBookingSchema } from "@/validations/booking";
 import { CreateBookingFormErrors } from "@/types/booking";
 
 export default function BookAppointmentPage() {

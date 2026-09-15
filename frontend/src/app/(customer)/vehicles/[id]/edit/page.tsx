@@ -10,7 +10,7 @@ import { updateVehicle } from "@/api/vehicles";
 import {
   updateVehicleSchema,
   UpdateVehicleFormData,
-} from "@/lib/validations/vehicle";
+} from "@/validations/vehicle";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

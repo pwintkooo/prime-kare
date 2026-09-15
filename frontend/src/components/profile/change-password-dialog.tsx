@@ -10,7 +10,7 @@ import { ApiError } from "@/api/apiError";
 import {
   changePasswordSchema,
   ChangePasswordFormData,
-} from "@/lib/validations/profile";
+} from "@/validations/profile";
 
 import { Button } from "@/components/ui/button";
 import {

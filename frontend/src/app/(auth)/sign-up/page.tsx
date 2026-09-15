@@ -9,7 +9,7 @@ import PasswordRequirements from "@/components/auth/PasswordRequirements";
 import ConfirmPassword from "@/components/auth/ConfirmPassword";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signUpSchema, SignUpFormData } from "@/lib/validations/auth";
+import { signUpSchema, SignUpFormData } from "@/validations/auth";
 import { SignInWithGoogle } from "@/api/auth";
 import GuestOnly from "@/components/auth/GuestOnly";
 

@@ -1,4 +1,3 @@
-import ConfirmPassword from "@/components/auth/ConfirmPassword";
 import { z } from "zod";
 
 export const updateProfileSchema = z.object({

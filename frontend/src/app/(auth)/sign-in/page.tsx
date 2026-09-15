@@ -8,7 +8,7 @@ import { SignIn } from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signInSchema, SignInFormData } from "@/lib/validations/auth";
+import { signInSchema, SignInFormData } from "@/validations/auth";
 import { SignInWithGoogle } from "@/api/auth";
 import GuestOnly from "@/components/auth/GuestOnly";
 

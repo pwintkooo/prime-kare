@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { BookingDetailsSkeleton } from "@/components/skeletons/BookingDetailsSkeleton";
-import { formatBookingDate, formatBookingTime } from "@/lib/formatters";
+import { formatBookingDate, formatBookingTime } from "@/utils/formatters";
 
 export default function BookingDetailsPage() {
   const params = useParams<{ id: string }>();
