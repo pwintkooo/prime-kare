@@ -17,64 +17,104 @@ public class CustomersController : ControllerBase
         _customerService = customerService;
     }
 
-    [Authorize(Roles = "Admin,Receptionist,Mechanic")]
+    [Authorize(
+        Roles = "Admin,Receptionist,Mechanic"
+    )]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<CustomerDto>>>
+    public async Task<
+        ActionResult<IEnumerable<CustomerDto>>>
         GetCustomers()
     {
-        var customers = await _customerService
-            .GetCustomersAsync();
+        var customers =
+            await _customerService
+                .GetCustomersAsync();
 
         return Ok(customers);
     }
 
-    [Authorize(Roles = "Admin,Receptionist,Mechanic")]
+    [Authorize(
+        Roles = "Admin,Receptionist,Mechanic"
+    )]
     [HttpGet("{id}")]
     public async Task<ActionResult<CustomerDto>>
         GetCustomer(int id)
     {
-        var customer = await _customerService
-            .GetCustomerAsync(id);
-
-        if (customer == null)
+        try
         {
-            return NotFound();
-        }
+            var customer =
+                await _customerService
+                    .GetCustomerAsync(id);
 
-        return Ok(customer);
+            return Ok(customer);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
-    [Authorize(Roles = "Admin,Receptionist")]
+    [Authorize(
+        Roles = "Admin,Receptionist"
+    )]
     [HttpPost]
     public async Task<ActionResult<CustomerDto>>
-        CreateCustomer(CreateCustomerDto dto)
+        CreateCustomer(
+            CreateCustomerDto dto)
     {
-        var customer = await _customerService
-            .CreateCustomerAsync(dto);
+        var customer =
+            await _customerService
+                .CreateCustomerAsync(dto);
 
         return CreatedAtAction(
             nameof(GetCustomer),
-            new { id = customer.Id },
+            new
+            {
+                id = customer.Id
+            },
             customer
         );
     }
 
-    [Authorize(Roles = "Admin,Receptionist,Customer")]
+    [Authorize(
+        Roles = "Admin,Receptionist,Customer"
+    )]
     [HttpPut("{id}")]
     public async Task<IActionResult>
         UpdateCustomer(
             int id,
             UpdateCustomerDto dto)
     {
-        var updated = await _customerService
-            .UpdateCustomerAsync(id, dto);
-
-        if (!updated)
+        try
         {
-            return NotFound();
-        }
+            await _customerService
+                .UpdateCustomerAsync(
+                    id,
+                    dto
+                );
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
     [Authorize(Roles = "Admin")]
@@ -82,14 +122,19 @@ public class CustomersController : ControllerBase
     public async Task<IActionResult>
         DeleteCustomer(int id)
     {
-        var deleted = await _customerService
-            .DeleteCustomerAsync(id);
-
-        if (!deleted)
+        try
         {
-            return NotFound();
-        }
+            await _customerService
+                .DeleteCustomerAsync(id);
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
     }
 }

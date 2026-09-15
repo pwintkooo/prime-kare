@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Auth;
 using PrimeKare.Api.Models;
+using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Services;
 
@@ -38,7 +39,7 @@ public class ExternalAuthService : IExternalAuthService
             ClaimTypes.NameIdentifier);
 
         var email = principal.FindFirstValue(
-            ClaimTypes.Email);
+            ClaimTypes.Email)?.Trim().ToLowerInvariant();
 
         var name = principal.FindFirstValue(
             ClaimTypes.Name);
@@ -62,10 +63,38 @@ public class ExternalAuthService : IExternalAuthService
         {
             var user = externalLogin.User;
 
-            if (user.Status != "active")
+            if (user.IsDeleted)
             {
-                throw new UnauthorizedAccessException(
-                    "User account is not active.");
+                throw new InvalidOperationException(
+                    "This account cannot be reactivated."
+                );
+            }
+
+            if (user.Status == "inactive")
+            {
+                user.Status = "active";
+                user.UpdatedAt = DateTime.UtcNow;
+
+                if (user.CustomerId.HasValue)
+                {
+                    var customer =
+                        await _context.Customers
+                            .FirstOrDefaultAsync(c =>
+                                c.Id == user.CustomerId.Value);
+
+                    if (customer != null)
+                    {
+                        customer.Status = "active";
+                        customer.UpdatedAt =
+                            DateTime.UtcNow;
+                    }
+                }
+            }
+            else if (user.Status != "active")
+            {
+                throw new InvalidOperationException(
+                    "This account is not available."
+                );
             }
 
             var code = GenerateAuthCode();
@@ -74,11 +103,13 @@ public class ExternalAuthService : IExternalAuthService
             {
                 Code = code,
                 UserId = user.Id,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(2),
+                ExpiresAt =
+                    DateTime.UtcNow.AddMinutes(2),
                 IsUsed = false
             };
 
-            _context.ExternalAuthCodes.Add(authCode);
+            _context.ExternalAuthCodes.Add(
+                authCode);
 
             await _context.SaveChangesAsync();
 
@@ -178,97 +209,162 @@ public class ExternalAuthService : IExternalAuthService
         };
     }
 
-    public async Task<SignInResponseDto?> ExchangeCodeAsync(
-        string code)
+    public async Task<SignInResponseDto>
+    ExchangeCodeAsync(string code)
     {
-        var authCode = await _context.ExternalAuthCodes
-            .Include(c => c.User)
-            .FirstOrDefaultAsync(c =>
-                c.Code == code);
+        var authCode =
+            await _context.ExternalAuthCodes
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(c =>
+                    c.Code == code);
 
         if (authCode == null)
-            return null;
+        {
+            throw new InvalidOperationException(
+                "Authorization code is invalid."
+            );
+        }
 
         if (authCode.IsUsed)
-            return null;
+        {
+            throw new InvalidOperationException(
+                "Authorization code has already been used."
+            );
+        }
 
         if (authCode.ExpiresAt <= DateTime.UtcNow)
-            return null;
+        {
+            throw new InvalidOperationException(
+                "Authorization code has expired."
+            );
+        }
 
         var user = authCode.User;
 
+        if (user.IsDeleted)
+        {
+            throw new InvalidOperationException(
+                "This account is not available."
+            );
+        }
+
         if (user.Status != "active")
-            return null;
+        {
+            throw new InvalidOperationException(
+                "This account is not active."
+            );
+        }
 
         authCode.IsUsed = true;
 
         await _context.SaveChangesAsync();
 
-        return _authService.CreateSignInResponse(user);
+        return _authService
+            .CreateSignInResponse(user);
     }
 
-    public async Task<SignInResponseDto?> VerifyAndLinkGoogleAsync(
-    string code,
-    string password)
+    public async Task<SignInResponseDto>
+    VerifyAndLinkGoogleAsync(
+        string code,
+        string password)
     {
-        var linkRequest = await _context.ExternalLinkRequests
-            .Include(r => r.User)
-            .FirstOrDefaultAsync(r =>
-                r.Code == code);
+        var linkRequest =
+            await _context.ExternalLinkRequests
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r =>
+                    r.Code == code);
 
         if (linkRequest == null)
-            return null;
+        {
+            throw new InvalidOperationException(
+                "Link request is invalid."
+            );
+        }
 
         if (linkRequest.IsUsed)
-            return null;
+        {
+            throw new InvalidOperationException(
+                "Link request has already been used."
+            );
+        }
 
         if (linkRequest.ExpiresAt <= DateTime.UtcNow)
-            return null;
+        {
+            throw new InvalidOperationException(
+                "Link request has expired."
+            );
+        }
 
         var user = linkRequest.User;
 
+        if (user.IsDeleted)
+        {
+            throw new InvalidOperationException(
+                "This account is not available."
+            );
+        }
+
         if (user.Status != "active")
-            return null;
+        {
+            throw new InvalidOperationException(
+                "This account is not active."
+            );
+        }
 
-        if (string.IsNullOrWhiteSpace(user.PasswordHash))
-            return null;
+        if (string.IsNullOrWhiteSpace(
+            user.PasswordHash))
+        {
+            throw new InvalidOperationException(
+                "Password verification is not available for this account."
+            );
+        }
 
-        // Verify the password of the existing PrimeKare account
-        var passwordResult = _passwordHasher.VerifyHashedPassword(
-            user,
-            user.PasswordHash,
-            password
-        );
+        var passwordResult =
+            _passwordHasher.VerifyHashedPassword(
+                user,
+                user.PasswordHash,
+                password
+            );
 
-        if (passwordResult == PasswordVerificationResult.Failed)
-            return null;
+        if (passwordResult ==
+            PasswordVerificationResult.Failed)
+        {
+            throw new InvalidOperationException(
+                "Password is incorrect."
+            );
+        }
 
-        // Make sure this Google account hasn't been linked
-        // to another PrimeKare account while this request was pending.
         var existingExternalLogin =
             await _context.ExternalLogins
                 .FirstOrDefaultAsync(e =>
-                    e.Provider == linkRequest.Provider &&
-                    e.ProviderUserId == linkRequest.ProviderUserId);
+                    e.Provider ==
+                        linkRequest.Provider &&
+                    e.ProviderUserId ==
+                        linkRequest.ProviderUserId);
 
         if (existingExternalLogin != null)
-            return null;
+        {
+            throw new ConflictException(
+                "This Google account is already linked to another account."
+            );
+        }
 
-        // Link Google to the existing PrimeKare account
         var externalLogin = new ExternalLogin
         {
             UserId = user.Id,
             Provider = linkRequest.Provider,
-            ProviderUserId = linkRequest.ProviderUserId
+            ProviderUserId =
+                linkRequest.ProviderUserId
         };
 
-        _context.ExternalLogins.Add(externalLogin);
+        _context.ExternalLogins.Add(
+            externalLogin);
 
-        // Prevent the same link request from being used again
         linkRequest.IsUsed = true;
 
         await _context.SaveChangesAsync();
 
-        return _authService.CreateSignInResponse(user);
+        return _authService
+            .CreateSignInResponse(user);
     }
 }

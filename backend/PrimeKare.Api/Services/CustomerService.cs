@@ -8,13 +8,18 @@ namespace PrimeKare.Api.Services;
 public class CustomerService : ICustomerService
 {
     private readonly AppDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public CustomerService(AppDbContext context)
+    public CustomerService(
+        AppDbContext context,
+        ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
-    public async Task<IEnumerable<CustomerDto>> GetCustomersAsync()
+    public async Task<IEnumerable<CustomerDto>>
+        GetCustomersAsync()
     {
         return await _context.Customers
             .Select(customer => new CustomerDto
@@ -30,14 +35,20 @@ public class CustomerService : ICustomerService
             .ToListAsync();
     }
 
-    public async Task<CustomerDto?> GetCustomerAsync(int id)
+    public async Task<CustomerDto>
+        GetCustomerAsync(int id)
     {
-        var customer = await _context.Customers
-            .FirstOrDefaultAsync(c => c.Id == id);
+        var customer =
+            await _context.Customers
+                .FirstOrDefaultAsync(
+                    c => c.Id == id
+                );
 
         if (customer == null)
         {
-            return null;
+            throw new KeyNotFoundException(
+                "Customer not found."
+            );
         }
 
         return new CustomerDto
@@ -52,14 +63,17 @@ public class CustomerService : ICustomerService
         };
     }
 
-    public async Task<CustomerDto> CreateCustomerAsync(
-        CreateCustomerDto dto)
+    public async Task<CustomerDto>
+        CreateCustomerAsync(
+            CreateCustomerDto dto)
     {
         var customer = new Customer
         {
-            Name = dto.Name,
-            Email = dto.Email,
-            Phone = dto.Phone,
+            Name = dto.Name.Trim(),
+            Email = dto.Email
+                .Trim()
+                .ToLowerInvariant(),
+            Phone = dto.Phone?.Trim(),
             Status = "active",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -74,50 +88,85 @@ public class CustomerService : ICustomerService
             Id = customer.Id,
             Name = customer.Name,
             Email = customer.Email,
-            Phone = customer.Phone,
+            Phone = customer.Phone ?? "",
             Status = customer.Status,
             CreatedAt = customer.CreatedAt,
             UpdatedAt = customer.UpdatedAt
         };
     }
 
-    public async Task<bool> UpdateCustomerAsync(
+    public async Task UpdateCustomerAsync(
         int id,
         UpdateCustomerDto dto)
     {
-        var customer = await _context.Customers
-            .FirstOrDefaultAsync(c => c.Id == id);
+        if (_currentUser.IsCustomer)
+        {
+            var customerId =
+                _currentUser.CustomerId;
+
+            if (!customerId.HasValue)
+            {
+                throw new InvalidOperationException(
+                    "Customer account is not properly configured."
+                );
+            }
+
+            if (customerId.Value != id)
+            {
+                throw new UnauthorizedAccessException();
+            }
+        }
+
+        var customer =
+            await _context.Customers
+                .FirstOrDefaultAsync(
+                    c => c.Id == id
+                );
 
         if (customer == null)
         {
-            return false;
+            throw new KeyNotFoundException(
+                "Customer not found."
+            );
         }
 
-        customer.Name = dto.Name;
-        customer.Email = dto.Email;
-        customer.Phone = dto.Phone;
+        customer.Name = dto.Name.Trim();
+        customer.Email = dto.Email
+            .Trim()
+            .ToLowerInvariant();
+        customer.Phone =
+            string.IsNullOrWhiteSpace(dto.Phone)
+                ? null
+                : dto.Phone.Trim();
+
         customer.Status = dto.Status;
-        customer.UpdatedAt = DateTime.UtcNow;
+
+        customer.UpdatedAt =
+            DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
-        return true;
     }
 
-    public async Task<bool> DeleteCustomerAsync(int id)
+    public async Task DeleteCustomerAsync(
+        int id)
     {
-        var customer = await _context.Customers
-            .FirstOrDefaultAsync(c => c.Id == id);
+        var customer =
+            await _context.Customers
+                .FirstOrDefaultAsync(
+                    c => c.Id == id
+                );
 
         if (customer == null)
         {
-            return false;
+            throw new KeyNotFoundException(
+                "Customer not found."
+            );
         }
 
-        _context.Customers.Remove(customer);
+        customer.Status = "inactive";
+        customer.UpdatedAt =
+            DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
-        return true;
     }
 }

@@ -21,6 +21,7 @@ public class ServiceService : IServiceService
     public async Task<List<ServiceDto>> GetServicesAsync()
     {
         return await _context.Services
+            .Where(service => service.IsActive && !service.IsDeleted)
             .Select(service => new ServiceDto
             {
                 Id = service.Id,
@@ -37,9 +38,9 @@ public class ServiceService : IServiceService
             .ToListAsync();
     }
 
-    public async Task<ServiceDto?> GetServiceAsync(int id)
+    public async Task<ServiceDto> GetServiceAsync(int id)
     {
-        return await _context.Services
+        var service = await _context.Services
             .Where(service => service.Id == id && service.IsActive && !service.IsDeleted)
             .Select(service => new ServiceDto
             {
@@ -55,11 +56,20 @@ public class ServiceService : IServiceService
                 UpdatedAt = service.UpdatedAt
             })
             .FirstOrDefaultAsync();
+
+        if (service == null)
+        {
+            throw new KeyNotFoundException(
+                "Service not found."
+            );
+        }
+
+        return service;
     }
 
-    public async Task<ServiceDto?> GetServiceBySlugAsync(string slug)
+    public async Task<ServiceDto> GetServiceBySlugAsync(string slug)
     {
-        return await _context.Services
+        var service = await _context.Services
             .Where(service => service.Slug == slug && service.IsActive && !service.IsDeleted)
             .Select(service => new ServiceDto
             {
@@ -75,6 +85,15 @@ public class ServiceService : IServiceService
                 UpdatedAt = service.UpdatedAt
             })
             .FirstOrDefaultAsync();
+
+        if (service == null)
+        {
+            throw new KeyNotFoundException(
+                "Service not found."
+            );
+        }
+
+        return service;
     }
 
     public async Task<ServiceDto> CreateServiceAsync(
@@ -127,16 +146,18 @@ public class ServiceService : IServiceService
         };
     }
 
-    public async Task<bool> UpdateServiceAsync(
+    public async Task UpdateServiceAsync(
         int id,
         UpdateServiceDto dto)
     {
         var service = await _context.Services
-            .FirstOrDefaultAsync(s => s.Id == id);
+            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
 
         if (service == null)
         {
-            return false;
+            throw new KeyNotFoundException(
+                "Service not found."
+            );
         }
 
         service.Name = dto.Name;
@@ -166,30 +187,24 @@ public class ServiceService : IServiceService
         }
 
         await _context.SaveChangesAsync();
-
-        return true;
     }
 
-    public async Task<bool> DeleteServiceAsync(int id)
+    public async Task DeleteServiceAsync(int id)
     {
         var service = await _context.Services
             .FirstOrDefaultAsync(s => s.Id == id);
 
         if (service == null)
         {
-            return false;
+            throw new KeyNotFoundException(
+                "Service not found."
+            );
         }
 
-        if (!string.IsNullOrWhiteSpace(service.ImageUrl))
-        {
-            await _azureBlobStorageService
-                .DeleteImageAsync(service.ImageUrl);
-        }
-
-        _context.Services.Remove(service);
+        service.IsDeleted = true;
+        service.IsActive = false;
+        service.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
-        return true;
     }
 }

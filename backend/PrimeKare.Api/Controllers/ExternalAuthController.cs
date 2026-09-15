@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using PrimeKare.Api.Services;
 using PrimeKare.Api.DTOs.Auth;
+using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -41,9 +42,14 @@ public class ExternalAuthController : ControllerBase
         var result = await HttpContext.AuthenticateAsync(
             GoogleDefaults.AuthenticationScheme);
 
-        if (!result.Succeeded || result.Principal == null)
+        if (!result.Succeeded ||
+            result.Principal == null)
         {
-            return Unauthorized();
+            return Unauthorized(new
+            {
+                message =
+                    "Google authentication failed."
+            });
         }
 
         try
@@ -68,56 +74,91 @@ public class ExternalAuthController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(ex.Message);
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Unauthorized(ex.Message);
+            return Unauthorized(new
+            {
+                message = ex.Message
+            });
         }
     }
 
     [HttpPost("exchange")]
     public async Task<IActionResult> ExchangeCode(
-        [FromBody] string code)
+    [FromBody] string code)
     {
         if (string.IsNullOrWhiteSpace(code))
-            return BadRequest(
-                "Authorization code is required.");
-
-        var response =
-            await _externalAuthService.ExchangeCodeAsync(code);
-
-        if (response == null)
         {
-            return Unauthorized(
-                "Invalid or expired authorization code.");
+            return BadRequest(new
+            {
+                message =
+                    "Authorization code is required."
+            });
         }
 
-        return Ok(response);
+        try
+        {
+            var response =
+                await _externalAuthService
+                    .ExchangeCodeAsync(code);
+
+            return Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
     [HttpPost("link/verify")]
-    public async Task<IActionResult> VerifyAndLinkGoogle(
-    [FromBody] VerifyExternalLinkDto request)
+    public async Task<IActionResult>
+    VerifyAndLinkGoogle(
+        [FromBody]
+        VerifyExternalLinkDto request)
     {
-        if (string.IsNullOrWhiteSpace(request.Code) ||
-            string.IsNullOrWhiteSpace(request.Password))
+        if (string.IsNullOrWhiteSpace(
+                request.Code) ||
+            string.IsNullOrWhiteSpace(
+                request.Password))
         {
-            return BadRequest(
-                "Authorization code and password are required.");
+            return BadRequest(new
+            {
+                message =
+                    "Authorization code and password are required."
+            });
         }
 
-        var response =
-            await _externalAuthService.VerifyAndLinkGoogleAsync(
-                request.Code,
-                request.Password);
-
-        if (response == null)
+        try
         {
-            return Unauthorized(
-                "Invalid authorization code or password.");
-        }
+            var response =
+                await _externalAuthService
+                    .VerifyAndLinkGoogleAsync(
+                        request.Code,
+                        request.Password);
 
-        return Ok(response);
+            return Ok(response);
+        }
+        catch (ConflictException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
     }
 }

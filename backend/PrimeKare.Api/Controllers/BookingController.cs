@@ -1,3 +1,4 @@
+using FirebaseAdmin.Messaging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrimeKare.Api.DTOs.Bookings;
@@ -31,18 +32,20 @@ public class BookingsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetBooking(int id)
     {
-        var booking = await _bookingService
+        try
+        {
+            var booking = await _bookingService
             .GetBookingAsync(id);
 
-        if (booking == null)
+            return Ok(booking);
+        }
+        catch(KeyNotFoundException ex)
         {
             return NotFound(new
             {
-                message = "Booking not found."
+                message = ex.Message
             });
         }
-
-        return Ok(booking);
     }
 
     [HttpPost]

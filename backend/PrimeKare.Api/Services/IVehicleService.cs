@@ -7,25 +7,25 @@ public interface IVehicleService
     Task<List<VehicleDto>> GetVehiclesAsync(
         int? customerId = null);
 
-    Task<VehicleDto?> GetVehicleAsync(
+    Task<VehicleDto> GetVehicleAsync(
         int id,
         int? customerId = null);
 
-    Task<VehicleDto?> CreateVehicleAsync(
+    Task<VehicleDto> CreateVehicleAsync(
         CreateVehicleDto dto,
         int customerId);
 
-    Task<bool> UpdateVehicleAsync(
+    Task UpdateVehicleAsync(
         int id,
         UpdateVehicleDto dto,
         int? customerId = null,
         bool isAdmin = false);
 
-    Task<bool> DeleteVehicleAsync(
+    Task DeleteVehicleAsync(
         int id,
         int? customerId = null,
         bool isAdmin = false);
 
-    Task<VehicleDto?> AdminCreateVehicleAsync(
+    Task<VehicleDto> AdminCreateVehicleAsync(
         AdminCreateVehicleDto dto);
 }

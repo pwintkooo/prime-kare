@@ -118,7 +118,7 @@ public class BookingService : IBookingService
             .ToListAsync();
     }
 
-    public async Task<BookingDto?> GetBookingAsync(int id)
+    public async Task<BookingDto> GetBookingAsync(int id)
     {
         var query = _context.Bookings
             .Where(b =>
@@ -131,40 +131,51 @@ public class BookingService : IBookingService
 
             if (!customerId.HasValue)
             {
-                return null;
+                throw new KeyNotFoundException(
+                "Customer account not found.");
             }
 
             query = query.Where(b =>
                 b.CustomerId == customerId.Value);
         }
 
-        return await query
-            .Select(b => new BookingDto
-            {
-                Id = b.Id,
+        var booking = await query
+        .Select(b => new BookingDto
+        {
+            Id = b.Id,
 
-                CustomerId = b.CustomerId,
-                CustomerName = b.Customer.Name,
+            CustomerId = b.CustomerId,
+            CustomerName = b.Customer.Name,
 
-                VehicleId = b.VehicleId,
-                VehiclePlateNumber = b.Vehicle.PlateNumber,
-                VehicleMake = b.Vehicle.Make,
-                VehicleModel = b.Vehicle.Model,
+            VehicleId = b.VehicleId,
+            VehiclePlateNumber =
+                b.Vehicle.PlateNumber,
+            VehicleMake = b.Vehicle.Make,
+            VehicleModel = b.Vehicle.Model,
 
-                ServiceId = b.ServiceId,
-                ServiceName = b.Service.Name,
+            ServiceId = b.ServiceId,
+            ServiceName = b.Service.Name,
 
-                BookingDate = b.BookingDate,
-                BookingTime = b.BookingTime,
+            BookingDate = b.BookingDate,
+            BookingTime = b.BookingTime,
 
-                Status = b.Status,
-                IsDeleted = b.IsDeleted,
-                Notes = b.Notes,
+            Status = b.Status,
+            IsDeleted = b.IsDeleted,
+            Notes = b.Notes,
 
-                CreatedAt = b.CreatedAt,
-                UpdatedAt = b.UpdatedAt
-            })
-            .FirstOrDefaultAsync();
+            CreatedAt = b.CreatedAt,
+            UpdatedAt = b.UpdatedAt
+        })
+        .FirstOrDefaultAsync();
+
+        if (booking == null)
+        {
+            throw new KeyNotFoundException(
+                "Booking not found."
+            );
+        }
+
+        return booking;
     }
 
     public async Task<BookingDto> CreateBookingAsync(

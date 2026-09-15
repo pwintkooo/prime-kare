@@ -32,9 +32,10 @@ public class VehiclesController : ControllerBase
 
         if (_currentUser.IsCustomer && customerId == null)
         {
-            return NotFound(new
+            return BadRequest(new
             {
-                message = "Customer account not found."
+                message =
+                    "Customer account is not properly configured."
             });
         }
 
@@ -44,71 +45,82 @@ public class VehiclesController : ControllerBase
         return vehicles;
     }
 
-    [Authorize(Roles = "Admin,Receptionist,Mechanic,Customer")]
-    [HttpGet("{id}")]
-    public async Task<ActionResult<VehicleDto>> GetVehicle(int id)
+    [Authorize(
+    Roles = "Admin,Receptionist,Mechanic,Customer")]
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<VehicleDto>>
+    GetVehicle(int id)
     {
-        var customerId = _currentUser.IsCustomer
-            ? _currentUser.CustomerId
-            : null;
+        var customerId =
+            _currentUser.IsCustomer
+                ? _currentUser.CustomerId
+                : null;
 
-        if (_currentUser.IsCustomer && customerId == null)
+        if (_currentUser.IsCustomer &&
+            customerId == null)
         {
-            return NotFound(new
-            {
-                message = "Customer account not found."
-            });
-        }
-
-        var vehicle = await _vehicleService
-            .GetVehicleAsync(id, customerId);
-
-        if (vehicle == null)
-        {
-            return NotFound(new
-            {
-                message = "Vehicle not found."
-            });
-        }
-
-        return vehicle;
-    }
-
-    [Authorize(Roles = "Customer")]
-    [HttpPost]
-    public async Task<ActionResult<VehicleDto>> CreateVehicle(
-        CreateVehicleDto dto)
-    {
-        var customerId = _currentUser.CustomerId;
-
-        if (customerId == null)
-        {
-            return Unauthorized(new
+            return BadRequest(new
             {
                 message =
-                    "Customer account is not associated with a customer."
+                    "Customer account is not properly configured."
             });
         }
 
         try
         {
-            var vehicle = await _vehicleService
-                .CreateVehicleAsync(
-                    dto,
-                    customerId.Value);
+            var vehicle =
+                await _vehicleService
+                    .GetVehicleAsync(
+                        id,
+                        customerId);
 
-            if (vehicle == null)
+            return Ok(vehicle);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
             {
-                return BadRequest(new
-                {
-                    message = "Customer does not exist."
-                });
-            }
+                message = ex.Message
+            });
+        }
+    }
+
+    [Authorize(Roles = "Customer")]
+    [HttpPost]
+    public async Task<ActionResult<VehicleDto>>
+    CreateVehicle(CreateVehicleDto dto)
+    {
+        var customerId =
+            _currentUser.CustomerId;
+
+        if (!customerId.HasValue)
+        {
+            return BadRequest(new
+            {
+                message =
+                    "Customer account is not properly configured."
+            });
+        }
+
+        try
+        {
+            var vehicle =
+                await _vehicleService
+                    .CreateVehicleAsync(
+                        dto,
+                        customerId.Value);
 
             return CreatedAtAction(
                 nameof(GetVehicle),
                 new { id = vehicle.Id },
                 vehicle);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
         }
         catch (ConflictException ex)
         {
@@ -119,40 +131,38 @@ public class VehiclesController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "Admin,Receptionist,Customer")]
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateVehicle(
+    [Authorize(
+    Roles = "Admin,Receptionist,Customer"
+)]
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult>
+    UpdateVehicle(
         int id,
         UpdateVehicleDto dto)
     {
-        var customerId = _currentUser.IsCustomer
-            ? _currentUser.CustomerId
-            : null;
+        var customerId =
+            _currentUser.IsCustomer
+                ? _currentUser.CustomerId
+                : null;
 
-        if (_currentUser.IsCustomer && customerId == null)
+        if (_currentUser.IsCustomer &&
+            customerId == null)
         {
-            return NotFound(new
+            return BadRequest(new
             {
-                message = "Customer account not found."
+                message =
+                    "Customer account is not properly configured."
             });
         }
 
         try
         {
-            var updated = await _vehicleService
+            await _vehicleService
                 .UpdateVehicleAsync(
                     id,
                     dto,
                     customerId,
                     _currentUser.IsAdmin);
-
-            if (!updated)
-            {
-                return BadRequest(new
-                {
-                    message = "Vehicle could not be updated."
-                });
-            }
 
             return NoContent();
         }
@@ -170,6 +180,13 @@ public class VehiclesController : ControllerBase
                 message = ex.Message
             });
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
         catch (ConflictException ex)
         {
             return Conflict(new
@@ -180,60 +197,74 @@ public class VehiclesController : ControllerBase
     }
 
     [Authorize(Roles = "Admin,Customer")]
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteVehicle(int id)
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult>
+    DeleteVehicle(int id)
     {
-        var customerId = _currentUser.IsCustomer
-            ? _currentUser.CustomerId
-            : null;
+        var customerId =
+            _currentUser.IsCustomer
+                ? _currentUser.CustomerId
+                : null;
 
-        if (_currentUser.IsCustomer && customerId == null)
+        if (_currentUser.IsCustomer &&
+            customerId == null)
         {
-            return NotFound(new
+            return BadRequest(new
             {
-                message = "Customer account not found."
+                message =
+                    "Customer account is not properly configured."
             });
         }
 
-        var deleted = await _vehicleService
-            .DeleteVehicleAsync(
-                id,
-                customerId,
-                _currentUser.IsAdmin);
+        try
+        {
+            await _vehicleService
+                .DeleteVehicleAsync(
+                    id,
+                    customerId,
+                    _currentUser.IsAdmin);
 
-        if (!deleted)
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
         {
             return NotFound(new
             {
-                message = "Vehicle not found."
+                message = ex.Message
             });
         }
-
-        return NoContent();
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new
+            {
+                message = ex.Message
+            });
+        }
     }
 
     [Authorize(Roles = "Admin,Receptionist")]
     [HttpPost("admin")]
-    public async Task<ActionResult<VehicleDto>> AdminCreateVehicle(
+    public async Task<ActionResult<VehicleDto>>
+    AdminCreateVehicle(
         AdminCreateVehicleDto dto)
     {
         try
         {
-            var vehicle = await _vehicleService
-                .AdminCreateVehicleAsync(dto);
-
-            if (vehicle == null)
-            {
-                return BadRequest(new
-                {
-                    message = "Customer does not exist."
-                });
-            }
+            var vehicle =
+                await _vehicleService
+                    .AdminCreateVehicleAsync(dto);
 
             return CreatedAtAction(
                 nameof(GetVehicle),
                 new { id = vehicle.Id },
                 vehicle);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
         }
         catch (ConflictException ex)
         {

@@ -29,29 +29,39 @@ public class ServicesController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ServiceDto>> GetService(int id)
     {
-        var service = await _serviceService
+        try
+        {
+            var service = await _serviceService
             .GetServiceAsync(id);
 
-        if (service == null)
-        {
-            return NotFound();
+            return service;
         }
-
-        return service;
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
     [HttpGet("{slug}")]
     public async Task<ActionResult<ServiceDto>> GetServiceBySlug(string slug)
     {
-        var service = await _serviceService
+        try
+        {
+            var service = await _serviceService
             .GetServiceBySlugAsync(slug);
 
-        if (service == null)
-        {
-            return NotFound();
+            return service;
         }
-
-        return service;
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
     [Authorize(Roles = "Admin")]
@@ -70,34 +80,46 @@ public class ServicesController : ControllerBase
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateService(
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult>
+    UpdateService(
         int id,
         [FromForm] UpdateServiceDto dto)
     {
-        var updated = await _serviceService
-            .UpdateServiceAsync(id, dto);
-
-        if (!updated)
+        try
         {
-            return NotFound();
-        }
+            await _serviceService
+                .UpdateServiceAsync(id, dto);
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteService(int id)
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult>
+    DeleteService(int id)
     {
-        var deleted = await _serviceService
-            .DeleteServiceAsync(id);
-
-        if (!deleted)
+        try
         {
-            return NotFound();
-        }
+            await _serviceService
+                .DeleteServiceAsync(id);
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
     }
 }

@@ -46,9 +46,9 @@ public class VehicleService : IVehicleService
             .ToListAsync();
     }
 
-    public async Task<VehicleDto?> GetVehicleAsync(
-        int id,
-        int? customerId = null)
+    public async Task<VehicleDto> GetVehicleAsync(
+    int id,
+    int? customerId = null)
     {
         var query = _context.Vehicles
             .Where(v => v.Id == id);
@@ -61,7 +61,7 @@ public class VehicleService : IVehicleService
                 !v.IsDeleted);
         }
 
-        return await query
+        var vehicle = await query
             .Select(v => new VehicleDto
             {
                 Id = v.Id,
@@ -70,14 +70,24 @@ public class VehicleService : IVehicleService
                 Model = v.Model,
                 Year = v.Year,
                 Status = v.Status,
+                IsDeleted = v.IsDeleted,
                 CustomerId = v.CustomerId,
                 CreatedAt = v.CreatedAt,
                 UpdatedAt = v.UpdatedAt
             })
             .FirstOrDefaultAsync();
+
+        if (vehicle == null)
+        {
+            throw new KeyNotFoundException(
+                "Vehicle not found."
+            );
+        }
+
+        return vehicle;
     }
 
-    public async Task<VehicleDto?> CreateVehicleAsync(
+    public async Task<VehicleDto> CreateVehicleAsync(
         CreateVehicleDto dto,
         int customerId)
     {
@@ -86,7 +96,9 @@ public class VehicleService : IVehicleService
 
         if (!customerExists)
         {
-            return null;
+            throw new KeyNotFoundException(
+                "Customer not found."
+            );
         }
 
         var plateNumber = dto.PlateNumber
@@ -130,18 +142,22 @@ public class VehicleService : IVehicleService
             Year = vehicle.Year,
             Status = vehicle.Status,
             IsDeleted = vehicle.IsDeleted,
-            CustomerId = vehicle.CustomerId
+            CustomerId = vehicle.CustomerId,
+            CreatedAt = vehicle.CreatedAt,
+            UpdatedAt = vehicle.UpdatedAt
         };
     }
 
-    public async Task<bool> UpdateVehicleAsync(
+    public async Task UpdateVehicleAsync(
     int id,
     UpdateVehicleDto dto,
     int? customerId = null,
     bool isAdmin = false)
     {
         var vehicle = await _context.Vehicles
-            .FirstOrDefaultAsync(v => v.Id == id);
+            .FirstOrDefaultAsync(v =>
+                v.Id == id &&
+                !v.IsDeleted);
 
         if (vehicle == null)
         {
@@ -190,45 +206,49 @@ public class VehicleService : IVehicleService
         vehicle.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
-        return true;
     }
 
-    public async Task<bool> DeleteVehicleAsync(
+    public async Task DeleteVehicleAsync(
         int id,
         int? customerId = null,
         bool isAdmin = false)
     {
         var vehicle = await _context.Vehicles
-            .FirstOrDefaultAsync(v => v.Id == id);
+            .FirstOrDefaultAsync(v =>
+                v.Id == id &&
+                !v.IsDeleted);
 
         if (vehicle == null)
         {
-            return false;
+            throw new KeyNotFoundException(
+                "Vehicle not found."
+            );
         }
 
         if (customerId.HasValue &&
-            vehicle.CustomerId != customerId.Value)
+        vehicle.CustomerId != customerId.Value)
         {
-            return false;
+            throw new UnauthorizedAccessException(
+                "You are not allowed to delete this vehicle."
+            );
         }
 
         if (isAdmin)
         {
-            _context.Vehicles.Remove(vehicle);
+            vehicle.IsDeleted = true;
+            vehicle.Status = "archived";
         }
         else
         {
             vehicle.Status = "archived";
-            vehicle.UpdatedAt = DateTime.UtcNow;
         }
 
-        await _context.SaveChangesAsync();
+        vehicle.UpdatedAt = DateTime.UtcNow;
 
-        return true;
+        await _context.SaveChangesAsync();
     }
 
-    public async Task<VehicleDto?> AdminCreateVehicleAsync(
+    public async Task<VehicleDto> AdminCreateVehicleAsync(
     AdminCreateVehicleDto dto)
     {
         var customerExists = await _context.Customers
@@ -236,7 +256,9 @@ public class VehicleService : IVehicleService
 
         if (!customerExists)
         {
-            return null;
+            throw new KeyNotFoundException(
+                "Customer not found."
+            );
         }
 
         var plateNumber = dto.PlateNumber
