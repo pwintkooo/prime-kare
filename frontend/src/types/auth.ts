@@ -37,3 +37,8 @@ export interface ExternalAuthResponse {
   token: string;
   user: User;
 }
+
+export interface ReactivateAccountRequest {
+  email: string;
+  password: string;
+}

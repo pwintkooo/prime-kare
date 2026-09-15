@@ -5,6 +5,7 @@ import {
   updateProfile,
   changeEmail,
   changePassword,
+  deleteAccount,
 } from "@/api/profile";
 
 export function useProfile() {
@@ -43,5 +44,11 @@ export function useChangeEmail() {
 export function useChangePassword() {
   return useMutation({
     mutationFn: changePassword,
+  });
+}
+
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: deleteAccount,
   });
 }

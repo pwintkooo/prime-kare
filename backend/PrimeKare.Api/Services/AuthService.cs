@@ -8,6 +8,7 @@ using PrimeKare.Api.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Services;
 
@@ -203,13 +204,6 @@ public class AuthService : IAuthService
             );
         }
 
-        if (user.Status != "active" || user.IsDeleted)
-        {
-            throw new InvalidOperationException(
-                "This account is not available for sign in."
-            );
-        }
-
         if (string.IsNullOrWhiteSpace(user.PasswordHash))
         {
             throw new InvalidOperationException(
@@ -232,6 +226,27 @@ public class AuthService : IAuthService
             );
         }
 
+        if (user.IsDeleted)
+        {
+            throw new InvalidOperationException(
+                "This account is not available."
+            );
+        }
+
+        if (user.Status == "inactive")
+        {
+            throw new AccountInactiveException(
+                "Your account is inactive."
+            );
+        }
+
+        if (user.Status != "active")
+        {
+            throw new InvalidOperationException(
+                "This account is not available."
+            );
+        }
+
         return CreateSignInResponse(user);
     }
 
@@ -241,7 +256,7 @@ public class AuthService : IAuthService
         var email = request.Email.Trim().ToLowerInvariant();
 
         var user = await _context.Users
-        .FirstOrDefaultAsync(u => 
+        .FirstOrDefaultAsync(u =>
         u.Email == email);
 
         if (user == null)
@@ -291,7 +306,7 @@ public class AuthService : IAuthService
         if (user.CustomerId != null)
         {
             var customer = await _context.Customers
-            .FirstOrDefaultAsync(c => 
+            .FirstOrDefaultAsync(c =>
             c.Id == user.CustomerId.Value);
 
             if (customer != null)

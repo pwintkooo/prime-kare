@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { ProfilePageSkeleton } from "@/components/skeletons/ProfilePageSkeleton";
 import { ChangeEmailDialog } from "@/components/profile/change-email-dialog";
 import { ChangePasswordDialog } from "@/components/profile/change-password-dialog";
+import { DeleteAccountDialog } from "@/components/profile/delete-account-dialog";
 
 export default function ProfilePage() {
   const { data: profile, isLoading, isError } = useProfile();
@@ -327,6 +328,32 @@ export default function ProfilePage() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+
+            <CardDescription>
+              Manage actions that affect access to your PrimeKare account.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-medium">Delete Account</p>
+
+                <p className="text-sm text-muted-foreground">
+                  Delete your account. You can reactivate it later by signing in
+                  again.
+                </p>
+              </div>
+
+              <DeleteAccountDialog />
+            </div>
           </CardContent>
         </Card>
       </div>

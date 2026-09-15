@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
 using PrimeKare.Api.DTOs.Auth;
 using PrimeKare.Api.Services;
+using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -74,6 +75,14 @@ public class AuthController : ControllerBase
             return BadRequest(new
             {
                 message = ex.Message
+            });
+        }
+        catch (AccountInactiveException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message,
+                code = "ACCOUNT_INACTIVE"
             });
         }
     }

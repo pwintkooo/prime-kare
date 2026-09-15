@@ -27,3 +27,7 @@ export async function changePassword(
 export async function changeEmail(request: ChangeEmailRequest): Promise<void> {
   await apiClient.patch("/api/profile/change-email", request);
 }
+
+export async function deleteAccount(): Promise<void> {
+  await apiClient.patch("/api/profile/delete-account");
+}

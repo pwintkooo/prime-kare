@@ -5,6 +5,7 @@ import {
   SignInRequest,
   SignInResponse,
   ExternalAuthResponse,
+  ReactivateAccountRequest,
 } from "@/types/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -57,6 +58,17 @@ export async function verifyAndLinkGoogle(
       code,
       password,
     },
+  );
+
+  return response.data;
+}
+
+export async function reactivateAccount(
+  request: ReactivateAccountRequest,
+): Promise<SignInResponse> {
+  const response = await apiClient.post<SignInResponse>(
+    "/api/auth/reactivate",
+    request,
   );
 
   return response.data;

@@ -4,22 +4,28 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SignIn } from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, SignInFormData } from "@/validations/auth";
-import { SignInWithGoogle } from "@/api/auth";
+import { SignIn, SignInWithGoogle } from "@/api/auth";
 import GuestOnly from "@/components/auth/GuestOnly";
+import { ApiError } from "@/api/apiError";
+import { ReactivateAccountDialog } from "@/components/auth/ReactivateAccountDialog";
 
 export default function SignInPage() {
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
   const [serverError, setServerError] = useState("");
 
+  const [reactivateOpen, setReactivateOpen] = useState(false);
+  const [reactivateCredentials, setReactivateCredentials] =
+    useState<SignInFormData | null>(null);
+
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -41,11 +47,31 @@ export default function SignInPage() {
       login(response.user, response.token);
       router.push("/");
     } catch (error) {
-      setServerError(
-        error instanceof Error ? error.message : "Something went wrong.",
-      );
+      if (error instanceof ApiError) {
+        const errorData = error.data as { code?: string } | undefined;
+
+        if (errorData?.code === "ACCOUNT_INACTIVE") {
+          setReactivateCredentials(data);
+          setReactivateOpen(true);
+          return;
+        }
+
+        setServerError(error.message);
+        return;
+      }
+
+      setServerError("Unable to sign in.");
     }
   };
+
+  function handleReactivateOpenChange(open: boolean) {
+    setReactivateOpen(open);
+
+    if (!open) {
+      setReactivateCredentials(null);
+      reset();
+    }
+  }
 
   return (
     <GuestOnly>
@@ -251,6 +277,14 @@ export default function SignInPage() {
           </div>
         </div>
       </main>
+      {reactivateCredentials && (
+        <ReactivateAccountDialog
+          open={reactivateOpen}
+          onOpenChange={handleReactivateOpenChange}
+          email={reactivateCredentials.email}
+          password={reactivateCredentials.password}
+        />
+      )}
     </GuestOnly>
   );
 }
