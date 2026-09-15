@@ -1,3 +1,4 @@
+import ConfirmPassword from "@/components/auth/ConfirmPassword";
 import { z } from "zod";
 
 export const updateProfileSchema = z.object({
@@ -56,10 +57,16 @@ export const changePasswordSchema = z
         /[^a-zA-Z0-9]/,
         "Password must contain at least one special character.",
       ),
+
+    confirmPassword: z.string().min(1, "Confirm password is required."),
   })
   .refine((data) => data.newPassword !== data.currentPassword, {
     message: "New password must be different from the current password.",
     path: ["newPassword"],
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
   });
 
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;

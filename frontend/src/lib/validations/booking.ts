@@ -1,9 +1,17 @@
 import { z } from "zod";
 
 export const createBookingSchema = z.object({
-  vehicleId: z.number().min(1, "Vehicle is required."),
+  vehicleId: z
+    .number({
+      error: "Please select a vehicle.",
+    })
+    .min(1, "Vehicle is required."),
 
-  serviceId: z.number().min(1, "Service is required."),
+  serviceId: z
+  .number({
+    error: "Please select a service."
+  })
+  .min(1, "Service is required."),
 
   bookingDate: z.string().min(1, "Date is required."),
 

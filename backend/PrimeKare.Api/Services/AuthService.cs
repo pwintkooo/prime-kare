@@ -199,7 +199,7 @@ public class AuthService : IAuthService
         if (user == null)
         {
             throw new KeyNotFoundException(
-                "Account not found."
+                "Invalid email or password."
             );
         }
 
@@ -228,7 +228,7 @@ public class AuthService : IAuthService
             PasswordVerificationResult.Failed)
         {
             throw new InvalidOperationException(
-                "Password is incorrect"
+                "Invalid email or password."
             );
         }
 

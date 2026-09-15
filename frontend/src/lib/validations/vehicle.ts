@@ -20,7 +20,9 @@ export const createVehicleSchema = z.object({
     .trim(),
 
   year: z
-    .number()
+    .number({
+      error: "Year is required."
+    })
     .int("Year must be a whole number.")
     .min(1900, "Please enter a valid year.")
     .max(new Date().getFullYear() + 1, "Please enter a valid year."),
@@ -48,7 +50,9 @@ export const updateVehicleSchema = z.object({
     .trim(),
 
   year: z
-    .number()
+    .number({
+      error: "Year is required."
+    })
     .int("Year must be a whole number.")
     .min(1900, "Please enter a valid year.")
     .max(new Date().getFullYear() + 1, "Please enter a valid year."),

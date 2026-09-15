@@ -16,8 +16,9 @@ export interface UpdateProfileRequest {
 }
 
 export interface ChangePasswordRequest {
-  newPassword: string;
   currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 export interface ChangeEmailRequest {

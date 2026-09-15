@@ -42,6 +42,7 @@ export function ChangePasswordDialog() {
     defaultValues: {
       currentPassword: "",
       newPassword: "",
+      confirmPassword: "",
     },
   });
 
@@ -52,6 +53,7 @@ export function ChangePasswordDialog() {
       await changePassword.mutateAsync({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword,
       });
 
       reset();
@@ -126,6 +128,23 @@ export function ChangePasswordDialog() {
               <p className="text-xs text-muted-foreground">
                 Minimum 8 characters, including uppercase, lowercase, number,
                 and special character.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+
+            <Input
+              id="confirmPassword"
+              type="password"
+              {...register("confirmPassword")}
+              aria-invalid={errors.confirmPassword ? "true" : "false"}
+            />
+
+            {errors.confirmPassword && (
+              <p className="text-sm text-destructive">
+                {errors.confirmPassword.message}
               </p>
             )}
           </div>
