@@ -12,6 +12,7 @@ import { SignIn, SignInWithGoogle } from "@/api/auth";
 import GuestOnly from "@/components/auth/GuestOnly";
 import { ApiError } from "@/api/apiError";
 import { ReactivateAccountDialog } from "@/components/auth/ReactivateAccountDialog";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export default function SignInPage() {
   const login = useAuthStore((state) => state.login);
@@ -182,13 +183,12 @@ export default function SignInPage() {
                     </Link>
                   </div>
 
-                  <input
+                  <PasswordInput
                     id="password"
-                    type="password"
                     autoComplete="current-password"
                     placeholder="Enter your password"
                     {...register("password")}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
+                    className="h-auto rounded-xl border-slate-700 bg-slate-900 px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus-visible:border-blue-400 focus-visible:ring-blue-400/20"
                   />
                 </div>
 
@@ -199,7 +199,7 @@ export default function SignInPage() {
                 )}
 
                 {/* Remember me */}
-                <div className="flex items-center gap-3">
+                {/* <div className="flex items-center gap-3">
                   <input
                     id="remember"
                     name="remember"
@@ -210,7 +210,7 @@ export default function SignInPage() {
                   <label htmlFor="remember" className="text-sm text-slate-400">
                     Remember me
                   </label>
-                </div>
+                </div> */}
 
                 {serverError && (
                   <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">

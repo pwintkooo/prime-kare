@@ -12,10 +12,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signUpSchema, SignUpFormData } from "@/validations/auth";
 import { SignInWithGoogle } from "@/api/auth";
 import GuestOnly from "@/components/auth/GuestOnly";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export default function SignUpPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState("");
+
   const {
     register,
     handleSubmit,
@@ -220,14 +222,13 @@ export default function SignUpPage() {
                     Password
                   </label>
 
-                  <input
+                  <PasswordInput
                     id="password"
-                    type="password"
                     autoComplete="new-password"
                     placeholder="Create a password"
                     {...register("password")}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                     required
+                    className="h-auto rounded-xl border-slate-700 bg-slate-900 px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus-visible:border-blue-400 focus-visible:ring-blue-400/20"
                   />
                 </div>
 
@@ -248,15 +249,15 @@ export default function SignUpPage() {
                     Confirm password
                   </label>
 
-                  <input
+                  <PasswordInput
                     id="confirmPassword"
-                    type="password"
                     autoComplete="new-password"
-                    placeholder="Confirm your password"
+                    placeholder="confirm your password"
                     {...register("confirmPassword")}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                     required
+                    className="h-auto rounded-xl border-slate-700 bg-slate-900 px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus-visible:border-blue-400 focus-visible:ring-blue-400/20"
                   />
+
                 </div>
 
                 <ConfirmPassword

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "../ui/password-input";
 
 export function ChangePasswordDialog() {
   const changePassword = useChangePassword();
@@ -96,11 +97,11 @@ export function ChangePasswordDialog() {
           <div className="space-y-2">
             <Label htmlFor="currentPassword">Current Password</Label>
 
-            <Input
+            <PasswordInput
               id="currentPassword"
-              type="password"
+              autoComplete="current-password"
+              placeholder="Enter your current password"
               {...register("currentPassword")}
-              aria-invalid={errors.currentPassword ? "true" : "false"}
             />
 
             {errors.currentPassword && (
@@ -113,11 +114,11 @@ export function ChangePasswordDialog() {
           <div className="space-y-2">
             <Label htmlFor="newPassword">New Password</Label>
 
-            <Input
+            <PasswordInput
               id="newPassword"
-              type="password"
+              autoComplete="new-password"
+              placeholder="Enter your new password"
               {...register("newPassword")}
-              aria-invalid={errors.newPassword ? "true" : "false"}
             />
 
             {errors.newPassword ? (
@@ -135,11 +136,11 @@ export function ChangePasswordDialog() {
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
 
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
+              autoComplete="new-password"
+              placeholder="Confirm your new password"
               {...register("confirmPassword")}
-              aria-invalid={errors.confirmPassword ? "true" : "false"}
             />
 
             {errors.confirmPassword && (
