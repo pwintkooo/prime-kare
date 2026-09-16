@@ -287,8 +287,8 @@ public class ProfileService : IProfileService
         }
 
         var emailExists = await _context.Users
-        .AnyAsync(u => 
-        u.Email == email && 
+        .AnyAsync(u =>
+        u.Email == email &&
         u.Id != userId);
 
         if (emailExists)
@@ -321,6 +321,8 @@ public class ProfileService : IProfileService
         var userId = GetCurrentUserId();
 
         var user = await _context.Users
+            .Include(u => u.Customer!)
+                .ThenInclude(c => c.Bookings)
             .FirstOrDefaultAsync(
                 u => u.Id == userId
             );
@@ -329,6 +331,26 @@ public class ProfileService : IProfileService
         {
             throw new KeyNotFoundException(
                 "User not found."
+            );
+        }
+
+        var hasConfirmedBookings = user.Customer!.Bookings
+        .Any(b => b.Status == "confirmed");
+
+        if (hasConfirmedBookings)
+        {
+            throw new InvalidOperationException(
+                "This account has confirmed bookings and cannot be deleted!"
+            );
+        }
+
+        var hasInProgressBookings = user.Customer!.Bookings
+        .Any(b => b.Status == "in-progress");
+
+        if (hasInProgressBookings)
+        {
+            throw new InvalidOperationException(
+                "This account has in progress bookings and cannot be deleted!"
             );
         }
 
@@ -365,7 +387,7 @@ public class ProfileService : IProfileService
             }
 
             var bookings = await _context.Bookings
-            .Where(b => 
+            .Where(b =>
             b.CustomerId == customerId &&
             (
                 b.Status == "pending" ||

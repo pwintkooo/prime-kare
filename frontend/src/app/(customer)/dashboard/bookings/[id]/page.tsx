@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { BookingDetailsSkeleton } from "@/components/skeletons/BookingDetailsSkeleton";
 import { formatBookingDate, formatBookingTime } from "@/utils/formatters";
+import { BookingStatusBadge } from "@/components/bookings/booking-status-badge";
 
 export default function BookingDetailsPage() {
   const params = useParams<{ id: string }>();
@@ -84,10 +85,8 @@ export default function BookingDetailsPage() {
               View the details and current status of your appointment.
             </p>
           </div>
-
-          <Badge variant="secondary" className="w-fit px-3 py-1 text-sm">
-            {booking.status}
-          </Badge>
+          
+          <BookingStatusBadge status={booking.status} />
         </div>
 
         <Separator />

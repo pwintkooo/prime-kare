@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
+import { Car, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -189,9 +191,23 @@ export default function BookAppointmentPage() {
             {!isLoadingVehicles &&
               !isVehiclesError &&
               vehicles?.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  No vehicles are currently available.
-                </p>
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed px-4 py-10 text-center">
+                  <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
+                    <Car className="size-6 text-muted-foreground" />
+                  </div>
+
+                  <h3 className="font-semibold">No vehicles added</h3>
+
+                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                    Add your vehicle before booking a service appointment.
+                  </p>
+
+                  <Button className="mt-5">
+                    <Link href="/vehicles/new">
+                      Add Vehicle
+                    </Link>
+                  </Button>
+                </div>
               )}
           </div>
 

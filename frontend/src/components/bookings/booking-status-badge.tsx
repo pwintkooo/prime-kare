@@ -20,7 +20,7 @@ const statusConfig: Record<
     label: "Confirmed",
     variant: "default",
   },
-  in_progress: {
+  "in-progress": {
     label: "In Progress",
     variant: "secondary",
   },
@@ -32,7 +32,7 @@ const statusConfig: Record<
     label: "Cancelled",
     variant: "destructive",
   },
-  no_show: {
+  "no-show": {
     label: "No Show",
     variant: "destructive",
   },

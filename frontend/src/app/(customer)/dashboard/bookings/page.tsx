@@ -8,11 +8,12 @@ import { Plus, CalendarDays, ArrowUpDown, ArrowDownUp } from "lucide-react";
 import { BookingCard } from "@/components/bookings/booking-card";
 import { BookingsDashboardSkeleton } from "@/components/skeletons/BookingsDashboardSkeleton";
 
-type BookingFilter = "all" | "upcoming" | "completed" | "cancelled";
+type BookingFilter = "all" | "upcoming" | "in-progress" | "completed" | "cancelled";
 
 const filterLabels: Record<BookingFilter, string> = {
   all: "bookings",
   upcoming: "upcoming bookings",
+  "in-progress": "in progress bookings",
   completed: "completed bookings",
   cancelled: "cancelled bookings",
 };
@@ -29,6 +30,10 @@ export default function BookingsPage() {
 
     if (filter === "upcoming") {
       return booking.status === "pending" || booking.status === "confirmed";
+    }
+
+    if (filter === "in-progress") {
+      return booking.status === "in-progress";
     }
 
     if (filter === "completed") {
@@ -94,6 +99,7 @@ export default function BookingsPage() {
           {[
             { value: "all", label: "All" },
             { value: "upcoming", label: "Upcoming" },
+            { value: "in-progress", label: "In Progress" },
             { value: "completed", label: "Completed" },
             { value: "cancelled", label: "Cancelled" },
           ].map((item) => (
