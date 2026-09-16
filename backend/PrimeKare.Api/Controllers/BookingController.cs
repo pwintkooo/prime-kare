@@ -39,7 +39,7 @@ public class BookingsController : ControllerBase
 
             return Ok(booking);
         }
-        catch(KeyNotFoundException ex)
+        catch (KeyNotFoundException ex)
         {
             return NotFound(new
             {
@@ -175,14 +175,16 @@ public class BookingsController : ControllerBase
     [HttpGet("availability")]
     public async Task<IActionResult> GetAvailability(
     [FromQuery] int serviceId,
-    [FromQuery] DateOnly date)
+    [FromQuery] DateOnly date,
+    [FromQuery] int? bookingId = null)
     {
         try
         {
             var availableTimes =
                 await _bookingService.GetAvailableTimesAsync(
                     serviceId,
-                    date);
+                    date,
+                    bookingId);
 
             return Ok(new BookingAvailabilityDto
             {

@@ -8,10 +8,10 @@ export const createBookingSchema = z.object({
     .min(1, "Vehicle is required."),
 
   serviceId: z
-  .number({
-    error: "Please select a service."
-  })
-  .min(1, "Service is required."),
+    .number({
+      error: "Please select a service.",
+    })
+    .min(1, "Service is required."),
 
   bookingDate: z.string().min(1, "Date is required."),
 
@@ -21,3 +21,25 @@ export const createBookingSchema = z.object({
 });
 
 export type CreateBookingFormData = z.infer<typeof createBookingSchema>;
+
+export const updateBookingSchema = z.object({
+  vehicleId: z
+    .number({
+      error: "Please select a vehicle.",
+    })
+    .min(1, "Vehicle is required."),
+
+  serviceId: z
+    .number({
+      error: "Please select a service.",
+    })
+    .min(1, "Service is required."),
+
+  bookingDate: z.string().min(1, "Please select a date."),
+
+  bookingTime: z.string().min(1, "Please select a time."),
+
+  notes: z.string().optional(),
+});
+
+export type UpdateBookingFormData = z.infer<typeof updateBookingSchema>;

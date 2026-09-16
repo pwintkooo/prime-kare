@@ -21,5 +21,6 @@ public interface IBookingService
 
     Task<List<string>> GetAvailableTimesAsync(
         int serviceId,
-        DateOnly date);
+        DateOnly date,
+        int? bookingId = null);
 }

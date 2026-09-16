@@ -23,3 +23,9 @@ export function formatBookingTime(time: string): string {
     hour12: true,
   });
 }
+
+export function formatTimeValue(time: string): string {
+  const [hour, minute] = time.split(":");
+
+  return `${hour.padStart(2, "0")}:${minute}`;
+}

@@ -41,7 +41,7 @@ export default function BookingsPage() {
     }
 
     if (filter === "cancelled") {
-      return booking.status === "cancelled" || booking.status === "no_show";
+      return booking.status === "cancelled" || booking.status === "no-show";
     }
 
     return true;

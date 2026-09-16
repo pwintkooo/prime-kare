@@ -44,6 +44,7 @@ export async function updateBookingStatus(
 export async function getBookingAvailability(
   serviceId: number,
   date: string,
+  bookingId?: number,
 ): Promise<BookingAvailability> {
   const response = await apiClient.get<BookingAvailability>(
     "/api/bookings/availability",
@@ -51,6 +52,7 @@ export async function getBookingAvailability(
       params: {
         serviceId,
         date,
+        bookingId,
       },
     },
   );

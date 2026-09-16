@@ -48,7 +48,7 @@ public class BookingService : IBookingService
                 (
                     b.Status == "pending" ||
                     b.Status == "confirmed" ||
-                    b.Status == "in_progress"
+                    b.Status == "in-progress"
                 ) &&
                 (excludeBookingId == null ||
                  b.Id != excludeBookingId))
@@ -433,6 +433,22 @@ public class BookingService : IBookingService
                 throw new InvalidOperationException(
                     "Customers can only cancel bookings.");
             }
+
+            if (currentStatus == "confirmed")
+            {
+                var bookingDateTime =
+                    booking.BookingDate.ToDateTime(
+                        TimeOnly.FromTimeSpan(booking.BookingTime));
+
+                var cancellationDeadline =
+                    bookingDateTime.AddHours(-2);
+
+                if (DateTime.Now >= cancellationDeadline)
+                {
+                    throw new InvalidOperationException(
+                        "Confirmed bookings must be cancelled at least 2 hours before the appointment.");
+                }
+            }
         }
         else if (_currentUser.IsReceptionist)
         {
@@ -456,7 +472,7 @@ public class BookingService : IBookingService
         }
         else if (_currentUser.IsMechanic)
         {
-            if (currentStatus != "in_progress" ||
+            if (currentStatus != "in-progress" ||
                 newStatus != "completed")
             {
                 throw new InvalidOperationException(
@@ -469,10 +485,10 @@ public class BookingService : IBookingService
             {
                 "pending",
                 "confirmed",
-                "in_progress",
+                "in-progress",
                 "completed",
                 "cancelled",
-                "no_show"
+                "no-show"
             };
 
             if (!allowedStatuses.Contains(newStatus))
@@ -497,7 +513,8 @@ public class BookingService : IBookingService
 
     public async Task<List<string>> GetAvailableTimesAsync(
         int serviceId,
-        DateOnly date)
+        DateOnly date,
+        int? bookingId = null)
     {
         var service = await _context.Services
             .FirstOrDefaultAsync(s =>
@@ -520,10 +537,11 @@ public class BookingService : IBookingService
             .Where(b =>
                 b.BookingDate == date &&
                 !b.IsDeleted &&
+                b.Id != bookingId &&
                 (
                     b.Status == "pending" ||
                     b.Status == "confirmed" ||
-                    b.Status == "in_progress"
+                    b.Status == "in-progress"
                 ))
             .Select(b => new
             {

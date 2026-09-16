@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import {
   AlertCircle,
@@ -13,19 +14,49 @@ import {
 
 import { useBooking } from "@/hooks/use-bookings";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { BookingDetailsSkeleton } from "@/components/skeletons/BookingDetailsSkeleton";
 import { formatBookingDate, formatBookingTime } from "@/utils/formatters";
 import { BookingStatusBadge } from "@/components/bookings/booking-status-badge";
+import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
 
 export default function BookingDetailsPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
 
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+
   const { data: booking, isLoading, isError, refetch } = useBooking(id);
+
+  const canEdit = booking?.status === "pending";
+
+  const canCancelBooking = () => {
+    if (!booking) {
+      return false;
+    }
+
+    if (booking.status === "pending") {
+      return true;
+    }
+
+    if (booking.status === "confirmed") {
+      const bookingDateTime = new Date(
+        `${booking.bookingDate}T${booking.bookingTime}`,
+      );
+
+      const cancellationDeadline = new Date(
+        bookingDateTime.getTime() - 2 * 60 * 60 * 1000,
+      );
+
+      return new Date() < cancellationDeadline;
+    }
+
+    return false;
+  };
+
+  const canCancel = canCancelBooking();
 
   if (isLoading) {
     return <BookingDetailsSkeleton />;
@@ -85,8 +116,24 @@ export default function BookingDetailsPage() {
               View the details and current status of your appointment.
             </p>
           </div>
-          
+
           <BookingStatusBadge status={booking.status} />
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button variant="outline" disabled={!canEdit}>
+            <Link href={`/dashboard/bookings/${booking.id}/edit`}>
+              Edit Booking
+            </Link>
+          </Button>
+
+          <Button
+            variant="destructive"
+            disabled={!canCancel}
+            onClick={() => setCancelDialogOpen(true)}
+          >
+            Cancel Booking
+          </Button>
         </div>
 
         <Separator />
@@ -140,7 +187,24 @@ export default function BookingDetailsPage() {
             </CardContent>
           </Card>
         </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Notes</CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+              {booking.notes || "No notes provided."}
+            </p>
+          </CardContent>
+        </Card>
       </div>
+
+      <CancelBookingDialog
+        bookingId={booking.id}
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+      />
     </main>
   );
 }
