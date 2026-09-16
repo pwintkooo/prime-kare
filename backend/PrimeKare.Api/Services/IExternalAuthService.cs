@@ -15,4 +15,8 @@ public interface IExternalAuthService
         string code,
         string password
     );
+
+    Task<SignInResponseDto> ReactivateAccountAsync(
+    string code
+);
 }

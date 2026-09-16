@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { exchangeExternalAuthCode } from "@/api/auth";
+import {
+  exchangeExternalAuthCode,
+  reactivateExternalAccount,
+} from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
+import { ApiError } from "@/api/apiError";
+import { Button } from "@/components/ui/button";
 
 export default function GoogleCallbackPage() {
   const router = useRouter();
@@ -13,6 +18,10 @@ export default function GoogleCallbackPage() {
 
   const code = searchParams.get("code");
   const type = searchParams.get("type");
+
+  const [isReactivating, setIsReactivating] = useState(false);
+
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!code || !type) {
@@ -42,6 +51,32 @@ export default function GoogleCallbackPage() {
     }
   }, [code, type, login, router]);
 
+  const handleReactivate = async () => {
+    if (!code) {
+      return;
+    }
+
+    setError("");
+    setIsReactivating(true);
+
+    try {
+      const response = await reactivateExternalAccount(code);
+
+      login(response.user, response.token);
+
+      router.replace("/");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setError(error.message);
+        return;
+      }
+
+      setError("Unable to reactivate your account.");
+    } finally {
+      setIsReactivating(false);
+    }
+  };
+
   if (!code || !type) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -56,7 +91,7 @@ export default function GoogleCallbackPage() {
     );
   }
 
-  if (type !== "login" && type !== "link") {
+  if (type !== "login" && type !== "link" && type !== "reactivate") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -65,6 +100,42 @@ export default function GoogleCallbackPage() {
           <p className="mt-2 text-muted-foreground">
             Invalid authentication request.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "reactivate") {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-6">
+        <div className="w-full max-w-md text-center">
+          <h1 className="text-2xl font-semibold">Reactivate your account?</h1>
+
+          <p className="mt-3 text-muted-foreground">
+            Your PrimeKare account is currently inactive. Would you like to
+            reactivate your account and regain access?
+          </p>
+
+          {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+
+          <div className="mt-6 flex justify-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isReactivating}
+              onClick={() => router.replace("/sign-in")}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="button"
+              disabled={isReactivating}
+              onClick={handleReactivate}
+            >
+              {isReactivating ? "Reactivating..." : "Reactivate Account"}
+            </Button>
+          </div>
         </div>
       </div>
     );

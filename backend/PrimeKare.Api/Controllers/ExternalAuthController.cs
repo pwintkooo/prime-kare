@@ -161,4 +161,34 @@ public class ExternalAuthController : ControllerBase
             });
         }
     }
+
+    [HttpPost("reactivate")]
+    public async Task<ActionResult<SignInResponseDto>>
+    ReactivateAccount(
+        ReactivateExternalAccountDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Code))
+        {
+            return BadRequest(new
+            {
+                message = "Authorization code is required."
+            });
+        }
+
+        try
+        {
+            var response =
+                await _externalAuthService
+                    .ReactivateAccountAsync(request.Code);
+
+            return Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
+    }
 }

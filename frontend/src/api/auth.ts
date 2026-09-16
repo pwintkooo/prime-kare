@@ -73,3 +73,14 @@ export async function reactivateAccount(
 
   return response.data;
 }
+
+export async function reactivateExternalAccount(
+  code: string,
+): Promise<SignInResponse> {
+  const response = await apiClient.post<SignInResponse>(
+    "/api/external-auth/reactivate",
+    { code },
+  );
+
+  return response.data;
+}

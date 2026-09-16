@@ -72,36 +72,40 @@ public class ExternalAuthService : IExternalAuthService
 
             if (user.Status == "inactive")
             {
-                user.Status = "active";
-                user.UpdatedAt = DateTime.UtcNow;
+                var code = GenerateAuthCode();
 
-                if (user.CustomerId.HasValue)
+                var authCode = new ExternalAuthCode
                 {
-                    var customer =
-                        await _context.Customers
-                            .FirstOrDefaultAsync(c =>
-                                c.Id == user.CustomerId.Value);
+                    Code = code,
+                    UserId = user.Id,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(2),
+                    IsUsed = false
+                };
 
-                    if (customer != null)
-                    {
-                        customer.Status = "active";
-                        customer.UpdatedAt =
-                            DateTime.UtcNow;
-                    }
-                }
+                _context.ExternalAuthCodes.Add(
+                authCode);
+
+                await _context.SaveChangesAsync();
+
+                return new ExternalAuthResult
+                {
+                    Code = code,
+                    Type = "reactivate"
+                };
             }
-            else if (user.Status != "active")
+
+            if (user.Status != "active")
             {
                 throw new InvalidOperationException(
                     "This account is not available."
                 );
             }
 
-            var code = GenerateAuthCode();
+            var loginCode = GenerateAuthCode();
 
-            var authCode = new ExternalAuthCode
+            var loginAuthCode = new ExternalAuthCode
             {
-                Code = code,
+                Code = loginCode,
                 UserId = user.Id,
                 ExpiresAt =
                     DateTime.UtcNow.AddMinutes(2),
@@ -109,13 +113,13 @@ public class ExternalAuthService : IExternalAuthService
             };
 
             _context.ExternalAuthCodes.Add(
-                authCode);
+                loginAuthCode);
 
             await _context.SaveChangesAsync();
 
             return new ExternalAuthResult
             {
-                Code = code,
+                Code = loginCode,
                 Type = "login"
             };
         }
@@ -366,5 +370,73 @@ public class ExternalAuthService : IExternalAuthService
 
         return _authService
             .CreateSignInResponse(user);
+    }
+
+    public async Task<SignInResponseDto>
+    ReactivateAccountAsync(string code)
+    {
+        var authCode = await _context.ExternalAuthCodes
+            .Include(a => a.User)
+            .FirstOrDefaultAsync(a => a.Code == code);
+
+        if (authCode == null)
+        {
+            throw new InvalidOperationException(
+                "Authorization code is invalid."
+            );
+        }
+
+        if (authCode.IsUsed)
+        {
+            throw new InvalidOperationException(
+                "Authorization code has already been used."
+            );
+        }
+
+        if (authCode.ExpiresAt < DateTime.UtcNow)
+        {
+            throw new InvalidOperationException(
+                "Authorization code has expired."
+            );
+        }
+
+        var user = authCode.User;
+
+        if (user.IsDeleted)
+        {
+            throw new InvalidOperationException(
+                "This account cannot be reactivated."
+            );
+        }
+
+        if (user.Status != "inactive")
+        {
+            throw new InvalidOperationException(
+                "This account is not available for reactivation."
+            );
+        }
+
+        user.Status = "active";
+        user.UpdatedAt = DateTime.UtcNow;
+
+        if (user.CustomerId.HasValue)
+        {
+            var customer = await _context.Customers
+                .FirstOrDefaultAsync(c =>
+                    c.Id == user.CustomerId.Value
+                );
+
+            if (customer != null)
+            {
+                customer.Status = "active";
+                customer.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        authCode.IsUsed = true;
+
+        await _context.SaveChangesAsync();
+
+        return _authService.CreateSignInResponse(user);
     }
 }
