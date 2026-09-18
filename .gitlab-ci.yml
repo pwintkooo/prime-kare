@@ -16,7 +16,7 @@ backend_build:
   image: mcr.microsoft.com/dotnet/sdk:10.0
 
   script:
-    - cd backend/PrimeKare.Api
+    - cd backend
     - dotnet restore
     - dotnet build --no-restore
 
@@ -25,10 +25,8 @@ backend_test:
   image: mcr.microsoft.com/dotnet/sdk:10.0
   variables:
     UseInMemoryDatabase: "true"
-    Jwt__Key: $JWT_KEY
-    Firebase__CredentialPath: $FIREBASE_SERVICE_ACCOUNT
 
   script:
     - test -f "$FIREBASE_SERVICE_ACCOUNT"
-    - cd backend/PrimeKare.Api.Tests
+    - cd backend
     - dotnet test

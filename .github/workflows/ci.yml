@@ -43,11 +43,11 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        working-directory: backend/PrimeKare.Api
+        working-directory: backend
         run: dotnet restore
 
       - name: Build
-        working-directory: backend/PrimeKare.Api
+        working-directory: backend
         run: dotnet build --no-restore
 
   backend_test:
@@ -66,14 +66,16 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Create Firebase credentials
-        working-directory: backend/PrimeKare.Api
+        working-directory: backend
         run: |
           echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > firebase-service-account.json
 
       - name: Run backend tests
-        working-directory: backend/PrimeKare.Api.Tests
+        working-directory: backend
         env:
           UseInMemoryDatabase: "true"
           Jwt__Key: ${{ secrets.JWT_KEY }}
-          Firebase__CredentialPath: ../PrimeKare.Api/firebase-service-account.json
+          Firebase__CredentialPath: firebase-service-account.json
+          Authentication__Google__ClientId: ${{ secrets.GOOGLE_CLIENT_ID }}
+          Authentication__Google__ClientSecret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: dotnet test

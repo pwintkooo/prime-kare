@@ -24,14 +24,6 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
         // var content = await response.Content.ReadAsStringAsync();
 
         // Assert.Contains("healthy", content);
-        // Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var content =
-        await response.Content.ReadAsStringAsync();
-
-        Assert.True(
-            response.IsSuccessStatusCode,
-            $"Expected 2xx but received {(int)response.StatusCode} " +
-            $"{response.StatusCode}. Response body: {content}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }
