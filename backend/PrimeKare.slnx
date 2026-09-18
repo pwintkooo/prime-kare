@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="PrimeKare.Api.Tests/PrimeKare.Api.Tests.csproj" />
+  <Project Path="PrimeKare.Api/PrimeKare.Api.csproj" />
+</Solution>

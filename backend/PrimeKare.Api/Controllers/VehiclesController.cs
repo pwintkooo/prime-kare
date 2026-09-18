@@ -131,9 +131,7 @@ public class VehiclesController : ControllerBase
         }
     }
 
-    [Authorize(
-    Roles = "Admin,Receptionist,Customer"
-)]
+    [Authorize(Roles = "Admin,Receptionist,Customer")]
     [HttpPut("{id:int}")]
     public async Task<IActionResult>
     UpdateVehicle(

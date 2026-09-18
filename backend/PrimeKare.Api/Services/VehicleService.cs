@@ -18,15 +18,13 @@ public class VehicleService : IVehicleService
     public async Task<List<VehicleDto>> GetVehiclesAsync(
         int? customerId = null)
     {
-        var query = _context.Vehicles
-            .AsQueryable();
+        var query = _context.Vehicles.Where(v => !v.IsDeleted);
 
         if (customerId.HasValue)
         {
             query = query.Where(v =>
                 v.CustomerId == customerId.Value &&
-                v.Status == "active" &&
-                !v.IsDeleted);
+                v.Status == "active");
         }
 
         return await query
@@ -51,14 +49,13 @@ public class VehicleService : IVehicleService
     int? customerId = null)
     {
         var query = _context.Vehicles
-            .Where(v => v.Id == id);
+            .Where(v => v.Id == id && !v.IsDeleted);
 
         if (customerId.HasValue)
         {
             query = query.Where(v =>
                 v.CustomerId == customerId.Value &&
-                v.Status == "active" &&
-                !v.IsDeleted);
+                v.Status == "active");
         }
 
         var vehicle = await query
@@ -105,13 +102,13 @@ public class VehicleService : IVehicleService
             .Trim()
             .ToUpperInvariant();
 
-        var exists = await _context.Vehicles
+        var plateNumberExists = await _context.Vehicles
             .AnyAsync(v =>
                 v.PlateNumber == plateNumber &&
                 !v.IsDeleted &&
                 v.Status == "active");
 
-        if (exists)
+        if (plateNumberExists)
         {
             throw new ConflictException(
                 "A vehicle with this plate number already exists.");
