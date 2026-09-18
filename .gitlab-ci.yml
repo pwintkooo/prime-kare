@@ -27,6 +27,6 @@ backend_test:
     UseInMemoryDatabase: "true"
 
   script:
-    - test -f "$FIREBASE_SERVICE_ACCOUNT"
+    - test -f "$Firebase__CredentialPath"
     - cd backend
     - dotnet test
