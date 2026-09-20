@@ -67,6 +67,7 @@ export default function ServiceDetailsPage() {
                 <Image
                   src={service.imageUrl}
                   alt={service.name}
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   fill
                   priority
                   className="object-cover"

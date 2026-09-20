@@ -5,7 +5,7 @@ using Azure.Storage.Blobs.Models;
 namespace PrimeKare.Api.Services;
 
 public class AzureBlobStorageService
-    : IAzureBlobStorageService
+    : IImageStorageService
 {
     private readonly BlobContainerClient _containerClient;
     private readonly string _accountName;

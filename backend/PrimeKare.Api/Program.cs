@@ -76,8 +76,8 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
-//builder.Services.AddScoped<IFirebaseStorageService, FirebaseStorageService>();
-builder.Services.AddScoped<IAzureBlobStorageService, AzureBlobStorageService>();
+//builder.Services.AddScoped<IImageStorageService, FirebaseStorageService>();
+builder.Services.AddScoped<IImageStorageService, AzureBlobStorageService>();
 builder.Services.AddScoped<IExternalAuthService, ExternalAuthService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 

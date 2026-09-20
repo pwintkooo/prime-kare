@@ -8,14 +8,14 @@ namespace PrimeKare.Api.Services;
 public class ServiceService : IServiceService
 {
     private readonly AppDbContext _context;
-    private readonly IAzureBlobStorageService _azureBlobStorageService;
+    private readonly IImageStorageService _imageStorageService;
 
     public ServiceService(
         AppDbContext context,
-        IAzureBlobStorageService azureBlobStorageService)
+        IImageStorageService imageStorageService)
     {
         _context = context;
-        _azureBlobStorageService = azureBlobStorageService;
+        _imageStorageService = imageStorageService;
     }
 
     public async Task<List<ServiceDto>> GetServicesAsync()
@@ -97,9 +97,8 @@ public class ServiceService : IServiceService
     }
 
     public async Task<ServiceDto> CreateServiceAsync(
-        CreateServiceDto dto)
+    CreateServiceDto dto)
     {
-
         string? imageUrl = null;
 
         if (dto.Image != null)
@@ -107,7 +106,7 @@ public class ServiceService : IServiceService
             await using var stream =
                 dto.Image.OpenReadStream();
 
-            imageUrl = await _azureBlobStorageService
+            imageUrl = await _imageStorageService
                 .UploadImageAsync(
                     stream,
                     dto.Image.FileName,
@@ -146,18 +145,69 @@ public class ServiceService : IServiceService
         };
     }
 
+    // public async Task<ServiceDto> CreateServiceAsync(
+    //     CreateServiceDto dto)
+    // {
+
+    //     string? imageUrl = null;
+
+    //     if (dto.Image != null)
+    //     {
+    //         await using var stream =
+    //             dto.Image.OpenReadStream();
+
+    //         imageUrl = await _azureBlobStorageService
+    //             .UploadImageAsync(
+    //                 stream,
+    //                 dto.Image.FileName,
+    //                 dto.Image.ContentType);
+    //     }
+
+    //     var service = new Service
+    //     {
+    //         Name = dto.Name,
+    //         Slug = dto.Slug,
+    //         Description = dto.Description,
+    //         Price = dto.Price,
+    //         EstimatedMinutes = dto.EstimatedMinutes,
+    //         IsActive = dto.IsActive,
+    //         ImageUrl = imageUrl,
+    //         CreatedAt = DateTime.UtcNow,
+    //         UpdatedAt = DateTime.UtcNow
+    //     };
+
+    //     _context.Services.Add(service);
+
+    //     await _context.SaveChangesAsync();
+
+    //     return new ServiceDto
+    //     {
+    //         Id = service.Id,
+    //         Name = service.Name,
+    //         Slug = service.Slug,
+    //         Description = service.Description,
+    //         Price = service.Price,
+    //         EstimatedMinutes = service.EstimatedMinutes,
+    //         IsActive = service.IsActive,
+    //         ImageUrl = service.ImageUrl,
+    //         CreatedAt = service.CreatedAt,
+    //         UpdatedAt = service.UpdatedAt
+    //     };
+    // }
+
     public async Task UpdateServiceAsync(
-        int id,
-        UpdateServiceDto dto)
+    int id,
+    UpdateServiceDto dto)
     {
         var service = await _context.Services
-            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+            .FirstOrDefaultAsync(s =>
+                s.Id == id &&
+                !s.IsDeleted);
 
         if (service == null)
         {
             throw new KeyNotFoundException(
-                "Service not found."
-            );
+                "Service not found.");
         }
 
         service.Name = dto.Name;
@@ -172,7 +222,7 @@ public class ServiceService : IServiceService
         {
             if (!string.IsNullOrWhiteSpace(service.ImageUrl))
             {
-                await _azureBlobStorageService
+                await _imageStorageService
                     .DeleteImageAsync(service.ImageUrl);
             }
 
@@ -180,14 +230,58 @@ public class ServiceService : IServiceService
                 dto.Image.OpenReadStream();
 
             service.ImageUrl =
-                await _azureBlobStorageService.UploadImageAsync(
-                    stream,
-                    dto.Image.FileName,
-                    dto.Image.ContentType);
+                await _imageStorageService
+                    .UploadImageAsync(
+                        stream,
+                        dto.Image.FileName,
+                        dto.Image.ContentType);
         }
 
         await _context.SaveChangesAsync();
     }
+
+    // public async Task UpdateServiceAsync(
+    //     int id,
+    //     UpdateServiceDto dto)
+    // {
+    //     var service = await _context.Services
+    //         .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+
+    //     if (service == null)
+    //     {
+    //         throw new KeyNotFoundException(
+    //             "Service not found."
+    //         );
+    //     }
+
+    //     service.Name = dto.Name;
+    //     service.Slug = dto.Slug;
+    //     service.Description = dto.Description;
+    //     service.Price = dto.Price;
+    //     service.EstimatedMinutes = dto.EstimatedMinutes;
+    //     service.IsActive = dto.IsActive;
+    //     service.UpdatedAt = DateTime.UtcNow;
+
+    //     if (dto.Image != null)
+    //     {
+    //         if (!string.IsNullOrWhiteSpace(service.ImageUrl))
+    //         {
+    //             await _azureBlobStorageService
+    //                 .DeleteImageAsync(service.ImageUrl);
+    //         }
+
+    //         await using var stream =
+    //             dto.Image.OpenReadStream();
+
+    //         service.ImageUrl =
+    //             await _azureBlobStorageService.UploadImageAsync(
+    //                 stream,
+    //                 dto.Image.FileName,
+    //                 dto.Image.ContentType);
+    //     }
+
+    //     await _context.SaveChangesAsync();
+    // }
 
     public async Task DeleteServiceAsync(int id)
     {
