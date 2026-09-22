@@ -9,6 +9,7 @@ using System.Text;
 using PrimeKare.Api.Models;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.Services;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,6 +81,8 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IImageStorageService, AzureBlobStorageService>();
 builder.Services.AddScoped<IExternalAuthService, ExternalAuthService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddScoped<IEmailService, ResendEmailService>();
 
 //register IPasswordHasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -143,6 +146,15 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+
+//register Resend
+builder.Services.AddResend(options =>
+{
+    options.ApiToken =
+        builder.Configuration["Resend:ApiKey"]
+        ?? throw new InvalidOperationException(
+            "Resend API key is not configured.");
+});
 
 var app = builder.Build();
 

@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, MapPin, Phone } from "lucide-react";
+import { useServices } from "@/hooks/use-services";
 
 const quickLinks = [
   { label: "Home", href: "/" },
@@ -9,14 +12,9 @@ const quickLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
-const services = [
-  { label: "Oil Change", href: "/services/oil-change" },
-  { label: "Brake Service", href: "/services/brake-service" },
-  { label: "Engine Diagnostics", href: "/services/engine-diagnostics" },
-  { label: "Tyre Service", href: "/services/tyre-service" },
-];
-
 export default function Footer() {
+  const { data: services = [], isLoading } = useServices();
+
   return (
     <footer className="border-t bg-slate-950 text-slate-300">
       <div className="mx-auto max-w-7xl px-6 py-16">
@@ -85,16 +83,26 @@ export default function Footer() {
             <h3 className="font-semibold text-white">Our Services</h3>
 
             <ul className="mt-5 space-y-3">
-              {services.map((service) => (
-                <li key={service.label}>
-                  <Link
-                    href={service.href}
-                    className="text-sm transition hover:text-white"
-                  >
-                    {service.label}
-                  </Link>
-                </li>
-              ))}
+              {isLoading ? (
+                <>
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <li key={index}>
+                      <div className="h-5 w-28 animate-pulse rounded bg-slate-800" />
+                    </li>
+                  ))}
+                </>
+              ) : (
+                services.map((service) => (
+                  <li key={service.id}>
+                    <Link
+                      href={`/services/${service.slug}`}
+                      className="text-sm transition hover:text-white"
+                    >
+                      {service.name}
+                    </Link>
+                  </li>
+                ))
+              )}
             </ul>
           </div>
 
@@ -116,8 +124,8 @@ export default function Footer() {
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-blue-500" />
 
-                <a href="tel:+6561234567" className="text-sm hover:text-white">
-                  +65 6123 4567
+                <a href="tel:+6585357096" className="text-sm hover:text-white">
+                  +65 8535 7096
                 </a>
               </li>
 
@@ -125,10 +133,10 @@ export default function Footer() {
                 <Mail className="h-5 w-5 text-blue-500" />
 
                 <a
-                  href="mailto:hello@autohub.com"
+                  href="mailto:contact@primekare.pkoo.dev"
                   className="text-sm hover:text-white"
                 >
-                  hello@primekare.com
+                  contact@primekare.pkoo.dev
                 </a>
               </li>
             </ul>

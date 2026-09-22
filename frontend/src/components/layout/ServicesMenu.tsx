@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 
-import { getServices } from "@/api/services";
+import { useServices } from "@/hooks/use-services";
 
 interface ServicesMenuProps {
   isActive: boolean;
@@ -15,10 +14,7 @@ export default function ServicesMenu({
   isActive,
   onMouseEnter,
 }: ServicesMenuProps) {
-  const { data: services = [], isLoading } = useQuery({
-    queryKey: ["services"],
-    queryFn: getServices,
-  });
+  const { data: services = [], isLoading } = useServices();
 
   return (
     <div className="group relative">

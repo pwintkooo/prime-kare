@@ -245,8 +245,8 @@ export default function MobileMenu() {
 
           {/* Footer */}
           <div className="mt-8 flex flex-col gap-1 text-sm text-neutral-400">
-            <span>hello@yourcompany.com</span>
-            <span>+65 0000 0000</span>
+            <span>contact@primekare.pkoo.dev</span>
+            <span>+65 8535 7096</span>
           </div>
         </div>
       </SheetContent>

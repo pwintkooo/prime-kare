@@ -7,14 +7,14 @@ const contactDetails = [
   {
     icon: Phone,
     title: "Phone",
-    value: "+65 6123 4567",
-    href: "tel:+6561234567",
+    value: "+65 8535 7096",
+    href: "tel:+6585357096",
   },
   {
     icon: Mail,
     title: "Email",
-    value: "hello@primekare.com",
-    href: "mailto:hello@primekare.com",
+    value: "contact@primekare.pkoo.dev",
+    href: "mailto:contact@primekare.pkoo.dev",
   },
   {
     icon: MapPin,

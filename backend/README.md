@@ -49,3 +49,6 @@ dotnet add package FluentValidation
 dotnet add package FluentValidation.DependencyInjectionExtensions
 
 dotnet add package Microsoft.AspNetCore.Authentication.Google
+
+dotnet add package Resend
+dotnet add package Azure.ResourceManager.Communication

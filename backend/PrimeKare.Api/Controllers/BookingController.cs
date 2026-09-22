@@ -1,4 +1,3 @@
-using FirebaseAdmin.Messaging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrimeKare.Api.DTOs.Bookings;

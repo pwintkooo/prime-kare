@@ -199,7 +199,7 @@ export default function SignUpPage() {
                     id="phone"
                     type="tel"
                     autoComplete="tel"
-                    placeholder="+65 9123 4567"
+                    placeholder="+65 1234 5678"
                     {...register("phone")}
                     className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                     required
