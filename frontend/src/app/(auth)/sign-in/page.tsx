@@ -76,12 +76,12 @@ export default function SignInPage() {
 
   return (
     <GuestOnly>
-      <main className="min-h-screen bg-slate-950">
-        <div className="grid min-h-screen lg:grid-cols-2">
+      <main className="min-h-screen bg-slate-900">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(480px,0.85fr)]">
           {/* Left - Image */}
-          <div className="relative hidden lg:block">
+          <div className="relative hidden h-screen lg:sticky lg:top-0 lg:block">
             <Image
-              src="/images/auth/login.jpg"
+              src="/images/auth/auth-background.jpg"
               alt="PrimeKare automotive workshop"
               fill
               priority
@@ -89,15 +89,11 @@ export default function SignInPage() {
             />
 
             {/* Overlay */}
-            <div className="absolute inset-0 bg-slate-950/70" />
+            <div className="absolute inset-0 bg-linear-to-r from-slate-950/70 via-slate-950/40 to-slate-950/15" />
 
             {/* Content */}
-            <div className="absolute inset-0 flex items-end p-12 xl:p-16">
+            <div className="absolute inset-0 flex items-center p-12 xl:p-16">
               <div className="max-w-lg">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
-                  PrimeKare
-                </p>
-
                 <h1 className="mt-4 text-4xl font-bold tracking-tight text-white xl:text-5xl">
                   Professional care for
                   <br />
@@ -113,15 +109,18 @@ export default function SignInPage() {
           </div>
 
           {/* Right - Login */}
-          <div className="flex items-center justify-center px-6 py-12 sm:px-8">
+          <div className="flex min-h-screen items-center justify-center px-6 py-12 sm:px-8">
             <div className="w-full max-w-md">
               {/* Logo / Brand */}
-              <div className="mb-10">
-                <Link
-                  href="/"
-                  className="text-xl font-bold tracking-tight text-white"
-                >
-                  Prime<span className="text-blue-400">Kare</span>
+              <div className="mb-8">
+                <Link href="/" className="inline-block">
+                  <Image
+                    src="/images/branding/primekare-dark-logo.png"
+                    alt="PrimeKare Logo"
+                    width={160}
+                    height={48}
+                    className="h-10 w-auto"
+                  />
                 </Link>
               </div>
               {/* Header */}

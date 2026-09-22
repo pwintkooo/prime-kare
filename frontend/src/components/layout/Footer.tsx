@@ -1,9 +1,6 @@
 import Link from "next/link";
-import {
-  Mail,
-  MapPin,
-  Phone,
-} from "lucide-react";
+import Image from "next/image";
+import { Mail, MapPin, Phone } from "lucide-react";
 
 const quickLinks = [
   { label: "Home", href: "/" },
@@ -24,32 +21,26 @@ export default function Footer() {
     <footer className="border-t bg-slate-950 text-slate-300">
       <div className="mx-auto max-w-7xl px-6 py-16">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
-
           {/* Brand */}
           <div>
-            <Link
-              href="/"
-              className="flex items-center gap-2"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 font-bold text-white">
-                PK
-              </div>
-
+            <Link href="/" className="flex items-center gap-2">
               <div>
-                <p className="font-bold text-white">
-                  Prime Kare
-                </p>
+                <Image
+                  src="/images/branding/primekare-dark-logo.png"
+                  alt="PrimeKare Logo"
+                  width={180}
+                  height={54}
+                  className="h-10 w-auto object-contain"
+                  priority
+                />
 
-                <p className="text-xs text-slate-400">
-                  Workshop Management
-                </p>
+                <p className="text-xs text-slate-400">Workshop Management</p>
               </div>
             </Link>
 
             <p className="mt-5 max-w-xs text-sm leading-6 text-slate-400">
-              Professional automotive care you can trust.
-              Keeping your vehicle safe, reliable, and ready
-              for every journey.
+              Professional automotive care you can trust. Keeping your vehicle
+              safe, reliable, and ready for every journey.
             </p>
 
             {/* <div className="mt-6 flex gap-3">
@@ -73,9 +64,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-white">
-              Quick Links
-            </h3>
+            <h3 className="font-semibold text-white">Quick Links</h3>
 
             <ul className="mt-5 space-y-3">
               {quickLinks.map((link) => (
@@ -93,9 +82,7 @@ export default function Footer() {
 
           {/* Services */}
           <div>
-            <h3 className="font-semibold text-white">
-              Our Services
-            </h3>
+            <h3 className="font-semibold text-white">Our Services</h3>
 
             <ul className="mt-5 space-y-3">
               {services.map((service) => (
@@ -113,9 +100,7 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="font-semibold text-white">
-              Contact Us
-            </h3>
+            <h3 className="font-semibold text-white">Contact Us</h3>
 
             <ul className="mt-5 space-y-4">
               <li className="flex gap-3">
@@ -131,10 +116,7 @@ export default function Footer() {
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-blue-500" />
 
-                <a
-                  href="tel:+6561234567"
-                  className="text-sm hover:text-white"
-                >
+                <a href="tel:+6561234567" className="text-sm hover:text-white">
                   +65 6123 4567
                 </a>
               </li>
@@ -156,22 +138,14 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-12 border-t border-slate-800 pt-8">
           <div className="flex flex-col gap-4 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
-            <p>
-              © 2026 Prime Kare Workshop. All rights reserved.
-            </p>
+            <p>© 2026 Prime Kare Workshop. All rights reserved.</p>
 
             <div className="flex gap-6">
-              <Link
-                href="/privacy"
-                className="hover:text-white"
-              >
+              <Link href="/privacy" className="hover:text-white">
                 Privacy Policy
               </Link>
 
-              <Link
-                href="/terms"
-                className="hover:text-white"
-              >
+              <Link href="/terms" className="hover:text-white">
                 Terms & Conditions
               </Link>
             </div>

@@ -17,9 +17,17 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-        <div className="flex items-center gap-4">
-          <MobileMenu />
-          <Logo />
+        <div className="flex items-center gap-3">
+          {/* Mobile */}
+          <div className="flex items-center gap-3 lg:hidden">
+            <MobileMenu />
+            <Logo />
+          </div>
+
+          {/* Desktop */}
+          <div className="hidden lg:block">
+            <Logo />
+          </div>
         </div>
 
         <Navigation />

@@ -1,17 +1,28 @@
 import Link from "next/link";
+import Image from "next/image";
 
-export default function Logo() {
+type LogoProps = {
+  className?: string;
+};
+
+export default function Logo({ className = "h-10" }: LogoProps) {
   return (
-    <Link href="/" className="flex items-center gap-2">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white font-bold">
-        PK
-      </div>
-
-      <div className="hidden sm:block">
-        <h1 className="text-lg font-bold text-slate-900">Prime Kare</h1>
-
-        <p className="text-xs text-slate-500">Workshop Management</p>
-      </div>
-    </Link>
+    <div>
+      <Link
+        href="/"
+        className="inline-flex items-center"
+        aria-label="PrimeKare home"
+      >
+        <Image
+          src="/images/branding/primekare-white-logo.png"
+          alt="PrimeKare Logo"
+          width={180}
+          height={54}
+          className={`${className} w-auto object-contain`}
+          priority
+        />
+      </Link>
+      <p className="text-xs text-slate-500">Workshop Management</p>
+    </div>
   );
 }
