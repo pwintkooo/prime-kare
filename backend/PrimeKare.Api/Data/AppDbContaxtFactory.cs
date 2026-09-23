@@ -25,9 +25,11 @@ public class AppDbContextFactory
             .Build();
 
         var connectionName =
-            args.Contains("--aiven")
-                ? "AivenDevelopment"
-                : "DefaultConnection";
+            args.Contains("--prod")
+                ? "AivenProduction"
+                : args.Contains("--dev")
+                    ? "AivenDevelopment"
+                    : "DefaultConnection";
 
         var connectionString =
             configuration.GetConnectionString(connectionName)

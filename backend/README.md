@@ -52,3 +52,7 @@ dotnet add package Microsoft.AspNetCore.Authentication.Google
 
 dotnet add package Resend
 dotnet add package Azure.ResourceManager.Communication
+
+//Test docker
+docker build -t primekare-api .
+docker run --rm --env-file .env.docker -p 10000:10000 primekare-api

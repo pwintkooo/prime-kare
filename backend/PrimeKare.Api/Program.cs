@@ -65,12 +65,18 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 //add the cors service
+var allowedOrigins =
+    builder.Configuration
+        .GetSection("AllowedOrigins")
+        .Get<string[]>()
+    ?? [];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:3000")
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -176,7 +182,22 @@ using (var scope = app.Services.CreateScope())
     var passwordHasher = scope.ServiceProvider
         .GetRequiredService<IPasswordHasher<User>>();
 
-    await DbSeeder.SeedAsync(context, passwordHasher);
+    var adminEmail =
+        builder.Configuration["Admin:Email"];
+
+    var adminPassword =
+        builder.Configuration["Admin:Password"];
+
+    if (!string.IsNullOrWhiteSpace(adminEmail) &&
+        !string.IsNullOrWhiteSpace(adminPassword))
+    {
+        await DbSeeder.SeedAsync(
+            context,
+            passwordHasher,
+            adminEmail,
+            adminPassword
+        );
+    }
 }
 
 // Configure the HTTP request pipeline.

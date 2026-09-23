@@ -1,4 +1,3 @@
-//create an admin account
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PrimeKare.Api.Models;
@@ -9,23 +8,26 @@ public static class DbSeeder
 {
     public static async Task SeedAsync(
         AppDbContext context,
-        IPasswordHasher<User> passwordHasher)
+        IPasswordHasher<User> passwordHasher,
+        string adminEmail,
+        string adminPassword)
     {
-        if (await context.Users.AnyAsync(u => u.Role == "Admin"))
+        if (await context.Users.AnyAsync(
+            u => u.Role == "Admin"))
         {
             return;
         }
 
         var admin = new User
         {
-            Email = "admin@primekare.com",
+            Email = adminEmail.Trim().ToLowerInvariant(),
             Role = "Admin",
             CustomerId = null
         };
 
         admin.PasswordHash = passwordHasher.HashPassword(
             admin,
-            "Admin*123"
+            adminPassword
         );
 
         context.Users.Add(admin);
