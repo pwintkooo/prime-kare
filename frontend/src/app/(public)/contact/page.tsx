@@ -1,7 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, MapPin, Phone, Clock3, Send } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import {
+  Mail,
+  MapPin,
+  Phone,
+  Clock3,
+  Loader2,
+  CircleCheck,
+} from "lucide-react";
+import { useSendContactMessage } from "@/hooks/use-contact";
+import {
+  CreateContactFormData,
+  createContactSchema,
+} from "@/validations/contact";
 
 const contactDetails = [
   {
@@ -31,33 +46,34 @@ const contactDetails = [
 ];
 
 export default function ContactPage() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    message: "",
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const sendContactMessageMutation = useSendContactMessage();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CreateContactFormData>({
+    resolver: zodResolver(createContactSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      message: "",
+    },
   });
 
-  const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = event.target;
-
-    setForm((current) => ({
-      ...current,
-      [name]: value,
-    }));
+  const onSubmit = async (data: CreateContactFormData) => {
+    try {
+      await sendContactMessageMutation.mutateAsync(data);
+      reset();
+      setIsSuccess(true);
+    } catch {
+      // Error is available from sendContactMessageMutation.error
+    }
   };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    console.log("Contact form:", form);
-
-    // Later:
-    // await createContactMessage(form)
-  };
-
   return (
     <main className="bg-white">
       {/* Hero */}
@@ -146,7 +162,7 @@ export default function ContactPage() {
               Fill out the form and we&apos;ll get back to you.
             </p>
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
               {/* Name */}
               <div>
                 <label
@@ -158,13 +174,20 @@ export default function ContactPage() {
 
                 <input
                   id="name"
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
+                  type="text"
+                  autoComplete="name"
                   placeholder="John Tan"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  {...register("name")}
+                  className={`w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:ring-2 ${
+                    errors.name
+                      ? "border-red-400 focus:border-red-400 focus:ring-red-400/20"
+                      : "border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  }`}
                 />
+
+                {errors.name && (
+                  <p className="text-sm text-red-400">{errors.name.message}</p>
+                )}
               </div>
 
               {/* Email + Phone */}
@@ -179,14 +202,22 @@ export default function ContactPage() {
 
                   <input
                     id="email"
-                    name="email"
                     type="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
+                    autoComplete="email"
                     placeholder="you@example.com"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    {...register("email")}
+                    className={`w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:ring-2 ${
+                      errors.email
+                        ? "border-red-400 focus:border-red-400 focus:ring-red-400/20"
+                        : "border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                    }`}
                   />
+
+                  {errors.email && (
+                    <p className="text-sm text-red-400">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -199,13 +230,21 @@ export default function ContactPage() {
 
                   <input
                     id="phone"
-                    name="phone"
                     type="tel"
-                    value={form.phone}
-                    onChange={handleChange}
+                    autoComplete="phone"
                     placeholder="+65 9123 4567"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    {...register("phone")}
+                    className={`w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:ring-2 ${
+                      errors.phone
+                        ? "border-red-400 focus:border-red-400 focus:ring-red-400/20"
+                        : "border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                    }`}
                   />
+                  {errors.phone && (
+                    <p className="text-sm text-red-400">
+                      {errors.phone.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -220,30 +259,70 @@ export default function ContactPage() {
 
                 <textarea
                   id="message"
-                  name="message"
-                  value={form.message}
-                  onChange={handleChange}
-                  required
+                  autoComplete="message"
                   rows={6}
                   placeholder="How can we help?"
-                  className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  {...register("message")}
+                  className={`w-full resize-none rounded-xl border bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:ring-2 ${
+                    errors.message
+                      ? "border-red-400 focus:border-red-400 focus:ring-red-400/20"
+                      : "border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  }`}
                 />
+
+                {errors.message && (
+                  <p className="text-sm text-red-400">
+                    {errors.message.message}
+                  </p>
+                )}
               </div>
 
-              <button
+              {isSuccess && (
+                <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+
+                  <div>
+                    <p className="text-sm font-medium text-emerald-800">
+                      Message sent successfully
+                    </p>
+
+                    <p className="mt-1 text-sm text-emerald-700">
+                      Thanks for contacting PrimeKare. We&apos;ll get back to
+                      you as soon as possible.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {sendContactMessageMutation.isError && (
+                <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
+                  <p className="text-sm text-red-400">
+                    {sendContactMessageMutation.error.message}
+                  </p>
+                </div>
+              )}
+
+              <Button
                 type="submit"
+                disabled={sendContactMessageMutation.isPending}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                <Send className="h-4 w-4" />
-                Send Message
-              </button>
+                {sendContactMessageMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending Message...
+                  </>
+                ) : (
+                  "Send Message"
+                )}
+              </Button>
             </form>
           </div>
         </div>
       </section>
 
       {/* Map placeholder */}
-      <section className="border-t">
+      {/* <section className="border-t">
         <div className="mx-auto max-w-7xl px-6 py-16 sm:px-8">
           <div className="flex h-72 items-center justify-center rounded-2xl bg-slate-100">
             <div className="text-center">
@@ -257,7 +336,7 @@ export default function ContactPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
     </main>
   );
 }

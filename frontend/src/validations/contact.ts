@@ -17,6 +17,7 @@ export const createContactSchema = z.object({
   phone: z
     .string()
     .trim()
+    .min(1, "Phone number is required")
     .max(20, "Phone number must not exceed 20 characters.")
     .refine(
       (value) => {
