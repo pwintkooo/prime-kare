@@ -16,9 +16,6 @@ var builder = WebApplication.CreateBuilder(args);
 var useInMemoryDatabase =
     builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
-var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection");
-
 if (useInMemoryDatabase)
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
@@ -26,6 +23,16 @@ if (useInMemoryDatabase)
 }
 else
 {
+    var connectionName =
+        builder.Configuration["DATABASE_CONNECTION"]
+        ?? "DefaultConnection";
+
+    var connectionString =
+        builder.Configuration.GetConnectionString(connectionName)
+        ?? throw new InvalidOperationException(
+            $"Connection string '{connectionName}' is not configured."
+        );
+
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(connectionString));
 }
