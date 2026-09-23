@@ -1,28 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { SignUp } from "@/api/auth";
-import PasswordRequirements from "@/components/auth/PasswordRequirements";
-import ConfirmPassword from "@/components/auth/ConfirmPassword";
+
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import { signUpSchema, SignUpFormData } from "@/validations/auth";
+
 import { SignInWithGoogle } from "@/api/auth";
+import { useSignUp } from "@/hooks/use-auth";
+
+import PasswordRequirements from "@/components/auth/PasswordRequirements";
+import ConfirmPassword from "@/components/auth/ConfirmPassword";
 import GuestOnly from "@/components/auth/GuestOnly";
 import { PasswordInput } from "@/components/ui/password-input";
 
 export default function SignUpPage() {
-  const router = useRouter();
-  const [serverError, setServerError] = useState("");
+  const signUpMutation = useSignUp();
 
   const {
     register,
     handleSubmit,
     control,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -48,23 +49,15 @@ export default function SignUpPage() {
     }) ?? "";
 
   const onSubmit = async (data: SignUpFormData) => {
-    setServerError("");
-
     try {
-      const response = await SignUp({
+      await signUpMutation.mutateAsync({
         name: data.name,
         email: data.email,
         phone: data.phone,
         password: data.password,
       });
-
-      console.log("Account created:", response);
-
-      router.push("/sign-in");
-    } catch (error) {
-      setServerError(
-        error instanceof Error ? error.message : "Something went wrong.",
-      );
+    } catch {
+      // Error is available from signUpMutation.error
     }
   };
 
@@ -299,19 +292,21 @@ export default function SignUpPage() {
                   <p className="text-sm text-red-400">{errors.terms.message}</p>
                 )}
 
-                {serverError && (
+                {signUpMutation.isError && (
                   <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                    {serverError}
+                    {signUpMutation.error.message}
                   </div>
                 )}
 
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={signUpMutation.isPending}
                   className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-950"
                 >
-                  {isSubmitting ? "Creating account..." : "Create account"}
+                  {signUpMutation.isPending
+                    ? "Creating account..."
+                    : "Create account"}
                 </button>
               </form>
 

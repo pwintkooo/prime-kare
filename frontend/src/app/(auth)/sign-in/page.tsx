@@ -3,31 +3,31 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/authStore";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, SignInFormData } from "@/validations/auth";
-import { SignIn, SignInWithGoogle } from "@/api/auth";
+import { SignInWithGoogle } from "@/api/auth";
 import GuestOnly from "@/components/auth/GuestOnly";
-import { ApiError } from "@/api/apiError";
 import { ReactivateAccountDialog } from "@/components/auth/ReactivateAccountDialog";
 import { PasswordInput } from "@/components/ui/password-input";
+import { isAccountInactiveError, useSignIn } from "@/hooks/use-auth";
 
 export default function SignInPage() {
-  const login = useAuthStore((state) => state.login);
-  const router = useRouter();
-  const [serverError, setServerError] = useState("");
-
+  const signInMutation = useSignIn();
   const [reactivateOpen, setReactivateOpen] = useState(false);
   const [reactivateCredentials, setReactivateCredentials] =
     useState<SignInFormData | null>(null);
+
+  const serverError =
+    signInMutation.isError && !isAccountInactiveError(signInMutation.error)
+      ? signInMutation.error.message
+      : null;
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -37,31 +37,13 @@ export default function SignInPage() {
   });
 
   const onSubmit = async (data: SignInFormData) => {
-    setServerError("");
-
     try {
-      const response = await SignIn({
-        email: data.email,
-        password: data.password,
-      });
-
-      login(response.user, response.token);
-      router.push("/");
+      await signInMutation.mutateAsync(data);
     } catch (error) {
-      if (error instanceof ApiError) {
-        const errorData = error.data as { code?: string } | undefined;
-
-        if (errorData?.code === "ACCOUNT_INACTIVE") {
-          setReactivateCredentials(data);
-          setReactivateOpen(true);
-          return;
-        }
-
-        setServerError(error.message);
-        return;
+      if (isAccountInactiveError(error)) {
+        setReactivateCredentials(data);
+        setReactivateOpen(true);
       }
-
-      setServerError("Unable to sign in.");
     }
   };
 
@@ -220,10 +202,10 @@ export default function SignInPage() {
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={signInMutation.isPending}
                   className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isSubmitting ? "Signing in..." : "Sign in"}
+                  {signInMutation.isPending ? "Signing in..." : "Sign in"}
                 </button>
               </form>
 
