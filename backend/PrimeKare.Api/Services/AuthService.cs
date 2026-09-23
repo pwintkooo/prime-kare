@@ -9,6 +9,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using PrimeKare.Api.Services.Exceptions;
+using System.Security.Cryptography;
 
 namespace PrimeKare.Api.Services;
 
@@ -18,17 +19,26 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IConfiguration _configuration;
     private readonly IValidator<SignUpDto> _signUpValidator;
+    private readonly IValidator<ForgotPasswordRequestDto> _forgotPasswordValidator;
+    private readonly IValidator<ResetPasswordRequestDto> _resetPasswordValidator;
+    private readonly IEmailService _emailService;
 
     public AuthService(
         AppDbContext context,
         IPasswordHasher<User> passwordHasher,
         IConfiguration configuration,
-        IValidator<SignUpDto> signUpValidator)
+        IValidator<SignUpDto> signUpValidator,
+        IValidator<ForgotPasswordRequestDto> forgotPasswordValidator,
+        IValidator<ResetPasswordRequestDto> resetPasswordValidator,
+        IEmailService emailService)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _configuration = configuration;
         _signUpValidator = signUpValidator;
+        _forgotPasswordValidator = forgotPasswordValidator;
+        _resetPasswordValidator = resetPasswordValidator;
+        _emailService = emailService;
     }
 
     private string GenerateJwt(User user)
@@ -318,5 +328,140 @@ public class AuthService : IAuthService
 
         await _context.SaveChangesAsync();
         return CreateSignInResponse(user);
+    }
+
+    public async Task ForgotPasswordAsync(
+    ForgotPasswordRequestDto dto)
+    {
+        await _forgotPasswordValidator
+        .ValidateAndThrowAsync(dto);
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(
+                u => u.Email == dto.Email);
+
+        // Don't reveal whether the email exists.
+        if (user == null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(user.PasswordHash))
+        {
+            return;
+        }
+
+        var tokenBytes = RandomNumberGenerator.GetBytes(32);
+
+        var token = Convert.ToBase64String(tokenBytes);
+
+        var tokenHash = Convert.ToHexString(
+            SHA256.HashData(
+                Encoding.UTF8.GetBytes(token)));
+
+        user.PasswordResetTokenHash = tokenHash;
+
+        user.PasswordResetTokenExpiresAt =
+            DateTime.UtcNow.AddMinutes(30);
+
+        await _context.SaveChangesAsync();
+
+        var frontendUrl =
+            _configuration["FrontendUrl"]
+            ?? throw new InvalidOperationException(
+                "Frontend URL is not configured.");
+
+        var encodedToken =
+            Uri.EscapeDataString(token);
+
+        var encodedEmail =
+            Uri.EscapeDataString(user.Email);
+
+        var resetUrl =
+            $"{frontendUrl}/reset-password" +
+            $"?token={encodedToken}" +
+            $"&email={encodedEmail}";
+
+        var body = $"""
+        <h2>Reset your PrimeKare password</h2>
+
+        <p>Hi {user.Name},</p>
+
+        <p>
+            We received a request to reset the password
+            for your PrimeKare account.
+        </p>
+
+        <p>
+            <a href="{resetUrl}">
+                Reset Password
+            </a>
+        </p>
+
+        <p>
+            This link will expire in 30 minutes.
+        </p>
+
+        <p>
+            If you didn't request a password reset,
+            you can ignore this email.
+        </p>
+
+        <p>
+            Regards,<br>
+            PrimeKare
+        </p>
+        """;
+
+        await _emailService.SendEmailAsync(
+            user.Email,
+            "Reset your PrimeKare password",
+            body);
+    }
+
+    public async Task ResetPasswordAsync(
+    ResetPasswordRequestDto dto)
+    {
+        await _resetPasswordValidator
+        .ValidateAndThrowAsync(dto);
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(
+                u => u.Email == dto.Email);
+
+        if (user == null ||
+            user.PasswordResetTokenHash == null ||
+            user.PasswordResetTokenExpiresAt == null)
+        {
+            throw new InvalidOperationException(
+                "The password reset link is invalid or has expired.");
+        }
+
+        if (user.PasswordResetTokenExpiresAt < DateTime.UtcNow)
+        {
+            throw new InvalidOperationException(
+                "The password reset link is invalid or has expired.");
+        }
+
+        var tokenHash = Convert.ToHexString(
+            SHA256.HashData(
+                Encoding.UTF8.GetBytes(dto.Token)));
+
+        if (tokenHash != user.PasswordResetTokenHash)
+        {
+            throw new InvalidOperationException(
+                "The password reset link is invalid or has expired.");
+        }
+
+        user.PasswordHash =
+            _passwordHasher.HashPassword(
+                user,
+                dto.NewPassword);
+
+        // Make the reset link single-use.
+        user.PasswordResetTokenHash = null;
+        user.PasswordResetTokenExpiresAt = null;
+
+        await _context.SaveChangesAsync();
     }
 }

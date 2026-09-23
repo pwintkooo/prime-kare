@@ -12,4 +12,8 @@ public interface IAuthService
     SignInResponseDto CreateSignInResponse(User user);
 
     Task<SignInResponseDto> ReactivateAccountAsync(ReactivateAccountDto request);
+
+    Task ForgotPasswordAsync(ForgotPasswordRequestDto request);
+
+    Task ResetPasswordAsync(ResetPasswordRequestDto request);
 }
