@@ -6,6 +6,8 @@ import {
   SignInResponse,
   ExternalAuthResponse,
   ReactivateAccountRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
 } from "@/types/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -81,6 +83,22 @@ export async function reactivateExternalAccount(
     "/api/external-auth/reactivate",
     { code },
   );
+
+  return response.data;
+}
+
+export async function forgotPassword(
+  request: ForgotPasswordRequest,
+): Promise<ForgotPasswordRequest> {
+  const response = await apiClient.post("/api/auth/forgot-password", request);
+
+  return response.data;
+}
+
+export async function resetPassword(
+  request: ResetPasswordRequest,
+): Promise<ResetPasswordRequest> {
+  const response = await apiClient.post("/api/auth/reset-password", request);
 
   return response.data;
 }

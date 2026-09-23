@@ -57,7 +57,7 @@ export const signUpSchema = z
       .regex(/[0-9]/, "Must contain a number")
       .regex(/[^A-Za-z0-9]/, "Must contain a special character"),
 
-    confirmPassword: z.string(),
+    confirmPassword: z.string().min(1, "Please confirm your password."),
 
     terms: z.boolean().refine((value) => value === true, {
       message: "You must agree to the Terms of Service and Privacy Policy.",
@@ -73,10 +73,50 @@ export type SignUpFormData = z.infer<typeof signUpSchema>;
 export const signInSchema = z.object({
   email: z
     .string()
+    .trim()
     .min(1, "Email is required.")
-    .email("Please enter a valid email address."),
+    .email("Email format is invalid.")
+    .regex(
+      /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/,
+      "Email must contain a valid domain.",
+    )
+    .max(254, "Email must not exceed 254 characters."),
 
   password: z.string().min(1, "Password is required."),
 });
 
 export type SignInFormData = z.infer<typeof signInSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required.")
+    .email("Email format is invalid.")
+    .regex(
+      /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/,
+      "Email must contain a valid domain.",
+    )
+    .max(254, "Email must not exceed 254 characters."),
+});
+
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Must contain an uppercase letter")
+      .regex(/[a-z]/, "Must contain a lowercase letter")
+      .regex(/[0-9]/, "Must contain a number")
+      .regex(/[^A-Za-z0-9]/, "Must contain a special character"),
+
+    confirmPassword: z.string().min(1, "Please confirm your password."),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
