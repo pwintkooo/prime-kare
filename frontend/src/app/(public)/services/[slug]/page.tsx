@@ -63,20 +63,17 @@ export default function ServiceDetailsPage() {
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
             {/* Image */}
             <div className="relative h-87.5 overflow-hidden rounded-3xl bg-slate-100 sm:h-112.5">
-              {service.imageUrl ? (
-                <Image
-                  src={service.imageUrl}
-                  alt={service.name}
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  fill
-                  priority
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                  No image available
-                </div>
-              )}
+              <Image
+                src={
+                  service.imageUrl ||
+                  "/images/placeholders/service-placeholder.jpg"
+                }
+                alt={service.imageUrl ? service.name : "Service placeholder"}
+                sizes="(max-width: 768px) 100vw, 33vw"
+                fill
+                priority
+                className="object-cover"
+              />
             </div>
 
             {/* Information */}

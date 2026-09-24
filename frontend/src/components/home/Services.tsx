@@ -91,9 +91,9 @@ export default function Services() {
                 <Image
                   src={
                     service.imageUrl ??
-                    "/images/services/service-placeholder.jpeg"
+                    "/images/placeholders/service-placeholder.jpg"
                   }
-                  alt={service.name}
+                  alt={service.imageUrl ? service.name : "Service placeholder"}
                   loading="eager"
                   fill
                   sizes="(max-width: 640px) 100vw, 50vw"

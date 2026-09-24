@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
       //Azure Blob Storage
       {
         protocol: "https",
-        hostname: "primekarestorage.blob.core.windows.net",
+        hostname: "primekareappstorage.blob.core.windows.net",
       },
       //Firebase / Google Cloud Storage
       {

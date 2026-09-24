@@ -94,18 +94,17 @@ export default function ServicesPage() {
                 >
                   {/* Image */}
                   <div className="relative h-52 overflow-hidden bg-slate-100">
-                    {service.imageUrl ? (
-                      <Image
-                        src={service.imageUrl}
-                        alt={service.name}
-                        fill
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-slate-100 text-sm text-slate-400">
-                        No image available
-                      </div>
-                    )}
+                    <Image
+                      src={
+                        service.imageUrl ||
+                        "/images/placeholders/service-placeholder.jpg"
+                      }
+                      alt={
+                        service.imageUrl ? service.name : "Service placeholder"
+                      }
+                      fill
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                    />
                   </div>
 
                   {/* Content */}
