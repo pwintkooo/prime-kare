@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { Car, Plus } from "lucide-react";
+import { Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -22,7 +22,7 @@ import { useBookingAvailability } from "@/hooks/use-booking-availability";
 import { createBookingSchema } from "@/validations/booking";
 import { CreateBookingFormErrors } from "@/types/booking";
 
-export default function BookAppointmentPage() {
+function BookAppointmentContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -203,9 +203,7 @@ export default function BookAppointmentPage() {
                   </p>
 
                   <Button className="mt-5">
-                    <Link href="/vehicles/new">
-                      Add Vehicle
-                    </Link>
+                    <Link href="/vehicles/new">Add Vehicle</Link>
                   </Button>
                 </div>
               )}
@@ -391,5 +389,19 @@ export default function BookAppointmentPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function BookAppointmentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-slate-950">
+          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        </div>
+      }
+    >
+      <BookAppointmentContent />
+    </Suspense>
   );
 }

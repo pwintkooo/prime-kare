@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   exchangeExternalAuthCode,
@@ -9,8 +9,9 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { ApiError } from "@/api/apiError";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -147,5 +148,19 @@ export default function GoogleCallbackPage() {
         {type === "link" ? "Preparing account linking..." : "Signing you in..."}
       </p>
     </div>
+  );
+}
+
+export default function GoogleCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-slate-950">
+          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        </div>
+      }
+    >
+      <GoogleCallbackContent />
+    </Suspense>
   );
 }
