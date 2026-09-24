@@ -10,6 +10,7 @@ using PrimeKare.Api.Models;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.Services;
 using Resend;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -169,7 +170,19 @@ builder.Services.AddResend(options =>
             "Resend API key is not configured.");
 });
 
+
+// Configure forwarded headers for HTTPS behind a reverse proxy
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
+});
+
 var app = builder.Build();
+
+// Process forwarded headers before authentication and HTTPS-dependent middleware
+app.UseForwardedHeaders();
 
 app.UseCors("Frontend");
 
