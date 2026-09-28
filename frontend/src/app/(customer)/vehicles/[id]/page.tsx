@@ -143,12 +143,6 @@ export default function VehicleDetailsPage() {
           </div>
 
           <div>
-            <p className="text-sm text-muted-foreground">Customer ID</p>
-
-            <p className="mt-1 font-medium">{vehicle.customerId}</p>
-          </div>
-
-          <div>
             <p className="text-sm text-muted-foreground">Created</p>
 
             <p className="mt-1 font-medium">

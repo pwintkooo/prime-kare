@@ -6,6 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getServices } from "@/api/services";
 import { HomeServicesSkeleton } from "../skeletons/HomeServicesSkeleton";
+import { ImageWithFallback } from "../ui/image-with-fallback";
 
 export default function Services() {
   const {
@@ -88,12 +89,10 @@ export default function Services() {
               className="group relative overflow-hidden rounded-3xl"
             >
               <div className="relative aspect-video">
-                <Image
-                  src={
-                    service.imageUrl ??
-                    "/images/placeholders/service-placeholder.jpg"
-                  }
-                  alt={service.imageUrl ? service.name : "Service placeholder"}
+                <ImageWithFallback
+                  src={service.imageUrl}
+                  fallbackSrc="/images/placeholders/service-placeholder.jpg"
+                  alt={service.name}
                   loading="eager"
                   fill
                   sizes="(max-width: 640px) 100vw, 50vw"
