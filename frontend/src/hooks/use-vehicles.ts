@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getVehicles, getVehicle } from "@/api/vehicles";
 
-export function useVehicles() {
+export function useVehicles(enabled = true) {
   return useQuery({
     queryKey: ["vehicles"],
     queryFn: getVehicles,
+    enabled,
   });
 }
 

@@ -48,7 +48,7 @@ export default function Navbar() {
                 <Button variant="outline">Login</Button>
               </Link>
 
-              <Link href="/book">
+              <Link href="/book-appointment">
                 <Button>Book Appointment</Button>
               </Link>
             </>

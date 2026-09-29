@@ -1,27 +1,46 @@
 export interface Booking {
   id: number;
-  customerId: number;
+  referenceNumber: string;
+
+  customerId: number | null;
   customerName: string;
-  vehicleId: number;
+  customerEmail: string;
+  customerPhone: string;
+
+  vehicleId: number | null;
   vehiclePlateNumber: string;
   vehicleMake: string;
   vehicleModel: string;
+
   serviceId: number;
   serviceName: string;
+
   bookingDate: string;
   bookingTime: string;
+
   status: string;
   isDeleted: boolean;
   notes: string | null;
+
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateBookingRequest {
-  vehicleId: number;
+  vehicleId?: number;
+
   serviceId: number;
   bookingDate: string;
   bookingTime: string;
+
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+
+  vehiclePlateNumber?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+
   notes: string | null;
 }
 
@@ -45,8 +64,18 @@ export interface BookingAvailability {
 
 export interface CreateBookingFormErrors {
   vehicleId?: string;
+
   serviceId?: string;
   bookingDate?: string;
   bookingTime?: string;
+
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+
+  vehiclePlateNumber?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+
   notes?: string;
 }

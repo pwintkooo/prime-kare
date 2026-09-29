@@ -16,6 +16,10 @@ export function BookingCard({ booking }: BookingCardProps) {
         <div>
           <h2 className="font-semibold">{booking.serviceName}</h2>
 
+          <p className="text-sm text-muted-foreground">
+            Ref: {booking.referenceNumber}
+          </p>
+
           <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
             <Car className="size-4" />
 

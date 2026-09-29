@@ -30,11 +30,14 @@ apiClient.interceptors.response.use(
     }
 
     const status = error.response?.status;
+    const token = useAuthStore.getState().token;
 
-    if (status === 401) {
+    if (status === 401 && token) {
       useAuthStore.getState().showSessionExpired();
 
-      return Promise.reject(new ApiError("Your session has expired.", 401));
+      return Promise.reject(
+        new ApiError("Your session has expired.", 401, error.response?.data),
+      );
     }
 
     const message = error.response?.data?.message ?? "Something went wrong.";

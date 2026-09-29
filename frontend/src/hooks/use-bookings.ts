@@ -2,10 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getBookings,
   getBooking,
+  createBooking,
   updateBooking,
   updateBookingStatus,
 } from "@/api/booking";
 import {
+  CreateBookingRequest,
   UpdateBookingRequest,
   UpdateBookingStatusRequest,
 } from "@/types/booking";
@@ -22,6 +24,20 @@ export function useBooking(id: number) {
     queryKey: ["bookings", id],
     queryFn: () => getBooking(id),
     enabled: !!id,
+  });
+}
+
+export function useCreateBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: CreateBookingRequest) => createBooking(request),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["bookings"],
+      });
+    },
   });
 }
 

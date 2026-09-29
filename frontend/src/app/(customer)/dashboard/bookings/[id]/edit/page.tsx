@@ -100,7 +100,7 @@ export default function EditBookingPage() {
     }
 
     reset({
-      vehicleId: booking.vehicleId,
+      vehicleId: booking.vehicleId ?? undefined,
       serviceId: booking.serviceId,
       bookingDate: booking.bookingDate,
       bookingTime: formatTimeValue(booking.bookingTime),
@@ -194,6 +194,10 @@ export default function EditBookingPage() {
 
         <p className="mt-2 text-muted-foreground">
           Update your appointment details.
+        </p>
+
+        <p className="text-sm text-muted-foreground">
+          Ref: {booking.referenceNumber}
         </p>
       </div>
 

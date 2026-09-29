@@ -57,6 +57,15 @@ public class AppDbContext : DbContext
             .HasForeignKey(b => b.ServiceId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<Booking>()
+            .HasIndex(b => b.ReferenceNumber)
+            .IsUnique();
+
+        modelBuilder.Entity<Booking>()
+            .Property(b => b.ReferenceNumber)
+            .HasMaxLength(30)
+            .IsRequired();
+
         modelBuilder.Entity<ExternalLogin>()
             .HasOne(e => e.User)
             .WithMany(u => u.ExternalLogins)

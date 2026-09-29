@@ -152,6 +152,9 @@ export default function BookingDetailsPage() {
                 label="Vehicle"
                 value={`${booking.vehicleMake} ${booking.vehicleModel}`}
               />
+              <p className="text-sm text-muted-foreground">
+                Ref: {booking.referenceNumber}
+              </p>
 
               <Separator />
 

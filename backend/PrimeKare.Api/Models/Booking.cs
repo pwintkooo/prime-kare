@@ -3,15 +3,28 @@ namespace PrimeKare.Api.Models;
 public class Booking
 {
     public int Id { get; set; }
+    public string ReferenceNumber { get; set; } = string.Empty;
 
-    public int CustomerId { get; set; }
-    public Customer Customer { get; set; } = null!;
+    // Registered customer
+    public int? CustomerId { get; set; }
+    public Customer? Customer { get; set; }
 
-    public int VehicleId { get; set; }
-    public Vehicle Vehicle { get; set; } = null!;
+    // Saved vehicle
+    public int? VehicleId { get; set; }
+    public Vehicle? Vehicle { get; set; }
 
     public int ServiceId { get; set; }
     public Service Service { get; set; } = null!;
+
+    // Customer / guest details
+    public string CustomerName { get; set; } = string.Empty;
+    public string CustomerEmail { get; set; } = string.Empty;
+    public string CustomerPhone { get; set; } = string.Empty;
+
+    // Vehicle details
+    public string VehiclePlateNumber { get; set; } = string.Empty;
+    public string VehicleMake { get; set; } = string.Empty;
+    public string VehicleModel { get; set; } = string.Empty;
 
     public DateOnly BookingDate { get; set; }
 

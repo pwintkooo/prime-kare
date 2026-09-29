@@ -34,7 +34,7 @@ public class BookingsController : ControllerBase
         try
         {
             var booking = await _bookingService
-            .GetBookingAsync(id);
+                .GetBookingAsync(id);
 
             return Ok(booking);
         }
@@ -47,8 +47,8 @@ public class BookingsController : ControllerBase
         }
     }
 
+    [AllowAnonymous]
     [HttpPost]
-    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> CreateBooking(
         CreateBookingDto dto)
     {
@@ -94,8 +94,8 @@ public class BookingsController : ControllerBase
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateBooking(
-    int id,
-    UpdateBookingDto dto)
+        int id,
+        UpdateBookingDto dto)
     {
         try
         {
@@ -171,11 +171,12 @@ public class BookingsController : ControllerBase
         }
     }
 
+    [AllowAnonymous]
     [HttpGet("availability")]
     public async Task<IActionResult> GetAvailability(
-    [FromQuery] int serviceId,
-    [FromQuery] DateOnly date,
-    [FromQuery] int? bookingId = null)
+        [FromQuery] int serviceId,
+        [FromQuery] DateOnly date,
+        [FromQuery] int? bookingId = null)
     {
         try
         {

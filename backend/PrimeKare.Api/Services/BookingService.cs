@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Bookings;
 using PrimeKare.Api.Models;
@@ -10,13 +11,19 @@ public class BookingService : IBookingService
 {
     private readonly AppDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IValidator<CreateBookingDto> _createBookingValidator;
+    private readonly IValidator<UpdateBookingDto> _updateBookingValidator;
 
     public BookingService(
         AppDbContext context,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        IValidator<CreateBookingDto> createBookingValidator,
+        IValidator<UpdateBookingDto> updateBookingValidator)
     {
         _context = context;
         _currentUser = currentUser;
+        _createBookingValidator = createBookingValidator;
+        _updateBookingValidator = updateBookingValidator;
     }
 
     private async Task<bool> HasBookingConflictAsync(
@@ -71,6 +78,19 @@ public class BookingService : IBookingService
         });
     }
 
+    private static string GenerateReferenceNumber()
+    {
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+        var randomPart = new string(
+            Enumerable.Range(0, 6)
+                .Select(_ => chars[Random.Shared.Next(chars.Length)])
+                .ToArray()
+        );
+
+        return $"PK-{DateTime.UtcNow:yyyyMMdd}-{randomPart}";
+    }
+
     public async Task<IEnumerable<BookingDto>> GetBookingsAsync()
     {
         var query = _context.Bookings
@@ -93,14 +113,17 @@ public class BookingService : IBookingService
             .Select(b => new BookingDto
             {
                 Id = b.Id,
+                ReferenceNumber = b.ReferenceNumber,
 
                 CustomerId = b.CustomerId,
-                CustomerName = b.Customer.Name,
+                CustomerName = b.CustomerName,
+                CustomerEmail = b.CustomerEmail,
+                CustomerPhone = b.CustomerPhone,
 
                 VehicleId = b.VehicleId,
-                VehiclePlateNumber = b.Vehicle.PlateNumber,
-                VehicleMake = b.Vehicle.Make,
-                VehicleModel = b.Vehicle.Model,
+                VehiclePlateNumber = b.VehiclePlateNumber,
+                VehicleMake = b.VehicleMake,
+                VehicleModel = b.VehicleModel,
 
                 ServiceId = b.ServiceId,
                 ServiceName = b.Service.Name,
@@ -132,7 +155,7 @@ public class BookingService : IBookingService
             if (!customerId.HasValue)
             {
                 throw new KeyNotFoundException(
-                "Customer account not found.");
+                    "Customer account not found.");
             }
 
             query = query.Where(b =>
@@ -140,65 +163,339 @@ public class BookingService : IBookingService
         }
 
         var booking = await query
-        .Select(b => new BookingDto
-        {
-            Id = b.Id,
+            .Select(b => new BookingDto
+            {
+                Id = b.Id,
+                ReferenceNumber = b.ReferenceNumber,
 
-            CustomerId = b.CustomerId,
-            CustomerName = b.Customer.Name,
+                CustomerId = b.CustomerId,
+                CustomerName = b.CustomerName,
+                CustomerEmail = b.CustomerEmail,
+                CustomerPhone = b.CustomerPhone,
 
-            VehicleId = b.VehicleId,
-            VehiclePlateNumber =
-                b.Vehicle.PlateNumber,
-            VehicleMake = b.Vehicle.Make,
-            VehicleModel = b.Vehicle.Model,
+                VehicleId = b.VehicleId,
+                VehiclePlateNumber = b.VehiclePlateNumber,
+                VehicleMake = b.VehicleMake,
+                VehicleModel = b.VehicleModel,
 
-            ServiceId = b.ServiceId,
-            ServiceName = b.Service.Name,
+                ServiceId = b.ServiceId,
+                ServiceName = b.Service.Name,
 
-            BookingDate = b.BookingDate,
-            BookingTime = b.BookingTime,
+                BookingDate = b.BookingDate,
+                BookingTime = b.BookingTime,
 
-            Status = b.Status,
-            IsDeleted = b.IsDeleted,
-            Notes = b.Notes,
+                Status = b.Status,
+                IsDeleted = b.IsDeleted,
+                Notes = b.Notes,
 
-            CreatedAt = b.CreatedAt,
-            UpdatedAt = b.UpdatedAt
-        })
-        .FirstOrDefaultAsync();
+                CreatedAt = b.CreatedAt,
+                UpdatedAt = b.UpdatedAt
+            })
+            .FirstOrDefaultAsync();
 
         if (booking == null)
         {
             throw new KeyNotFoundException(
-                "Booking not found."
-            );
+                "Booking not found.");
         }
 
         return booking;
     }
 
     public async Task<BookingDto> CreateBookingAsync(
-        CreateBookingDto dto)
+    CreateBookingDto dto)
     {
-        if (!_currentUser.IsCustomer)
+        await _createBookingValidator.ValidateAndThrowAsync(dto);
+
+        int? customerId = null;
+        int? vehicleId = null;
+
+        string customerName;
+        string customerEmail;
+        string customerPhone;
+
+        string vehiclePlateNumber;
+        string vehicleMake;
+        string vehicleModel;
+
+        // Registered customer
+        if (_currentUser.IsCustomer)
         {
-            throw new UnauthorizedAccessException(
-                "Only customers can create bookings.");
+            customerId = _currentUser.CustomerId;
+
+            if (!customerId.HasValue)
+            {
+                throw new UnauthorizedAccessException(
+                    "Customer account is not associated with a customer.");
+            }
+
+            if (!dto.VehicleId.HasValue)
+            {
+                throw new InvalidOperationException(
+                    "Vehicle is required.");
+            }
+
+            var customer = await _context.Customers
+                .FirstOrDefaultAsync(c =>
+                    c.Id == customerId.Value &&
+                    !c.IsDeleted);
+
+            if (customer == null)
+            {
+                throw new KeyNotFoundException(
+                    "Customer not found.");
+            }
+
+            var vehicle = await _context.Vehicles
+                .FirstOrDefaultAsync(v =>
+                    v.Id == dto.VehicleId.Value &&
+                    v.CustomerId == customerId.Value &&
+                    v.Status == "active" &&
+                    !v.IsDeleted);
+
+            if (vehicle == null)
+            {
+                throw new KeyNotFoundException(
+                    "Vehicle not found.");
+            }
+
+            vehicleId = vehicle.Id;
+
+            if (string.IsNullOrWhiteSpace(customer.Phone))
+            {
+                throw new InvalidOperationException(
+                    "Please add a phone number to your profile before creating a booking.");
+            }
+
+            // Snapshot customer information
+            customerName = customer.Name;
+            customerEmail = customer.Email;
+            customerPhone = customer.Phone;
+
+            // Snapshot vehicle information
+            vehiclePlateNumber = vehicle.PlateNumber;
+            vehicleMake = vehicle.Make;
+            vehicleModel = vehicle.Model;
         }
 
-        var customerId = _currentUser.CustomerId;
-
-        if (!customerId.HasValue)
+        // Staff should not create bookings through
+        // the public/customer booking flow
+        else if (
+            _currentUser.IsAdmin ||
+            _currentUser.IsReceptionist ||
+            _currentUser.IsMechanic)
         {
             throw new UnauthorizedAccessException(
-                "Customer account is not associated with a customer.");
+                "Only customers and guests can create bookings.");
+        }
+
+        // Guest
+        else
+        {
+            if (string.IsNullOrWhiteSpace(dto.CustomerName) ||
+                string.IsNullOrWhiteSpace(dto.CustomerEmail) ||
+                string.IsNullOrWhiteSpace(dto.CustomerPhone))
+            {
+                throw new InvalidOperationException(
+                    "Guest contact information is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.VehiclePlateNumber) ||
+                string.IsNullOrWhiteSpace(dto.VehicleMake) ||
+                string.IsNullOrWhiteSpace(dto.VehicleModel))
+            {
+                throw new InvalidOperationException(
+                    "Guest vehicle information is required.");
+            }
+
+            customerName = dto.CustomerName.Trim();
+
+            customerEmail = dto.CustomerEmail
+                .Trim()
+                .ToLowerInvariant();
+
+            customerPhone = dto.CustomerPhone.Trim();
+
+            vehiclePlateNumber = dto.VehiclePlateNumber
+                .Trim()
+                .ToUpperInvariant();
+
+            vehicleMake = dto.VehicleMake.Trim();
+            vehicleModel = dto.VehicleModel.Trim();
+        }
+
+        // Validate service
+        var service = await _context.Services
+            .FirstOrDefaultAsync(s =>
+                s.Id == dto.ServiceId &&
+                s.IsActive &&
+                !s.IsDeleted);
+
+        if (service == null)
+        {
+            throw new KeyNotFoundException(
+                "Service not found.");
+        }
+
+        // Singapore current date
+        var singaporeTimeZone =
+            TimeZoneInfo.FindSystemTimeZoneById(
+                "Singapore Standard Time");
+
+        var today = DateOnly.FromDateTime(
+            TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.UtcNow,
+                singaporeTimeZone));
+
+        if (dto.BookingDate < today)
+        {
+            throw new InvalidOperationException(
+                "Booking date cannot be in the past.");
+        }
+
+        if (dto.BookingDate.DayOfWeek == DayOfWeek.Sunday)
+        {
+            throw new InvalidOperationException(
+                "The workshop is closed on Sundays.");
+        }
+
+        // Check booking conflict
+        var hasConflict = await HasBookingConflictAsync(
+            dto.BookingDate,
+            dto.BookingTime,
+            dto.ServiceId);
+
+        if (hasConflict)
+        {
+            throw new ConflictException(
+                "The selected time slot is no longer available.");
+        }
+
+        // Create booking
+        var booking = new Booking
+        {
+            ReferenceNumber = GenerateReferenceNumber(),
+
+            CustomerId = customerId,
+            VehicleId = vehicleId,
+
+            ServiceId = dto.ServiceId,
+
+            CustomerName = customerName,
+            CustomerEmail = customerEmail,
+            CustomerPhone = customerPhone,
+
+            VehiclePlateNumber = vehiclePlateNumber,
+            VehicleMake = vehicleMake,
+            VehicleModel = vehicleModel,
+
+            BookingDate = dto.BookingDate,
+            BookingTime = dto.BookingTime,
+
+            Status = "pending",
+            Notes = dto.Notes,
+
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+
+        _context.Bookings.Add(booking);
+
+        await _context.SaveChangesAsync();
+
+        // Return the newly created booking directly.
+        // Do not call GetBookingAsync() because guest creation
+        // and viewing an existing booking have different
+        // authorization requirements.
+        return new BookingDto
+        {
+            Id = booking.Id,
+            ReferenceNumber = booking.ReferenceNumber,
+
+            CustomerId = booking.CustomerId,
+            CustomerName = booking.CustomerName,
+            CustomerEmail = booking.CustomerEmail,
+            CustomerPhone = booking.CustomerPhone,
+
+            VehicleId = booking.VehicleId,
+            VehiclePlateNumber = booking.VehiclePlateNumber,
+            VehicleMake = booking.VehicleMake,
+            VehicleModel = booking.VehicleModel,
+
+            ServiceId = booking.ServiceId,
+            ServiceName = service.Name,
+
+            BookingDate = booking.BookingDate,
+            BookingTime = booking.BookingTime,
+
+            Status = booking.Status,
+            IsDeleted = booking.IsDeleted,
+            Notes = booking.Notes,
+
+            CreatedAt = booking.CreatedAt,
+            UpdatedAt = booking.UpdatedAt
+        };
+    }
+
+    public async Task<bool> UpdateBookingAsync(
+    int id,
+    UpdateBookingDto dto)
+    {
+        await _updateBookingValidator.ValidateAndThrowAsync(dto);
+
+        var booking = await _context.Bookings
+            .FirstOrDefaultAsync(b =>
+                b.Id == id &&
+                !b.IsDeleted);
+
+        if (booking == null)
+        {
+            throw new KeyNotFoundException(
+                "Booking not found.");
+        }
+
+        if (!_currentUser.IsCustomer &&
+            !_currentUser.IsReceptionist &&
+            !_currentUser.IsAdmin)
+        {
+            throw new UnauthorizedAccessException(
+                "You are not allowed to update this booking.");
+        }
+
+        if (_currentUser.IsCustomer)
+        {
+            var customerId = _currentUser.CustomerId;
+
+            if (!customerId.HasValue ||
+                booking.CustomerId != customerId.Value)
+            {
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to modify this booking.");
+            }
+
+            if (booking.Status != "pending")
+            {
+                throw new InvalidOperationException(
+                    "Only pending bookings can be modified.");
+            }
+        }
+
+        if (!dto.VehicleId.HasValue)
+        {
+            throw new InvalidOperationException(
+                "Vehicle is required.");
+        }
+
+        if (!booking.CustomerId.HasValue)
+        {
+            throw new InvalidOperationException(
+                "Guest bookings cannot be modified through this endpoint.");
         }
 
         var vehicle = await _context.Vehicles
             .FirstOrDefaultAsync(v =>
-                v.Id == dto.VehicleId &&
-                v.CustomerId == customerId.Value &&
+                v.Id == dto.VehicleId.Value &&
+                v.CustomerId == booking.CustomerId.Value &&
                 v.Status == "active" &&
                 !v.IsDeleted);
 
@@ -244,127 +541,6 @@ public class BookingService : IBookingService
         var hasConflict = await HasBookingConflictAsync(
             dto.BookingDate,
             dto.BookingTime,
-            dto.ServiceId);
-
-        if (hasConflict)
-        {
-            throw new ConflictException(
-                "The selected time slot is no longer available.");
-        }
-
-        var booking = new Booking
-        {
-            CustomerId = customerId.Value,
-            VehicleId = dto.VehicleId,
-            ServiceId = dto.ServiceId,
-
-            BookingDate = dto.BookingDate,
-            BookingTime = dto.BookingTime,
-
-            Status = "pending",
-            Notes = dto.Notes,
-
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        _context.Bookings.Add(booking);
-
-        await _context.SaveChangesAsync();
-
-        return (await GetBookingAsync(booking.Id))!;
-    }
-
-    public async Task<bool> UpdateBookingAsync(
-        int id,
-        UpdateBookingDto dto)
-    {
-        var booking = await _context.Bookings
-            .FirstOrDefaultAsync(b =>
-                b.Id == id &&
-                !b.IsDeleted);
-
-        if (booking == null)
-        {
-            throw new KeyNotFoundException(
-                "Booking not found.");
-        }
-
-        if (!_currentUser.IsCustomer &&
-            !_currentUser.IsReceptionist &&
-            !_currentUser.IsAdmin)
-        {
-            throw new UnauthorizedAccessException(
-                "You are not allowed to update this booking.");
-        }
-
-        if (_currentUser.IsCustomer)
-        {
-            var customerId = _currentUser.CustomerId;
-
-            if (!customerId.HasValue ||
-                booking.CustomerId != customerId.Value)
-            {
-                throw new UnauthorizedAccessException(
-                    "You are not allowed to modify this booking.");
-            }
-
-            if (booking.Status != "pending")
-            {
-                throw new InvalidOperationException(
-                    "Only pending bookings can be modified.");
-            }
-        }
-
-        var vehicle = await _context.Vehicles
-            .FirstOrDefaultAsync(v =>
-                v.Id == dto.VehicleId &&
-                v.CustomerId == booking.CustomerId &&
-                v.Status == "active" &&
-                !v.IsDeleted);
-
-        if (vehicle == null)
-        {
-            throw new KeyNotFoundException(
-                "Vehicle not found.");
-        }
-
-        var serviceExists = await _context.Services
-            .AnyAsync(s =>
-                s.Id == dto.ServiceId &&
-                s.IsActive &&
-                !s.IsDeleted);
-
-        if (!serviceExists)
-        {
-            throw new KeyNotFoundException(
-                "Service not found.");
-        }
-
-        var singaporeTimeZone =
-            TimeZoneInfo.FindSystemTimeZoneById(
-                "Singapore Standard Time");
-
-        var today = DateOnly.FromDateTime(
-            TimeZoneInfo.ConvertTimeFromUtc(
-                DateTime.UtcNow,
-                singaporeTimeZone));
-
-        if (dto.BookingDate < today)
-        {
-            throw new InvalidOperationException(
-                "Booking date cannot be in the past.");
-        }
-
-        if (dto.BookingDate.DayOfWeek == DayOfWeek.Sunday)
-        {
-            throw new InvalidOperationException(
-                "The workshop is closed on Sundays.");
-        }
-
-        var hasConflict = await HasBookingConflictAsync(
-            dto.BookingDate,
-            dto.BookingTime,
             dto.ServiceId,
             id);
 
@@ -374,11 +550,18 @@ public class BookingService : IBookingService
                 "The selected time slot is no longer available.");
         }
 
-        booking.VehicleId = dto.VehicleId;
-        booking.ServiceId = dto.ServiceId;
+        booking.VehicleId = vehicle.Id;
+
+        // Update vehicle snapshot
+        booking.VehiclePlateNumber = vehicle.PlateNumber;
+        booking.VehicleMake = vehicle.Make;
+        booking.VehicleModel = vehicle.Model;
+
+        booking.ServiceId = service.Id;
         booking.BookingDate = dto.BookingDate;
         booking.BookingTime = dto.BookingTime;
-        booking.Notes = dto.Notes;
+        booking.Notes = dto.Notes?.Trim();
+
         booking.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

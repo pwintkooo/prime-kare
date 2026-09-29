@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "sonner";
 import QueryProvider from "@/providers/QueryProvider";
 import AuthHydration from "@/providers/AuthHydration";
 import SessionExpiredDialog from "@/components/auth/SessionExpiredDialog";
@@ -18,10 +19,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Primekare",
-  description: "PrimeKare - Car service booking and vehicle maintenance platform.",
+  description:
+    "PrimeKare - Car service booking and vehicle maintenance platform.",
   icons: {
-    icon: "/images/branding/primekare-icon.png"
-  }
+    icon: "/images/branding/primekare-icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -39,7 +41,7 @@ export default function RootLayout({
           <QueryProvider>
             <AuthHydration />
             {children}
-
+            <Toaster richColors position="top-right" />
             <SessionExpiredDialog />
           </QueryProvider>
         </TooltipProvider>

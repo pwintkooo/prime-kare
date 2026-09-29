@@ -3,13 +3,14 @@ namespace PrimeKare.Api.DTOs.Bookings;
 public class BookingDto
 {
     public int Id { get; set; }
-
-    public int CustomerId { get; set; }
+    public string ReferenceNumber { get; set; } = string.Empty;
+    public int? CustomerId { get; set; }
     public string CustomerName { get; set; } = string.Empty;
+    public string CustomerEmail { get; set; } = string.Empty;
+    public string CustomerPhone { get; set; } = string.Empty;
 
-    public int VehicleId { get; set; }
+    public int? VehicleId { get; set; }
     public string VehiclePlateNumber { get; set; } = string.Empty;
-
     public string VehicleMake { get; set; } = string.Empty;
     public string VehicleModel { get; set; } = string.Empty;
 
@@ -22,9 +23,9 @@ public class BookingDto
 
     public string Status { get; set; } = string.Empty;
 
-    public bool IsDeleted { get; set; }
-
     public string? Notes { get; set; }
+
+    public bool IsDeleted { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

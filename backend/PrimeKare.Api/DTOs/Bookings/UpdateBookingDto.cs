@@ -2,8 +2,8 @@ namespace PrimeKare.Api.DTOs.Bookings;
 
 public class UpdateBookingDto
 {
-    public int VehicleId { get; set; }
-    
+    public int? VehicleId { get; set; }
+
     public int ServiceId { get; set; }
 
     public DateOnly BookingDate { get; set; }
@@ -11,5 +11,4 @@ public class UpdateBookingDto
     public TimeSpan BookingTime { get; set; }
 
     public string? Notes { get; set; }
-    
 }
