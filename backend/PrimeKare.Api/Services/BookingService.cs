@@ -4,6 +4,7 @@ using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Bookings;
 using PrimeKare.Api.Models;
 using PrimeKare.Api.Services.Exceptions;
+using PrimeKare.Api.Templates;
 
 namespace PrimeKare.Api.Services;
 
@@ -13,17 +14,26 @@ public class BookingService : IBookingService
     private readonly ICurrentUserService _currentUser;
     private readonly IValidator<CreateBookingDto> _createBookingValidator;
     private readonly IValidator<UpdateBookingDto> _updateBookingValidator;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<BookingService> _logger;
 
     public BookingService(
         AppDbContext context,
         ICurrentUserService currentUser,
         IValidator<CreateBookingDto> createBookingValidator,
-        IValidator<UpdateBookingDto> updateBookingValidator)
+        IValidator<UpdateBookingDto> updateBookingValidator,
+        IEmailService emailService,
+        IConfiguration configuration,
+        ILogger<BookingService> logger)
     {
         _context = context;
         _currentUser = currentUser;
         _createBookingValidator = createBookingValidator;
         _updateBookingValidator = updateBookingValidator;
+        _emailService = emailService;
+        _configuration = configuration;
+        _logger = logger;
     }
 
     private async Task<bool> HasBookingConflictAsync(
@@ -403,11 +413,7 @@ public class BookingService : IBookingService
 
         await _context.SaveChangesAsync();
 
-        // Return the newly created booking directly.
-        // Do not call GetBookingAsync() because guest creation
-        // and viewing an existing booking have different
-        // authorization requirements.
-        return new BookingDto
+        var bookingDto = new BookingDto
         {
             Id = booking.Id,
             ReferenceNumber = booking.ReferenceNumber,
@@ -435,6 +441,33 @@ public class BookingService : IBookingService
             CreatedAt = booking.CreatedAt,
             UpdatedAt = booking.UpdatedAt
         };
+
+        try
+        {
+            var frontendUrl =
+                _configuration["FrontendUrl"]
+                ?? throw new InvalidOperationException(
+                    "Frontend URL is not configured.");
+
+            var emailBody =
+                BookingEmailTemplate.BuildConfirmationEmail(
+                    bookingDto,
+                    frontendUrl);
+
+            await _emailService.SendEmailAsync(
+                bookingDto.CustomerEmail,
+                $"Booking Received - {bookingDto.ReferenceNumber}",
+                emailBody);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to send booking confirmation email for booking {ReferenceNumber}.",
+                bookingDto.ReferenceNumber);
+        }
+
+        return bookingDto;
     }
 
     public async Task<bool> UpdateBookingAsync(
