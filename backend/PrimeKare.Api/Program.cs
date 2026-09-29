@@ -11,8 +11,19 @@ using PrimeKare.Api.Data;
 using PrimeKare.Api.Services;
 using Resend;
 using Microsoft.AspNetCore.HttpOverrides;
+using PdfSharp.Fonts;
+using PrimeKare.Api.Services.Pdf;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//PDF fonts
+var fontsPath = Path.Combine(
+    builder.Environment.ContentRootPath,
+    "Assets",
+    "Fonts");
+
+GlobalFontSettings.FontResolver =
+    new PrimeKareFontResolver(fontsPath);
 
 var useInMemoryDatabase =
     builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
@@ -97,6 +108,7 @@ builder.Services.AddScoped<IExternalAuthService, ExternalAuthService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IEmailService, ResendEmailService>();
+builder.Services.AddScoped<IBookingDocumentService, BookingDocumentService>();
 
 //register IPasswordHasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();

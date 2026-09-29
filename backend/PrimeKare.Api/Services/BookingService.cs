@@ -5,6 +5,7 @@ using PrimeKare.Api.DTOs.Bookings;
 using PrimeKare.Api.Models;
 using PrimeKare.Api.Services.Exceptions;
 using PrimeKare.Api.Templates;
+using PrimeKare.Api.DTOs.Email;
 
 namespace PrimeKare.Api.Services;
 
@@ -17,6 +18,7 @@ public class BookingService : IBookingService
     private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<BookingService> _logger;
+    private readonly IBookingDocumentService _bookingDocumentService;
 
     public BookingService(
         AppDbContext context,
@@ -25,7 +27,9 @@ public class BookingService : IBookingService
         IValidator<UpdateBookingDto> updateBookingValidator,
         IEmailService emailService,
         IConfiguration configuration,
-        ILogger<BookingService> logger)
+        ILogger<BookingService> logger,
+        IBookingDocumentService bookingDocumentService
+        )
     {
         _context = context;
         _currentUser = currentUser;
@@ -34,6 +38,7 @@ public class BookingService : IBookingService
         _emailService = emailService;
         _configuration = configuration;
         _logger = logger;
+        _bookingDocumentService = bookingDocumentService;
     }
 
     private async Task<bool> HasBookingConflictAsync(
@@ -454,10 +459,25 @@ public class BookingService : IBookingService
                     bookingDto,
                     frontendUrl);
 
+            var pdfBytes =
+                _bookingDocumentService.GenerateBookingConfirmation(
+                    bookingDto);
+
+            var attachment = new EmailFileAttachment
+            {
+                FileName =
+                    $"PrimeKare-{bookingDto.ReferenceNumber}.pdf",
+
+                Content = pdfBytes,
+
+                ContentType = "application/pdf"
+            };
+
             await _emailService.SendEmailAsync(
                 bookingDto.CustomerEmail,
                 $"Booking Received - {bookingDto.ReferenceNumber}",
-                emailBody);
+                emailBody,
+                attachment: attachment);
         }
         catch (Exception ex)
         {

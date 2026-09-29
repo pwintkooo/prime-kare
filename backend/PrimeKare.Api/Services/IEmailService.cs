@@ -1,3 +1,5 @@
+using PrimeKare.Api.DTOs.Email;
+
 namespace PrimeKare.Api.Services;
 
 public interface IEmailService
@@ -6,5 +8,6 @@ public interface IEmailService
         string to,
         string subject,
         string htmlBody,
-        string? replyTo = null);
+        string? replyTo = null,
+        EmailFileAttachment? attachment = null);
 }

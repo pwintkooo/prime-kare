@@ -1,4 +1,5 @@
 using Resend;
+using PrimeKare.Api.DTOs.Email;
 
 namespace PrimeKare.Api.Services;
 
@@ -19,7 +20,8 @@ public class ResendEmailService : IEmailService
         string to,
         string subject,
         string htmlBody,
-        string? replyTo = null)
+        string? replyTo = null,
+        EmailFileAttachment? attachment = null)
     {
         var fromEmail =
             _configuration["Resend:FromEmail"]
@@ -37,6 +39,19 @@ public class ResendEmailService : IEmailService
         if (!string.IsNullOrWhiteSpace(replyTo))
         {
             message.ReplyTo = replyTo;
+        }
+
+        if (attachment != null)
+        {
+            message.Attachments =
+            [
+                new EmailAttachment
+                {
+                    Filename = attachment.FileName,
+                    Content = attachment.Content,
+                    ContentType = attachment.ContentType
+                }
+            ];
         }
 
         await _resend.EmailSendAsync(message);
