@@ -774,11 +774,6 @@ public class BookingService : IBookingService
                 "Service not found.");
         }
 
-        if (date.DayOfWeek == DayOfWeek.Sunday)
-        {
-            return [];
-        }
-
         var bookings = await _context.Bookings
             .Where(b =>
                 b.BookingDate == date &&
@@ -810,11 +805,41 @@ public class BookingService : IBookingService
             TimeSpan.FromMinutes(
                 service.EstimatedMinutes);
 
+        var singaporeTimeZone =
+            TimeZoneInfo.FindSystemTimeZoneById(
+                "Singapore Standard Time");
+
+        var singaporeNow =
+            TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.UtcNow,
+                singaporeTimeZone);
+
+        var today =
+            DateOnly.FromDateTime(singaporeNow);
+
+        var currentTime =
+            singaporeNow.TimeOfDay;
+
+        if (date < today)
+        {
+            return [];
+        }
+
+        if (date.DayOfWeek == DayOfWeek.Sunday)
+        {
+            return [];
+        }
+
         for (
             var startTime = openingTime;
             startTime + serviceDuration <= closingTime;
             startTime += slotInterval)
         {
+            if (date == today && startTime <= currentTime)
+            {
+                continue;
+            }
+
             var endTime =
                 startTime + serviceDuration;
 

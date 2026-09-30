@@ -6,6 +6,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { Car, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,6 +151,7 @@ function BookAppointmentContent() {
         },
         {
           onSuccess: (result) => {
+            toast.success("Appointment requested successfully.");
             router.push(`/dashboard/bookings/${result.booking.id}`);
           },
         },
@@ -192,7 +194,9 @@ function BookAppointmentContent() {
             console.error("Guest access token is missing.");
             return;
           }
-          
+
+          toast.success("Appointment requested successfully.");
+
           router.push(
             `/book-appointment/success?ref=${result.booking.referenceNumber}&token=${result.guestAccessToken}`,
           );

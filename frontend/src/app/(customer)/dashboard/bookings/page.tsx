@@ -4,11 +4,23 @@ import { useState } from "react";
 import Link from "next/link";
 import { useBookings } from "@/hooks/use-bookings";
 import { Button } from "@/components/ui/button";
-import { Plus, CalendarDays, ArrowUpDown, ArrowDownUp } from "lucide-react";
+import {
+  Plus,
+  CalendarDays,
+  ArrowUpDown,
+  ArrowDownUp,
+  Search,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { BookingCard } from "@/components/bookings/booking-card";
 import { BookingsDashboardSkeleton } from "@/components/skeletons/BookingsDashboardSkeleton";
 
-type BookingFilter = "all" | "upcoming" | "in-progress" | "completed" | "cancelled";
+type BookingFilter =
+  | "all"
+  | "upcoming"
+  | "in-progress"
+  | "completed"
+  | "cancelled";
 
 const filterLabels: Record<BookingFilter, string> = {
   all: "bookings",
@@ -22,8 +34,17 @@ export default function BookingsPage() {
   const { data: bookings, isLoading, isError } = useBookings();
   const [filter, setFilter] = useState<BookingFilter>("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [search, setSearch] = useState("");
 
   const filteredBookings = bookings?.filter((booking) => {
+    const matchesSearch = booking.referenceNumber
+      .toLowerCase()
+      .includes(search.trim().toLowerCase());
+
+    if (!matchesSearch) {
+      return false;
+    }
+
     if (filter === "all") {
       return true;
     }
@@ -94,6 +115,20 @@ export default function BookingsPage() {
         </Button>
       </div>
 
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+        <Input
+          type="search"
+          placeholder="Search by reference number..."
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/*Fillter*/}
       <div className="flex items-center justify-between gap-4 border-b">
         <div className="flex gap-2 overflow-x-auto">
           {[
@@ -140,10 +175,14 @@ export default function BookingsPage() {
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
           <CalendarDays className="mb-4 size-10 text-muted-foreground" />
 
-          <h2 className="text-lg font-semibold">No {filterLabels[filter]}</h2>
+          <h2 className="text-lg font-semibold">
+            {search ? "No matching bookings" : `No ${filterLabels[filter]}`}
+          </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Try selecting a different filter.
+            {search
+              ? `No bookings found for "${search}".`
+              : "Try selecting a different filter."}
           </p>
         </div>
       ) : (

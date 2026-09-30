@@ -1,14 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { Car, Plus, CalendarDays, Pencil, ChevronRight } from "lucide-react";
-
+import { useState } from "react";
+import {
+  Car,
+  Plus,
+  CalendarDays,
+  Pencil,
+  ChevronRight,
+  Search,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { VehiclesSkeleton } from "@/components/skeletons/VehiclesSkeleton";
 import { useVehicles } from "@/hooks/use-vehicles";
 
 export default function VehiclesPage() {
+  const [search, setSearch] = useState("");
+
   const { data: vehicles, isLoading, isError } = useVehicles();
+
+  const filteredVehicles = vehicles?.filter((vehicle) =>
+    vehicle.plateNumber.toLowerCase().includes(search.trim().toLowerCase()),
+  );
 
   if (isLoading) {
     return <VehiclesSkeleton />;
@@ -59,6 +73,21 @@ export default function VehiclesPage() {
           </Link>
         </div>
 
+        {/* Search */}
+        {vehicles && vehicles.length > 0 && (
+          <div className="relative mt-8 max-w-sm">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+
+            <Input
+              type="search"
+              placeholder="Search by plate number..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="bg-white pl-9"
+            />
+          </div>
+        )}
+
         {/* Empty state */}
         {!vehicles || vehicles.length === 0 ? (
           <div className="mt-10 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
@@ -81,6 +110,21 @@ export default function VehiclesPage() {
                 Add Your First Vehicle
               </Button>
             </Link>
+          </div>
+        ) : filteredVehicles?.length === 0 ? (
+          // No search results
+          <div className="mt-10 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+              <Search className="h-8 w-8 text-slate-500" />
+            </div>
+
+            <h2 className="mt-5 text-xl font-semibold text-slate-900">
+              No matching vehicles
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-500">
+              No vehicles found for &quot;{search}&quot;.
+            </p>
           </div>
         ) : (
           /* Vehicle cards */
