@@ -5,6 +5,7 @@ import {
   UpdateBookingRequest,
   UpdateBookingStatusRequest,
   BookingAvailability,
+  CreateBookingResponse,
 } from "@/types/booking";
 
 export async function getBookings(): Promise<Booking[]> {
@@ -21,8 +22,11 @@ export async function getBooking(id: number): Promise<Booking> {
 
 export async function createBooking(
   request: CreateBookingRequest,
-): Promise<Booking> {
-  const response = await apiClient.post<Booking>("/api/bookings", request);
+): Promise<CreateBookingResponse> {
+  const response = await apiClient.post<CreateBookingResponse>(
+    "/api/bookings",
+    request,
+  );
 
   return response.data;
 }
@@ -56,6 +60,27 @@ export async function getBookingAvailability(
       },
     },
   );
+
+  return response.data;
+}
+
+export async function downloadBookingConfirmation(id: number) {
+  const response = await apiClient.get(`/api/bookings/${id}/confirmation`, {
+    responseType: "blob",
+  });
+
+  return response.data;
+}
+
+export async function downloadGuestBookingConfirmation(
+  token: string,
+): Promise<Blob> {
+  const response = await apiClient.get("/api/bookings/guest/confirmation", {
+    params: {
+      token,
+    },
+    responseType: "blob",
+  });
 
   return response.data;
 }

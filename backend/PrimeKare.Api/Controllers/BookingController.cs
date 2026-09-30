@@ -12,11 +12,14 @@ namespace PrimeKare.Api.Controllers;
 public class BookingsController : ControllerBase
 {
     private readonly IBookingService _bookingService;
+    private readonly IBookingDocumentService _bookingDocumentService;
 
     public BookingsController(
-        IBookingService bookingService)
+        IBookingService bookingService,
+        IBookingDocumentService bookingDocumentService)
     {
         _bookingService = bookingService;
+        _bookingDocumentService = bookingDocumentService;
     }
 
     [HttpGet]
@@ -54,13 +57,12 @@ public class BookingsController : ControllerBase
     {
         try
         {
-            var booking = await _bookingService
+            var result = await _bookingService
                 .CreateBookingAsync(dto);
 
-            return CreatedAtAction(
-                nameof(GetBooking),
-                new { id = booking.Id },
-                booking);
+            return StatusCode(
+                StatusCodes.Status201Created,
+                result);
         }
         catch (KeyNotFoundException ex)
         {
@@ -192,6 +194,66 @@ public class BookingsController : ControllerBase
                 ServiceId = serviceId,
                 AvailableTimes = availableTimes
             });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+    }
+
+    [HttpGet("{id}/confirmation")]
+    public async Task<IActionResult> GetBookingConfirmation(
+    int id)
+    {
+        try
+        {
+            var booking = await _bookingService
+                .GetBookingAsync(id);
+
+            var pdfBytes = _bookingDocumentService
+                .GenerateBookingConfirmation(booking);
+
+            return File(
+                pdfBytes,
+                "application/pdf",
+                $"PrimeKare-{booking.ReferenceNumber}.pdf");
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new
+            {
+                message = ex.Message
+            });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpGet("guest/confirmation")]
+    public async Task<IActionResult> GetGuestBookingConfirmation(
+    [FromQuery] string token)
+    {
+        try
+        {
+            var booking = await _bookingService
+                .GetGuestBookingByTokenAsync(token);
+
+            var pdfBytes = _bookingDocumentService
+                .GenerateBookingConfirmation(booking);
+
+            return File(
+                pdfBytes,
+                "application/pdf",
+                $"PrimeKare-{booking.ReferenceNumber}.pdf");
         }
         catch (KeyNotFoundException ex)
         {

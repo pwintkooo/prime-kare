@@ -34,6 +34,8 @@ public class Booking
 
     public string? Notes { get; set; }
 
+    public string? GuestAccessToken { get; set; }
+    
     public bool IsDeleted { get; set; } = false;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

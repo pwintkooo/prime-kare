@@ -1,18 +1,23 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, Copy, Home, Loader2 } from "lucide-react";
+import { CheckCircle2, Copy, Home, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+import { downloadGuestBookingConfirmation } from "@/api/bookings";
+
 function BookingSuccessContent() {
   const searchParams = useSearchParams();
 
   const referenceNumber = searchParams.get("ref");
+  const token = searchParams.get("token");
+
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleCopy = async () => {
     if (!referenceNumber) return;
@@ -20,6 +25,37 @@ function BookingSuccessContent() {
     await navigator.clipboard.writeText(referenceNumber);
 
     toast.success("Booking reference copied.");
+  };
+
+  const handleDownload = async () => {
+    if (!token || !referenceNumber) {
+      toast.error("Unable to download booking PDF.");
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+
+      const blob = await downloadGuestBookingConfirmation(token);
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `PrimeKare-${referenceNumber}.pdf`;
+
+      document.body.appendChild(link);
+
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Failed to download booking PDF.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -71,6 +107,24 @@ function BookingSuccessContent() {
             Please note that your appointment is currently pending. Our team
             will confirm the appointment after reviewing your request.
           </div>
+
+          {token && referenceNumber && (
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-6 gap-2"
+              onClick={handleDownload}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
+
+              {isDownloading ? "Downloading..." : "Download Booking PDF"}
+            </Button>
+          )}
 
           <Link href="/" className="mt-8 inline-block">
             <Button

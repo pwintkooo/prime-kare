@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getBookingAvailability } from "@/api/booking";
+import { getBookingAvailability } from "@/api/bookings";
 
 export function useBookingAvailability(
   serviceId: number | null,

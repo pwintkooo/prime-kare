@@ -8,7 +8,7 @@ public interface IBookingService
 
     Task<BookingDto> GetBookingAsync(int id);
 
-    Task<BookingDto> CreateBookingAsync(
+    Task<CreateBookingResponseDto> CreateBookingAsync(
         CreateBookingDto dto);
 
     Task<bool> UpdateBookingAsync(
@@ -23,4 +23,7 @@ public interface IBookingService
         int serviceId,
         DateOnly date,
         int? bookingId = null);
+
+    Task<BookingDto> GetGuestBookingByTokenAsync(
+        string token);
 }

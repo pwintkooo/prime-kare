@@ -149,8 +149,8 @@ function BookAppointmentContent() {
           notes: data.notes?.trim() || null,
         },
         {
-          onSuccess: (booking) => {
-            router.push(`/dashboard/bookings/${booking.id}`);
+          onSuccess: (result) => {
+            router.push(`/dashboard/bookings/${result.booking.id}`);
           },
         },
       );
@@ -187,9 +187,14 @@ function BookAppointmentContent() {
         notes: data.notes?.trim() || null,
       },
       {
-        onSuccess: (booking) => {
+        onSuccess: (result) => {
+          if (!result.guestAccessToken) {
+            console.error("Guest access token is missing.");
+            return;
+          }
+          
           router.push(
-            `/book-appointment/success?ref=${booking.referenceNumber}`,
+            `/book-appointment/success?ref=${result.booking.referenceNumber}&token=${result.guestAccessToken}`,
           );
         },
       },

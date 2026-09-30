@@ -5,7 +5,7 @@ import {
   createBooking,
   updateBooking,
   updateBookingStatus,
-} from "@/api/booking";
+} from "@/api/bookings";
 import {
   CreateBookingRequest,
   UpdateBookingRequest,

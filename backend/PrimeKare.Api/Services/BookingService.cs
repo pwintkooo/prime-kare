@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
+using System.Security.Cryptography;
 using PrimeKare.Api.Data;
 using PrimeKare.Api.DTOs.Bookings;
 using PrimeKare.Api.Models;
@@ -217,7 +218,7 @@ public class BookingService : IBookingService
         return booking;
     }
 
-    public async Task<BookingDto> CreateBookingAsync(
+    public async Task<CreateBookingResponseDto> CreateBookingAsync(
     CreateBookingDto dto)
     {
         await _createBookingValidator.ValidateAndThrowAsync(dto);
@@ -232,6 +233,8 @@ public class BookingService : IBookingService
         string vehiclePlateNumber;
         string vehicleMake;
         string vehicleModel;
+
+        string? guestAccessToken = null;
 
         // Registered customer
         if (_currentUser.IsCustomer)
@@ -323,6 +326,8 @@ public class BookingService : IBookingService
                     "Guest vehicle information is required.");
             }
 
+            guestAccessToken = GenerateGuestAccessToken();
+
             customerName = dto.CustomerName.Trim();
 
             customerEmail = dto.CustomerEmail
@@ -409,6 +414,7 @@ public class BookingService : IBookingService
 
             Status = "pending",
             Notes = dto.Notes,
+            GuestAccessToken = guestAccessToken,
 
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
@@ -487,7 +493,11 @@ public class BookingService : IBookingService
                 bookingDto.ReferenceNumber);
         }
 
-        return bookingDto;
+        return new CreateBookingResponseDto
+        {
+            Booking = bookingDto,
+            GuestAccessToken = guestAccessToken
+        };
     }
 
     public async Task<bool> UpdateBookingAsync(
@@ -839,5 +849,65 @@ public class BookingService : IBookingService
         }
 
         return availableTimes;
+    }
+
+    public async Task<BookingDto> GetGuestBookingByTokenAsync(
+    string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            throw new KeyNotFoundException(
+                "Booking not found.");
+        }
+
+        var booking = await _context.Bookings
+            .AsNoTracking()
+            .Include(b => b.Service)
+            .FirstOrDefaultAsync(b =>
+                b.GuestAccessToken == token &&
+                b.CustomerId == null &&
+                !b.IsDeleted);
+
+        if (booking == null)
+        {
+            throw new KeyNotFoundException(
+                "Booking not found.");
+        }
+
+        return new BookingDto
+        {
+            Id = booking.Id,
+            ReferenceNumber = booking.ReferenceNumber,
+
+            CustomerId = booking.CustomerId,
+            CustomerName = booking.CustomerName,
+            CustomerEmail = booking.CustomerEmail,
+            CustomerPhone = booking.CustomerPhone,
+
+            VehicleId = booking.VehicleId,
+            VehiclePlateNumber = booking.VehiclePlateNumber,
+            VehicleMake = booking.VehicleMake,
+            VehicleModel = booking.VehicleModel,
+
+            ServiceId = booking.ServiceId,
+            ServiceName = booking.Service.Name,
+
+            BookingDate = booking.BookingDate,
+            BookingTime = booking.BookingTime,
+
+            Status = booking.Status,
+            Notes = booking.Notes,
+
+            IsDeleted = booking.IsDeleted,
+            CreatedAt = booking.CreatedAt,
+            UpdatedAt = booking.UpdatedAt
+        };
+    }
+
+    private static string GenerateGuestAccessToken()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(32);
+
+        return Convert.ToHexString(bytes);
     }
 }

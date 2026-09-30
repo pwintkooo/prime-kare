@@ -10,6 +10,7 @@ import {
   Car,
   Clock,
   Wrench,
+  Download,
 } from "lucide-react";
 
 import { useBooking } from "@/hooks/use-bookings";
@@ -21,12 +22,15 @@ import { BookingDetailsSkeleton } from "@/components/skeletons/BookingDetailsSke
 import { formatBookingDate, formatBookingTime } from "@/utils/formatters";
 import { BookingStatusBadge } from "@/components/bookings/booking-status-badge";
 import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
+import { toast } from "sonner";
+import { downloadBookingConfirmation } from "@/api/bookings";
 
 export default function BookingDetailsPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { data: booking, isLoading, isError, refetch } = useBooking(id);
 
@@ -57,6 +61,35 @@ export default function BookingDetailsPage() {
   };
 
   const canCancel = canCancelBooking();
+
+  const handleDownloadConfirmation = async () => {
+    if (!booking) {
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+
+      const blob = await downloadBookingConfirmation(booking.id);
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `PrimeKare-${booking.referenceNumber}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Failed to download booking confirmation.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   if (isLoading) {
     return <BookingDetailsSkeleton />;
@@ -121,6 +154,16 @@ export default function BookingDetailsPage() {
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button
+            variant="outline"
+            onClick={handleDownloadConfirmation}
+            disabled={isDownloading}
+          >
+            <Download className="size-4" />
+
+            {isDownloading ? "Downloading..." : "Download Confirmation"}
+          </Button>
+
           <Button variant="outline" disabled={!canEdit}>
             <Link href={`/dashboard/bookings/${booking.id}/edit`}>
               Edit Booking

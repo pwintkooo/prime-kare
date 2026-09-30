@@ -66,6 +66,14 @@ public class AppDbContext : DbContext
             .HasMaxLength(30)
             .IsRequired();
 
+        modelBuilder.Entity<Booking>()
+            .HasIndex(b => b.GuestAccessToken)
+            .IsUnique();
+
+        modelBuilder.Entity<Booking>()
+            .Property(b => b.GuestAccessToken)
+            .HasMaxLength(100);
+
         modelBuilder.Entity<ExternalLogin>()
             .HasOne(e => e.User)
             .WithMany(u => u.ExternalLogins)

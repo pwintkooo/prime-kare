@@ -79,3 +79,8 @@ export interface CreateBookingFormErrors {
 
   notes?: string;
 }
+
+export type CreateBookingResponse = {
+  booking: Booking;
+  guestAccessToken: string | null;
+};
