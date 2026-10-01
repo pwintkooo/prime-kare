@@ -162,7 +162,7 @@ export default function ServicesPage() {
           </p>
 
           <Link
-            href="/book"
+            href="/book-appointment"
             className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
           >
             Book an Appointment
