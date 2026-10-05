@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
 
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,6 +24,7 @@ export default function SignUpPage() {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -34,6 +36,44 @@ export default function SignUpPage() {
       confirmPassword: "",
       terms: false,
     },
+  });
+
+  const saveSignUpForm = () => {
+    sessionStorage.setItem(
+      "signup-form",
+      JSON.stringify({
+        name,
+        email,
+        phone,
+      }),
+    );
+  };
+
+  useEffect(() => {
+    const savedForm = sessionStorage.getItem("signup-form");
+
+    if (!savedForm) return;
+
+    const data = JSON.parse(savedForm);
+
+    setValue("name", data.name ?? "");
+    setValue("email", data.email ?? "");
+    setValue("phone", data.phone ?? "");
+  }, [setValue]);
+
+  const name = useWatch({
+    control,
+    name: "name",
+  });
+
+  const email = useWatch({
+    control,
+    name: "name",
+  });
+
+  const phone = useWatch({
+    control,
+    name: "name",
   });
 
   const password =
@@ -56,6 +96,8 @@ export default function SignUpPage() {
         phone: data.phone,
         password: data.password,
       });
+
+      sessionStorage.removeItem("signup-form");
     } catch {
       // Error is available from signUpMutation.error
     }
@@ -273,6 +315,7 @@ export default function SignUpPage() {
                     I agree to the{" "}
                     <Link
                       href="/terms"
+                      onClick={saveSignUpForm}
                       className="text-blue-400 transition hover:text-blue-300"
                     >
                       Terms of Service
@@ -280,6 +323,7 @@ export default function SignUpPage() {
                     and{" "}
                     <Link
                       href="/privacy"
+                      onClick={saveSignUpForm}
                       className="text-blue-400 transition hover:text-blue-300"
                     >
                       Privacy Policy
