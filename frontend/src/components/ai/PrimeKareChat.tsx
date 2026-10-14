@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Image from "next/image";
+import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
 import { sendChatMessage } from "@/api/aiAgent";
 import type { ChatMessage } from "@/types/aiAgent";
@@ -298,14 +299,21 @@ export default function PrimeKareChat() {
           </div>
 
           {/* Error */}
-          {error && (
-            <p
-              role="alert"
-              className="border-t border-red-100 bg-red-50 px-4 py-2 text-sm text-red-600"
-            >
-              {error}
+
+          {error === "SESSION_EXPIRED" ? (
+            <p className="text-sm text-slate-300">
+              Your session has expired. Please{" "}
+              <Link
+                href="/sign-in"
+                className="font-medium text-blue-400 underline hover:text-blue-300"
+              >
+                log in again
+              </Link>{" "}
+              to continue using PrimeKare AI.
             </p>
-          )}
+          ) : error ? (
+            <p className="text-sm text-red-400">{error}</p>
+          ) : null}
 
           {/* Input */}
           <form

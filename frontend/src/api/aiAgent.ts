@@ -23,15 +23,24 @@ export async function sendChatMessage(
     return response.data.reply;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const detail = error.response?.data?.detail;
+
+      if (
+        status === 401 &&
+        typeof detail === "object" &&
+        detail !== null &&
+        detail.code === "SESSION_EXPIRED"
+      ) {
+        throw new Error("SESSION_EXPIRED");
+      }
+      
       // Rate limit exceeded
       if (error.response?.status === 429) {
         throw new Error(
           "You've sent too many messages. Please wait a minute before trying again.",
         );
       }
-
-      // Extract FastAPI error details
-      const detail = error.response?.data?.detail;
 
       if (typeof detail === "string") {
         throw new Error(detail);
