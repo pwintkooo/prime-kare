@@ -1,12 +1,13 @@
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Depends
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, Field
 from typing import Literal
 import json
 import httpx
+from fastapi.security import HTTPBearer
 
 # Load settings from .env
 load_dotenv()
@@ -15,6 +16,7 @@ load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 model = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 services_url = os.getenv("PRIMEKARE_SERVICES_URL")
+api_base_url = os.getenv("PRIMEKARE_API_URL")
 
 # Create the FastAPI application
 app = FastAPI(
@@ -22,6 +24,8 @@ app = FastAPI(
     description="AI assistant for PrimeKare",
     version="0.1.0",
 )
+
+bearer_scheme = HTTPBearer()
 
 # Create the OpenAI client
 client = OpenAI(api_key=api_key) if api_key else None
@@ -40,6 +44,57 @@ class ChatRequest(BaseModel):
 # Define the response format
 class ChatResponse(BaseModel):
     reply: str
+
+
+def call_protected_api(
+    path: str,
+    authorization: str | None,
+):
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication is required.",
+        )
+
+    if not api_base_url:
+        raise HTTPException(
+            status_code=500,
+            detail="PrimeKare API URL is not configured.",
+        )
+
+    try:
+        response = httpx.get(
+            f"{api_base_url.rstrip('/')}/{path.lstrip('/')}",
+            headers={
+                "Authorization": authorization,
+            },
+            timeout=10.0,
+        )
+
+        if response.status_code in (401, 403):
+            raise HTTPException(
+                status_code=response.status_code,
+                detail="The backend rejected the authentication request.",
+            )
+
+        response.raise_for_status()
+        return response.json()
+
+    except httpx.HTTPStatusError as e:
+        print(f"PrimeKare API returned HTTP {e.response.status_code}")
+
+        raise HTTPException(
+            status_code=502,
+            detail="The PrimeKare backend request failed.",
+        )
+
+    except httpx.RequestError as e:
+        print(f"PrimeKare API connection error: {type(e).__name__}")
+
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to connect to the PrimeKare backend.",
+        )
 
 
 def get_available_services():
@@ -74,6 +129,27 @@ def get_available_services():
         return {"error": "Unable to retrieve services from PrimeKare."}
 
 
+def get_my_vehicles(authorization: str):
+    vehicles = call_protected_api(
+        path="api/Vehicles",
+        authorization=authorization,
+    )
+
+    # Return only fields the AI needs to answer the user.
+    return [
+        {
+            "id": vehicle["id"],
+            "plateNumber": vehicle["plateNumber"],
+            "make": vehicle["make"],
+            "model": vehicle["model"],
+            "year": vehicle["year"],
+            "status": vehicle["status"],
+        }
+        for vehicle in vehicles
+        if not vehicle.get("isDeleted", False)
+    ]
+
+
 tools = [
     {
         "type": "function",
@@ -89,12 +165,33 @@ tools = [
             "additionalProperties": False,
         },
         "strict": True,
-    }
+    },
+    {
+        "type": "function",
+        "name": "get_my_vehicles",
+        "description": (
+            "Retrieve vehicles accessible to the currently authenticated user. "
+            "Use this when the user asks about their registered vehicles. "
+            "Do not ask the user for a customer ID."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
 ]
 
 # Only functions registered here can be executed by the AI agent.
 tool_handlers = {
-    "get_available_services": get_available_services,
+    "get_available_services": lambda arguments, authorization: (
+        get_available_services()
+    ),
+    "get_my_vehicles": lambda arguments, authorization: (
+        get_my_vehicles(authorization)
+    ),
 }
 
 
@@ -104,7 +201,12 @@ def home():
 
 
 @app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
+def chat(
+    request: ChatRequest,
+    credentials = Depends(bearer_scheme),
+):
+    authorization = f"Bearer {credentials.credentials}"
+    
     if client is None:
         raise HTTPException(
             status_code=500,
@@ -165,7 +267,7 @@ def chat(request: ChatRequest):
                         if not isinstance(arguments, dict):
                             raise ValueError("Tool arguments must be an object.")
 
-                        result = handler(**arguments)
+                        result = handler(arguments, authorization)
 
                     except (ValueError, TypeError):
                         result = {"error": "Invalid tool arguments."}
