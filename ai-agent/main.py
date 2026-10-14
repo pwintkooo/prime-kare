@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes.chat import router as chat_router
 from core.limiter import limiter
+from core.config import PRIMEKARE_FRONTEND_URL
 
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -15,7 +16,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[PRIMEKARE_FRONTEND_URL],
     allow_credentials=False,
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
