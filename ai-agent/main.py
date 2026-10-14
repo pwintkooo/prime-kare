@@ -8,6 +8,7 @@ from typing import Literal
 import json
 import httpx
 from fastapi.security import HTTPBearer
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load settings from .env
 load_dotenv()
@@ -26,6 +27,16 @@ app = FastAPI(
 )
 
 bearer_scheme = HTTPBearer()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 # Create the OpenAI client
 client = OpenAI(api_key=api_key) if api_key else None
@@ -138,7 +149,6 @@ def get_my_vehicles(authorization: str):
     # Return only fields the AI needs to answer the user.
     return [
         {
-            "id": vehicle["id"],
             "plateNumber": vehicle["plateNumber"],
             "make": vehicle["make"],
             "model": vehicle["model"],
@@ -203,10 +213,10 @@ def home():
 @app.post("/chat", response_model=ChatResponse)
 def chat(
     request: ChatRequest,
-    credentials = Depends(bearer_scheme),
+    credentials=Depends(bearer_scheme),
 ):
     authorization = f"Bearer {credentials.credentials}"
-    
+
     if client is None:
         raise HTTPException(
             status_code=500,
@@ -222,17 +232,34 @@ def chat(
             for message in request.messages
         ]
 
+        
         instructions = (
             "You are PrimeKare's helpful car workshop assistant. "
-            "Use the available tools to retrieve real service information. "
-            "Only report information present in the tool results. "
-            "Display prices with two decimal places, such as 89.90. "
+
+            "When listing available services: "
+            "Use a Markdown table with Service, Description, Price, and Duration columns. "
+            "Display prices in Singapore dollars (S$) with two decimal places, "
+            "such as S$89.90. "
+            "Display duration with min, such as 45min."
             "Do not assume a currency unless the backend specifies it. "
             "Display service durations in minutes. "
-            "Use a clear, readable list or table when presenting multiple services. "
+
+            "When listing registered vehicles: "
+            "Use a Markdown table with Plate Number, Make, Model, Year, and Status columns. "
+            "Never display internal database IDs or customer IDs. "
+            "If there are no registered vehicles, say so clearly. "
+
+            "Use clear, readable Markdown formatting, including tables or lists "
+            "when presenting multiple services or vehicles. "
+
+            "Only report information present in the relevant tool results. "
+            "Never invent service details, vehicle details, prices, or durations. "
+
             "If a tool returns an error, explain that the information is "
-            "temporarily unavailable. Never invent prices or claim to have "
-            "created or changed a booking."
+            "temporarily unavailable. "
+
+            "Never claim to have created or changed a booking unless the backend "
+            "confirms it."
         )
 
         response = client.responses.create(

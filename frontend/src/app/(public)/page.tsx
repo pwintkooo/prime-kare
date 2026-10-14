@@ -1,13 +1,15 @@
 import Hero from "@/components/home/Hero";
 import Services from "@/components/home/Services";
-import WhyChooseUs from "@/components/home/WhyChooseUs"
+import WhyChooseUs from "@/components/home/WhyChooseUs";
+import PrimeKareChat from "@/components/ai/PrimeKareChat";
 
 export default function HomePage() {
   return (
     <>
-      <Hero/>
-      <Services/>
-      <WhyChooseUs/>
+      <PrimeKareChat />
+      <Hero />
+      <Services />
+      <WhyChooseUs />
     </>
   );
 }
