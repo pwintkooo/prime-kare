@@ -6,6 +6,7 @@ from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, Field
 from typing import Literal
 import json
+import httpx
 
 # Load settings from .env
 load_dotenv()
@@ -13,6 +14,7 @@ load_dotenv()
 # Read configuration
 api_key = os.getenv("OPENAI_API_KEY")
 model = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
+services_url = os.getenv("PRIMEKARE_SERVICES_URL")
 
 # Create the FastAPI application
 app = FastAPI(
@@ -41,22 +43,59 @@ class ChatResponse(BaseModel):
 
 
 def get_available_services():
-    """Return sample services offered by PrimeKare."""
+    """Retrieve active services from the PrimeKare backend."""
 
-    return [
-        {
-            "name": "Oil Change",
-            "description": "Engine oil and oil filter replacement.",
+    if not services_url:
+        return {"error": "PrimeKare services API URL is not configured."}
+
+    try:
+        response = httpx.get(services_url, timeout=10.0)
+        response.raise_for_status()
+
+        services = response.json()
+
+        if not isinstance(services, list):
+            return {"error": "Unexpected response from the services API."}
+
+        return [
+            {
+                "id": service["id"],
+                "name": service["name"],
+                "description": service.get("description"),
+                "price": service.get("price"),
+                "estimatedMinutes": service.get("estimatedMinutes"),
+            }
+            for service in services
+            if service.get("isActive") is True
+        ]
+
+    except (httpx.HTTPError, ValueError, KeyError) as e:
+        print(f"PrimeKare API error: {type(e).__name__}: {e}")
+        return {"error": "Unable to retrieve services from PrimeKare."}
+
+
+tools = [
+    {
+        "type": "function",
+        "name": "get_available_services",
+        "description": (
+            "Get the services offered by PrimeKare. "
+            "Use this when a customer asks about available services."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
         },
-        {
-            "name": "Brake Inspection",
-            "description": "Inspection of brake pads and braking components.",
-        },
-        {
-            "name": "General Vehicle Inspection",
-            "description": "A general check of the vehicle's condition.",
-        },
-    ]
+        "strict": True,
+    }
+]
+
+# Only functions registered here can be executed by the AI agent.
+tool_handlers = {
+    "get_available_services": get_available_services,
+}
 
 
 @app.get("/")
@@ -73,24 +112,6 @@ def chat(request: ChatRequest):
         )
 
     try:
-        tools = [
-            {
-                "type": "function",
-                "name": "get_available_services",
-                "description": (
-                    "Get the list of services currently offered by PrimeKare. "
-                    "Use this when a customer asks what services are available."
-                ),
-                "parameters": {
-                    "type": "object",
-                    "properties": {},
-                    "required": [],
-                    "additionalProperties": False,
-                },
-                "strict": True,
-            }
-        ]
-        
         conversation = [
             {
                 "role": message.role,
@@ -99,77 +120,91 @@ def chat(request: ChatRequest):
             for message in request.messages
         ]
 
+        instructions = (
+            "You are PrimeKare's helpful car workshop assistant. "
+            "Use the available tools to retrieve real service information. "
+            "Only report information present in the tool results. "
+            "Display prices with two decimal places, such as 89.90. "
+            "Do not assume a currency unless the backend specifies it. "
+            "Display service durations in minutes. "
+            "Use a clear, readable list or table when presenting multiple services. "
+            "If a tool returns an error, explain that the information is "
+            "temporarily unavailable. Never invent prices or claim to have "
+            "created or changed a booking."
+        )
+
         response = client.responses.create(
             model=model,
-            instructions=(
-                "You are PrimeKare's AI assistant for a car workshop management system. "
-                "Your responsibilities are to help customers understand vehicle "
-                "servicing, workshop services, vehicle maintenance, and bookings. "
-                "Answer in a friendly, professional, and easy-to-understand way. "
-                "Keep answers concise unless the customer asks for more detail. "
-                "You do not currently have access to PrimeKare's database, customer "
-                "records, vehicles, service prices, or appointment availability. "
-                "Never invent service prices, customer information, booking details, "
-                "or appointment availability. If you do not know something, say so. "
-                "Never claim that you have created, updated, or cancelled a booking. "
-                "Explain that you cannot perform these actions yet. "
-                "Only answer within your capabilities. If a request requires access "
-                "to real PrimeKare data or an action you cannot perform, explain "
-                "the limitation clearly."
-            ),
+            instructions=instructions,
             input=conversation,
             tools=tools,
         )
-        
-        # Check whether the AI requested a tool.
-        for item in response.output:
-            if item.type == "function_call":
-                if item.name == "get_available_services":
-                    # Execute our Python function.
-                    result = get_available_services()
 
-                    # Add the AI's tool request and the function result
-                    # to the conversation.
-                    conversation.append(item.model_dump(exclude_none=True))
+        # Allow up to 5 rounds of tool calls.
+        for _ in range(5):
+            function_calls = [
+                item for item in response.output if item.type == "function_call"
+            ]
 
-                    conversation.append(
-                        {
-                            "type": "function_call_output",
-                            "call_id": item.call_id,
-                            "output": json.dumps(result),
-                        }
-                    )
+            # No more tools requested: we have the final answer.
+            if not function_calls:
+                break
 
-                    # Let the AI turn the result into a natural answer.
-                    response = client.responses.create(
-                        model=model,
-                        instructions=(
-                            "You are PrimeKare's helpful car workshop assistant. "
-                            "Answer clearly and politely. "
-                            "Use the supplied tool results to answer accurately. "
-                            "Do not invent prices or claim to have made bookings."
-                        ),
-                        input=conversation,
-                    )
+            # Preserve the model's complete response for the next call.
+            conversation.extend(response.output)
 
-                    break
+            for call in function_calls:
+                handler = tool_handlers.get(call.name)
 
+                if handler is None:
+                    result = {"error": "This tool is not available."}
+                else:
+                    try:
+                        arguments = json.loads(call.arguments)
+
+                        if not isinstance(arguments, dict):
+                            raise ValueError("Tool arguments must be an object.")
+
+                        result = handler(**arguments)
+
+                    except (ValueError, TypeError):
+                        result = {"error": "Invalid tool arguments."}
+
+                conversation.append(
+                    {
+                        "type": "function_call_output",
+                        "call_id": call.call_id,
+                        "output": json.dumps(result),
+                    }
+                )
+
+            # Send tool results back to the model.
+            response = client.responses.create(
+                model=model,
+                instructions=instructions,
+                input=conversation,
+                tools=tools,
+            )
+
+        else:
+            # The loop used all 5 iterations.
+            # Check whether the latest response still requests a tool.
+            function_calls = [
+                item for item in response.output if item.type == "function_call"
+            ]
+
+            if function_calls:
+                raise HTTPException(
+                    status_code=502,
+                    detail="The AI exceeded the tool-call limit.",
+                )
 
         return ChatResponse(reply=response.output_text)
-
-    # except OpenAIError:
-    #     raise HTTPException(
-    #         status_code=502,
-    #         detail=(
-    #             "The AI service request failed. "
-    #             "Check your API key, model access, and billing."
-    #         ),
-    #     )
 
     except OpenAIError as e:
         print(f"OpenAI error: {type(e).__name__}: {e}")
 
-    raise HTTPException(
-        status_code=502,
-        detail=f"OpenAI error: {type(e).__name__}: {e}",
-    )
+        raise HTTPException(
+            status_code=502,
+            detail="The AI service request failed. Check the server logs.",
+        )
