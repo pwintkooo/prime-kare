@@ -106,12 +106,19 @@ export default function PrimeKareChat() {
       const reply = await sendChatMessage(updatedMessages, token);
 
       setMessages([...updatedMessages, { role: "assistant", content: reply }]);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again.",
-      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.";
+
+      setMessages((previous) => [
+        ...previous,
+        {
+          role: "assistant",
+          content: errorMessage,
+        },
+      ]);
     } finally {
       setLoading(false);
     }

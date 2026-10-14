@@ -1,3 +1,4 @@
+import axios from "axios";
 import { ChatMessage, ChatResponse } from "@/types/aiAgent.js";
 
 const AI_AGENT_URL =
@@ -7,23 +8,38 @@ export async function sendChatMessage(
   messages: ChatMessage[],
   token: string,
 ): Promise<string> {
-  const response = await fetch(`${AI_AGENT_URL}/chat`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ messages }),
-  });
+  try {
+    const response = await axios.post<ChatResponse>(
+      `${AI_AGENT_URL}/chat`,
+      { messages: messages.slice(-10) },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => null);
+    return response.data.reply;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      // Rate limit exceeded
+      if (error.response?.status === 429) {
+        throw new Error(
+          "You've sent too many messages. Please wait a minute before trying again.",
+        );
+      }
+
+      // Extract FastAPI error details
+      const detail = error.response?.data?.detail;
+
+      if (typeof detail === "string") {
+        throw new Error(detail);
+      }
+    }
 
     throw new Error(
-      error?.detail ?? "Unable to contact the PrimeKare AI assistant.",
+      "Unable to contact the PrimeKare AI assistant. Please try again.",
     );
   }
-
-  const data: ChatResponse = await response.json();
-  return data.reply;
 }

@@ -1,14 +1,20 @@
 import os
+import json
+import httpx
+import jwt
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import FastAPI, HTTPException, Header, Depends, Request
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, Field
 from typing import Literal
-import json
-import httpx
 from fastapi.security import HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from jwt import InvalidTokenError
+from datetime import datetime, timezone
 
 # Load settings from .env
 load_dotenv()
@@ -18,6 +24,10 @@ api_key = os.getenv("OPENAI_API_KEY")
 model = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 services_url = os.getenv("PRIMEKARE_SERVICES_URL")
 api_base_url = os.getenv("PRIMEKARE_API_URL")
+
+jwt_secret = os.getenv("JWT_SECRET")
+jwt_issuer = os.getenv("JWT_ISSUER")
+jwt_audience = os.getenv("JWT_AUDIENCE")
 
 # Create the FastAPI application
 app = FastAPI(
@@ -39,7 +49,15 @@ app.add_middleware(
 )
 
 # Create the OpenAI client
-client = OpenAI(api_key=api_key) if api_key else None
+client = (
+    OpenAI(
+        api_key=api_key,
+        timeout=30.0,
+        max_retries=1,
+    )
+    if api_key
+    else None
+)
 
 
 # Define the expected request body
@@ -106,6 +124,54 @@ def call_protected_api(
             status_code=502,
             detail="Unable to connect to the PrimeKare backend.",
         )
+
+
+
+def get_user_rate_limit_key(request: Request) -> str:
+    authorization = request.headers.get("Authorization", "")
+
+    if not authorization.lower().startswith("bearer "):
+        key = f"ip:{get_remote_address(request)}"
+        print("Rate-limit key:", key, "(missing bearer token)")
+        return key
+
+    token = authorization.split(" ", 1)[1].strip()
+
+    try:
+        if not jwt_secret:
+            raise RuntimeError("JWT_SECRET is not configured.")
+
+        payload = jwt.decode(
+            token,
+            jwt_secret,
+            algorithms=["HS256"],
+            issuer=jwt_issuer,
+            audience=jwt_audience,
+        )
+
+        user_id = (
+            payload.get("sub")
+            or payload.get("nameid")
+            or payload.get(
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+            )
+        )
+
+        print("JWT valid, but no recognized user-ID claim.")
+
+    except InvalidTokenError as e:
+        print("JWT validation failed:", type(e).__name__)
+
+    return f"ip:{get_remote_address(request)}"
+
+# rate limit
+limiter = Limiter(key_func=get_user_rate_limit_key)
+
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
+)
 
 
 def get_available_services():
@@ -211,12 +277,14 @@ def home():
 
 
 @app.post("/chat", response_model=ChatResponse)
+@limiter.limit("10/minute")
 def chat(
-    request: ChatRequest,
+    request: Request,
+    chat_request: ChatRequest,
     credentials=Depends(bearer_scheme),
 ):
     authorization = f"Bearer {credentials.credentials}"
-
+    print("Endpoint reached at:", datetime.now(timezone.utc).isoformat())
     if client is None:
         raise HTTPException(
             status_code=500,
@@ -229,13 +297,11 @@ def chat(
                 "role": message.role,
                 "content": message.content,
             }
-            for message in request.messages
+            for message in chat_request.messages
         ]
 
-        
         instructions = (
             "You are PrimeKare's helpful car workshop assistant. "
-
             "When listing available services: "
             "Use a Markdown table with Service, Description, Price, and Duration columns. "
             "Display prices in Singapore dollars (S$) with two decimal places, "
@@ -243,21 +309,16 @@ def chat(
             "Display duration with min, such as 45min."
             "Do not assume a currency unless the backend specifies it. "
             "Display service durations in minutes. "
-
             "When listing registered vehicles: "
             "Use a Markdown table with Plate Number, Make, Model, Year, and Status columns. "
             "Never display internal database IDs or customer IDs. "
             "If there are no registered vehicles, say so clearly. "
-
             "Use clear, readable Markdown formatting, including tables or lists "
             "when presenting multiple services or vehicles. "
-
             "Only report information present in the relevant tool results. "
             "Never invent service details, vehicle details, prices, or durations. "
-
             "If a tool returns an error, explain that the information is "
             "temporarily unavailable. "
-
             "Never claim to have created or changed a booking unless the backend "
             "confirms it."
         )
@@ -267,6 +328,7 @@ def chat(
             instructions=instructions,
             input=conversation,
             tools=tools,
+            max_output_tokens=1000,
         )
 
         # Allow up to 5 rounds of tool calls.
