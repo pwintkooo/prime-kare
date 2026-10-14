@@ -60,3 +60,35 @@ yarn-error.log*
 
 **/TestResults/
 **/*.trx
+
+
+# ==========================================
+# Python AI Agent
+# ==========================================
+
+# Virtual environments
+**/.venv/
+**/venv/
+**/env/
+
+# Python cache and compiled files
+**/__pycache__/
+**/*.py[cod]
+
+# Environment variables and secrets
+**/.env
+**/.env.*
+!**/.env.example
+
+# Testing and coverage
+**/.pytest_cache/
+**/.coverage
+**/htmlcov/
+
+# Type checking and linting caches
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Build and packaging
+**/dist/
+**/egg-info/
