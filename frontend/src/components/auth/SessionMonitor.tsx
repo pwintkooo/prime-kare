@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { apiClient } from "@/api/client";
 
-// const WARNING_BEFORE_EXPIRY_MS = 15 * 60 * 1000;
-const WARNING_BEFORE_EXPIRY_MS = 60 * 1000;
+const WARNING_BEFORE_EXPIRY_MS = 15 * 60 * 1000;
 const CHECK_INTERVAL_MS = 1000;
 
 function getTokenExpiry(token: string): number | null {

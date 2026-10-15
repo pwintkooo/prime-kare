@@ -42,7 +42,7 @@ public class AuthService : IAuthService
     }
 
     private static readonly TimeSpan AccessTokenLifetime =
-    TimeSpan.FromMinutes(2);
+    TimeSpan.FromHours(2);
 
     private static readonly TimeSpan RefreshTokenLifetime =
         TimeSpan.FromDays(7);
