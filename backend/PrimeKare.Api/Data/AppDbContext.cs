@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<ExternalLogin> ExternalLogins { get; set; }
     public DbSet<ExternalAuthCode> ExternalAuthCodes { get; set; }
     public DbSet<ExternalLinkRequest> ExternalLinkRequests { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -108,6 +109,30 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ExternalLinkRequest>()
             .HasIndex(e => e.Code)
             .IsUnique();
+
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.TokenHash)
+                .HasMaxLength(64)
+                .IsRequired();
+
+            entity.HasIndex(x => x.TokenHash)
+                .IsUnique();
+
+            entity.HasOne(x => x.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<RefreshToken>()
+                .WithMany()
+                .HasForeignKey(x => x.ReplacedByTokenId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
 
         modelBuilder.Entity<Service>().HasData(
             new Service

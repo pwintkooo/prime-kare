@@ -7,8 +7,11 @@ export interface AuthState {
 
   login: (user: User, token: string) => void;
   logout: () => void;
+  updateToken: (token: string) => void;
 
   sessionExpired: boolean;
+  sessionHasExpired: boolean;
+  setSessionHasExpired: (expired: boolean) => void;
 
   showSessionExpired: () => void;
   clearSessionExpired: () => void;

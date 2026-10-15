@@ -14,6 +14,7 @@ public class User
     public int? CustomerId { get; set; }
     public Customer? Customer { get; set; }
     public ICollection<ExternalLogin> ExternalLogins { get; set; } = new List<ExternalLogin>();
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     public string? PasswordResetTokenHash { get; set; }
     public DateTime? PasswordResetTokenExpiresAt { get; set; }
 }

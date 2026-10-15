@@ -41,19 +41,32 @@ public class AuthService : IAuthService
         _emailService = emailService;
     }
 
+    private static readonly TimeSpan AccessTokenLifetime =
+    TimeSpan.FromMinutes(2);
+
+    private static readonly TimeSpan RefreshTokenLifetime =
+        TimeSpan.FromDays(7);
+
+    private static string HashRefreshToken(string token)
+    {
+        return Convert.ToHexString(
+            SHA256.HashData(
+                Encoding.UTF8.GetBytes(token)));
+    }
+
     private string GenerateJwt(User user)
     {
         var claims = new List<Claim>
     {
-        new Claim(
+        new(
             ClaimTypes.NameIdentifier,
             user.Id.ToString()),
 
-        new Claim(
+        new(
             ClaimTypes.Email,
             user.Email),
 
-        new Claim(
+        new(
             ClaimTypes.Role,
             user.Role)
     };
@@ -75,21 +88,18 @@ public class AuthService : IAuthService
         }
 
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtKey)
-        );
+            Encoding.UTF8.GetBytes(jwtKey));
 
         var credentials = new SigningCredentials(
             key,
-            SecurityAlgorithms.HmacSha256
-        );
+            SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(2),
-            signingCredentials: credentials
-        );
+            expires: DateTime.UtcNow.Add(AccessTokenLifetime),
+            signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler()
             .WriteToken(token);
@@ -97,12 +107,9 @@ public class AuthService : IAuthService
 
     public SignInResponseDto CreateSignInResponse(User user)
     {
-        var token = GenerateJwt(user);
-
         return new SignInResponseDto
         {
-            Token = token,
-
+            Token = GenerateJwt(user),
             User = new UserDto
             {
                 Id = user.Id,
@@ -110,6 +117,32 @@ public class AuthService : IAuthService
                 Email = user.Email,
                 Role = user.Role
             }
+        };
+    }
+
+    public async Task<AuthSessionResult> CreateSignInSessionAsync(
+    User user)
+    {
+        var rawRefreshToken = Convert.ToBase64String(
+            RandomNumberGenerator.GetBytes(64));
+
+        var now = DateTime.UtcNow;
+
+        var refreshToken = new RefreshToken
+        {
+            UserId = user.Id,
+            TokenHash = HashRefreshToken(rawRefreshToken),
+            CreatedAt = now,
+            ExpiresAt = now.Add(RefreshTokenLifetime)
+        };
+
+        _context.RefreshTokens.Add(refreshToken);
+        await _context.SaveChangesAsync();
+
+        return new AuthSessionResult
+        {
+            Response = CreateSignInResponse(user),
+            RefreshToken = rawRefreshToken
         };
     }
 
@@ -198,7 +231,7 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<SignInResponseDto> SignInAsync(
+    public async Task<AuthSessionResult> SignInAsync(
         SignInDto request)
     {
         var email = request.Email.Trim().ToLowerInvariant();
@@ -257,10 +290,10 @@ public class AuthService : IAuthService
             );
         }
 
-        return CreateSignInResponse(user);
+        return await CreateSignInSessionAsync(user);
     }
 
-    public async Task<SignInResponseDto> ReactivateAccountAsync(
+    public async Task<AuthSessionResult> ReactivateAccountAsync(
         ReactivateAccountDto request)
     {
         var email = request.Email.Trim().ToLowerInvariant();
@@ -327,7 +360,7 @@ public class AuthService : IAuthService
         }
 
         await _context.SaveChangesAsync();
-        return CreateSignInResponse(user);
+        return await CreateSignInSessionAsync(user);
     }
 
     public async Task ForgotPasswordAsync(
@@ -462,6 +495,102 @@ public class AuthService : IAuthService
         user.PasswordResetTokenHash = null;
         user.PasswordResetTokenExpiresAt = null;
 
+        var activeRefreshTokens = await _context.RefreshTokens
+            .Where(rt =>
+                rt.UserId == user.Id &&
+                rt.RevokedAt == null)
+            .ToListAsync();
+
+        var now = DateTime.UtcNow;
+
+        foreach (var refreshToken in activeRefreshTokens)
+        {
+            refreshToken.RevokedAt = now;
+        }
+
         await _context.SaveChangesAsync();
     }
+
+
+    public async Task<AuthSessionResult> RefreshSessionAsync(
+        string rawRefreshToken)
+    {
+        if (string.IsNullOrWhiteSpace(rawRefreshToken))
+        {
+            throw new UnauthorizedAccessException(
+                "Invalid or expired refresh token.");
+        }
+
+        var tokenHash = HashRefreshToken(rawRefreshToken);
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        var existingToken = await _context.RefreshTokens
+            .Include(rt => rt.User)
+            .SingleOrDefaultAsync(rt => rt.TokenHash == tokenHash);
+
+        var now = DateTime.UtcNow;
+
+        if (existingToken is null ||
+            existingToken.RevokedAt is not null ||
+            existingToken.ExpiresAt <= now ||
+            existingToken.User.IsDeleted ||
+            !string.Equals(
+                existingToken.User.Status,
+                "active",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new UnauthorizedAccessException(
+                "Invalid or expired refresh token.");
+        }
+
+        // Generate a replacement refresh token.
+        var rawNewRefreshToken = Convert.ToBase64String(
+            RandomNumberGenerator.GetBytes(64));
+
+        var newRefreshToken = new RefreshToken
+        {
+            UserId = existingToken.UserId,
+            TokenHash = HashRefreshToken(rawNewRefreshToken),
+            CreatedAt = now,
+            ExpiresAt = now.Add(RefreshTokenLifetime)
+        };
+
+        // Revoke the old token and store the replacement.
+        existingToken.RevokedAt = now;
+
+        _context.RefreshTokens.Add(newRefreshToken);
+        await _context.SaveChangesAsync();
+
+        existingToken.ReplacedByTokenId = newRefreshToken.Id;
+        await _context.SaveChangesAsync();
+
+        await transaction.CommitAsync();
+
+        return new AuthSessionResult
+        {
+            Response = CreateSignInResponse(existingToken.User),
+            RefreshToken = rawNewRefreshToken
+        };
+    }
+
+    public async Task RevokeRefreshTokenAsync(
+        string? rawRefreshToken)
+    {
+        if (string.IsNullOrWhiteSpace(rawRefreshToken))
+            return;
+
+        var tokenHash = HashRefreshToken(rawRefreshToken);
+
+        var token = await _context.RefreshTokens
+            .SingleOrDefaultAsync(rt => rt.TokenHash == tokenHash);
+
+        if (token is null || token.RevokedAt is not null)
+            return;
+
+        token.RevokedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+    }
+
 }

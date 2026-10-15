@@ -10,12 +10,17 @@ export const useAuthStore = create<AuthState>()(
       hydrated: false,
 
       sessionExpired: false,
+      sessionHasExpired: false,
+
+      setSessionHasExpired: (expired: boolean) =>
+        set({ sessionHasExpired: expired }),
 
       login: (user, token) => {
         set({
           user,
           token,
           sessionExpired: false,
+          sessionHasExpired: false,
         });
       },
 
@@ -23,8 +28,19 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           token: null,
+          sessionExpired: false,
+          sessionHasExpired: false,
         });
       },
+
+      updateToken: (token) => {
+        set({
+          token,
+          sessionExpired: false,
+          sessionHasExpired: false,
+        });
+      },
+
       showSessionExpired: () => {
         set({
           sessionExpired: true,
@@ -34,6 +50,7 @@ export const useAuthStore = create<AuthState>()(
       clearSessionExpired: () => {
         set({
           sessionExpired: false,
+          sessionHasExpired: false,
         });
       },
     }),

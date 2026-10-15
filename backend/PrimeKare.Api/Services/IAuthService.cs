@@ -7,13 +7,19 @@ public interface IAuthService
 {
     Task<SignUpResponseDto> SignUpAsync(SignUpDto request);
 
-    Task<SignInResponseDto> SignInAsync(SignInDto request);
+    Task<AuthSessionResult> SignInAsync(SignInDto request);
+
+    Task<AuthSessionResult> CreateSignInSessionAsync(User user);
 
     SignInResponseDto CreateSignInResponse(User user);
 
-    Task<SignInResponseDto> ReactivateAccountAsync(ReactivateAccountDto request);
+    Task<AuthSessionResult> ReactivateAccountAsync(ReactivateAccountDto request);
 
     Task ForgotPasswordAsync(ForgotPasswordRequestDto request);
 
     Task ResetPasswordAsync(ResetPasswordRequestDto request);
+
+    Task<AuthSessionResult> RefreshSessionAsync(string rawRefreshToken);
+    
+    Task RevokeRefreshTokenAsync(string? rawRefreshToken);
 }

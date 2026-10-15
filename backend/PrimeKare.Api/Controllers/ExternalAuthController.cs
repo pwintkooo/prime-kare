@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
-using PrimeKare.Api.Services;
 using PrimeKare.Api.DTOs.Auth;
+using PrimeKare.Api.Services;
 using PrimeKare.Api.Services.Exceptions;
 
 namespace PrimeKare.Api.Controllers;
@@ -11,6 +11,9 @@ namespace PrimeKare.Api.Controllers;
 [Route("api/external-auth")]
 public class ExternalAuthController : ControllerBase
 {
+    private const string RefreshTokenCookieName =
+        "primekare_refresh";
+
     private readonly IExternalAuthService _externalAuthService;
     private readonly IConfiguration _configuration;
 
@@ -20,6 +23,21 @@ public class ExternalAuthController : ControllerBase
     {
         _externalAuthService = externalAuthService;
         _configuration = configuration;
+    }
+
+    private void SetRefreshTokenCookie(string refreshToken)
+    {
+        Response.Cookies.Append(
+            RefreshTokenCookieName,
+            refreshToken,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Path = "/api",
+                Expires = DateTimeOffset.UtcNow.AddDays(7)
+            });
     }
 
     [HttpGet("google")]
@@ -32,8 +50,7 @@ public class ExternalAuthController : ControllerBase
 
         return Challenge(
             properties,
-            GoogleDefaults.AuthenticationScheme
-        );
+            GoogleDefaults.AuthenticationScheme);
     }
 
     [HttpGet("google/callback")]
@@ -42,13 +59,11 @@ public class ExternalAuthController : ControllerBase
         var result = await HttpContext.AuthenticateAsync(
             GoogleDefaults.AuthenticationScheme);
 
-        if (!result.Succeeded ||
-            result.Principal == null)
+        if (!result.Succeeded || result.Principal == null)
         {
             return Unauthorized(new
             {
-                message =
-                    "Google authentication failed."
+                message = "Google authentication failed."
             });
         }
 
@@ -69,8 +84,7 @@ public class ExternalAuthController : ControllerBase
             return Redirect(
                 $"{frontendUrl}/auth/google/callback" +
                 $"?code={Uri.EscapeDataString(authResult.Code)}" +
-                $"&type={Uri.EscapeDataString(authResult.Type)}"
-            );
+                $"&type={Uri.EscapeDataString(authResult.Type)}");
         }
         catch (InvalidOperationException ex)
         {
@@ -90,24 +104,24 @@ public class ExternalAuthController : ControllerBase
 
     [HttpPost("exchange")]
     public async Task<IActionResult> ExchangeCode(
-    [FromBody] string code)
+        [FromBody] string code)
     {
         if (string.IsNullOrWhiteSpace(code))
         {
             return BadRequest(new
             {
-                message =
-                    "Authorization code is required."
+                message = "Authorization code is required."
             });
         }
 
         try
         {
-            var response =
-                await _externalAuthService
-                    .ExchangeCodeAsync(code);
+            var result =
+                await _externalAuthService.ExchangeCodeAsync(code);
 
-            return Ok(response);
+            SetRefreshTokenCookie(result.RefreshToken);
+
+            return Ok(result.Response);
         }
         catch (InvalidOperationException ex)
         {
@@ -119,15 +133,11 @@ public class ExternalAuthController : ControllerBase
     }
 
     [HttpPost("link/verify")]
-    public async Task<IActionResult>
-    VerifyAndLinkGoogle(
-        [FromBody]
-        VerifyExternalLinkDto request)
+    public async Task<IActionResult> VerifyAndLinkGoogle(
+        [FromBody] VerifyExternalLinkDto request)
     {
-        if (string.IsNullOrWhiteSpace(
-                request.Code) ||
-            string.IsNullOrWhiteSpace(
-                request.Password))
+        if (string.IsNullOrWhiteSpace(request.Code) ||
+            string.IsNullOrWhiteSpace(request.Password))
         {
             return BadRequest(new
             {
@@ -138,13 +148,14 @@ public class ExternalAuthController : ControllerBase
 
         try
         {
-            var response =
-                await _externalAuthService
-                    .VerifyAndLinkGoogleAsync(
-                        request.Code,
-                        request.Password);
+            var result =
+                await _externalAuthService.VerifyAndLinkGoogleAsync(
+                    request.Code,
+                    request.Password);
 
-            return Ok(response);
+            SetRefreshTokenCookie(result.RefreshToken);
+
+            return Ok(result.Response);
         }
         catch (ConflictException ex)
         {
@@ -163,9 +174,8 @@ public class ExternalAuthController : ControllerBase
     }
 
     [HttpPost("reactivate")]
-    public async Task<ActionResult<SignInResponseDto>>
-    ReactivateAccount(
-        ReactivateExternalAccountDto request)
+    public async Task<IActionResult> ReactivateAccount(
+        [FromBody] ReactivateExternalAccountDto request)
     {
         if (string.IsNullOrWhiteSpace(request.Code))
         {
@@ -177,11 +187,13 @@ public class ExternalAuthController : ControllerBase
 
         try
         {
-            var response =
-                await _externalAuthService
-                    .ReactivateAccountAsync(request.Code);
+            var result =
+                await _externalAuthService.ReactivateAccountAsync(
+                    request.Code);
 
-            return Ok(response);
+            SetRefreshTokenCookie(result.RefreshToken);
+
+            return Ok(result.Response);
         }
         catch (InvalidOperationException ex)
         {

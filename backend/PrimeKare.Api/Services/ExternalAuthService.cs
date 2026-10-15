@@ -213,7 +213,7 @@ public class ExternalAuthService : IExternalAuthService
         };
     }
 
-    public async Task<SignInResponseDto>
+    public async Task<AuthSessionResult>
     ExchangeCodeAsync(string code)
     {
         var authCode =
@@ -263,11 +263,11 @@ public class ExternalAuthService : IExternalAuthService
 
         await _context.SaveChangesAsync();
 
-        return _authService
-            .CreateSignInResponse(user);
+        return await _authService
+            .CreateSignInSessionAsync(user);
     }
 
-    public async Task<SignInResponseDto>
+    public async Task<AuthSessionResult>
     VerifyAndLinkGoogleAsync(
         string code,
         string password)
@@ -368,11 +368,11 @@ public class ExternalAuthService : IExternalAuthService
 
         await _context.SaveChangesAsync();
 
-        return _authService
-            .CreateSignInResponse(user);
+        return await _authService
+            .CreateSignInSessionAsync(user);
     }
 
-    public async Task<SignInResponseDto>
+    public async Task<AuthSessionResult>
     ReactivateAccountAsync(string code)
     {
         var authCode = await _context.ExternalAuthCodes
@@ -437,6 +437,7 @@ public class ExternalAuthService : IExternalAuthService
 
         await _context.SaveChangesAsync();
 
-        return _authService.CreateSignInResponse(user);
+        return await _authService
+            .CreateSignInSessionAsync(user);
     }
 }

@@ -166,7 +166,7 @@ export default function MobileMenu() {
 
             {/* Book Appointment */}
             <Link
-              href="/book"
+              href="/book-appointment"
               onClick={closeMenu}
               className="mt-8 flex items-center justify-center rounded-xl bg-blue-600 px-5 py-4 text-sm font-semibold text-white transition hover:bg-blue-500"
             >

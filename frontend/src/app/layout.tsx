@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import QueryProvider from "@/providers/QueryProvider";
 import AuthHydration from "@/providers/AuthHydration";
 import SessionExpiredDialog from "@/components/auth/SessionExpiredDialog";
+import SessionMonitor from "@/components/auth/SessionMonitor";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,6 +43,7 @@ export default function RootLayout({
             <AuthHydration />
             {children}
             <Toaster richColors position="top-right" />
+            <SessionMonitor />
             <SessionExpiredDialog />
           </QueryProvider>
         </TooltipProvider>

@@ -8,15 +8,15 @@ public interface IExternalAuthService
     Task<ExternalAuthResult> HandleGoogleLoginAsync(
         ClaimsPrincipal principal);
 
-    Task<SignInResponseDto> ExchangeCodeAsync(
+    Task<AuthSessionResult> ExchangeCodeAsync(
         string code);
 
-    Task<SignInResponseDto> VerifyAndLinkGoogleAsync(
+    Task<AuthSessionResult> VerifyAndLinkGoogleAsync(
         string code,
         string password
     );
 
-    Task<SignInResponseDto> ReactivateAccountAsync(
+    Task<AuthSessionResult> ReactivateAccountAsync(
     string code
 );
 }

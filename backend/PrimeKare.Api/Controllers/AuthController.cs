@@ -1,9 +1,10 @@
+
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using FluentValidation;
 using PrimeKare.Api.DTOs.Auth;
 using PrimeKare.Api.Services;
 using PrimeKare.Api.Services.Exceptions;
-using Microsoft.AspNetCore.Authorization;
 
 namespace PrimeKare.Api.Controllers;
 
@@ -11,6 +12,11 @@ namespace PrimeKare.Api.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
+    private const string RefreshCookieName = "primekare_refresh";
+
+    private static readonly TimeSpan RefreshTokenLifetime =
+        TimeSpan.FromDays(7);
+
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
 
@@ -22,10 +28,38 @@ public class AuthController : ControllerBase
         _logger = logger;
     }
 
+    private void SetRefreshTokenCookie(string refreshToken)
+    {
+        Response.Cookies.Append(
+            RefreshCookieName,
+            refreshToken,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Path = "/api",
+                Expires = DateTimeOffset.UtcNow.Add(
+                    RefreshTokenLifetime)
+            });
+    }
+
+    private void ClearRefreshTokenCookie()
+    {
+        Response.Cookies.Delete(
+            RefreshCookieName,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Path = "/api"
+            });
+    }
+
     [AllowAnonymous]
     [HttpPost("sign-up")]
-    public async Task<IActionResult> SignUp(
-        SignUpDto request)
+    public async Task<IActionResult> SignUp(SignUpDto request)
     {
         try
         {
@@ -51,38 +85,29 @@ public class AuthController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new
-            {
-                message = ex.Message
-            });
+            return Conflict(new { message = ex.Message });
         }
     }
 
     [AllowAnonymous]
     [HttpPost("sign-in")]
-    public async Task<IActionResult> SignIn(
-        SignInDto request)
+    public async Task<IActionResult> SignIn(SignInDto request)
     {
-
         try
         {
-            var response = await _authService.SignInAsync(request);
+            var result = await _authService.SignInAsync(request);
 
-            return Ok(response);
+            SetRefreshTokenCookie(result.RefreshToken);
+
+            return Ok(result.Response);
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new
-            {
-                message = ex.Message
-            });
+            return NotFound(new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new
-            {
-                message = ex.Message
-            });
+            return BadRequest(new { message = ex.Message });
         }
         catch (AccountInactiveException ex)
         {
@@ -97,39 +122,80 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     [HttpPost("reactivate")]
     public async Task<ActionResult<SignInResponseDto>>
-    ReactivateAccount(
-        ReactivateAccountDto request)
+        ReactivateAccount(ReactivateAccountDto request)
     {
         try
         {
-            var response =
-                await _authService
-                    .ReactivateAccountAsync(
-                        request
-                    );
+            var result =
+                await _authService.ReactivateAccountAsync(request);
 
-            return Ok(response);
+            SetRefreshTokenCookie(result.RefreshToken);
+
+            return Ok(result.Response);
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new
-            {
-                message = ex.Message
-            });
+            return NotFound(new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh()
+    {
+        var refreshToken = Request.Cookies[RefreshCookieName];
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            ClearRefreshTokenCookie();
+
+            return Unauthorized(new
             {
-                message = ex.Message
+                message = "Your session has expired. Please sign in again."
+            });
+        }
+
+        try
+        {
+            var result =
+                await _authService.RefreshSessionAsync(refreshToken);
+
+            SetRefreshTokenCookie(result.RefreshToken);
+
+            return Ok(result.Response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            ClearRefreshTokenCookie();
+
+            return Unauthorized(new
+            {
+                message = "Your session has expired. Please sign in again."
             });
         }
     }
 
     [AllowAnonymous]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var refreshToken = Request.Cookies[RefreshCookieName];
+
+        await _authService.RevokeRefreshTokenAsync(refreshToken);
+
+        ClearRefreshTokenCookie();
+
+        return Ok(new { message = "You have been signed out." });
+    }
+
+    [AllowAnonymous]
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(
-    ForgotPasswordRequestDto dto)
+        ForgotPasswordRequestDto dto)
     {
         try
         {
@@ -172,11 +238,13 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(
-    ResetPasswordRequestDto dto)
+        ResetPasswordRequestDto dto)
     {
         try
         {
             await _authService.ResetPasswordAsync(dto);
+
+            ClearRefreshTokenCookie();
 
             return Ok(new
             {
@@ -186,16 +254,11 @@ public class AuthController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new
-            {
-                message = ex.Message
-            });
+            return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex)
         {
-            _logger.LogError(
-                ex,
-                "Failed to reset password.");
+            _logger.LogError(ex, "Failed to reset password.");
 
             return StatusCode(500, new
             {

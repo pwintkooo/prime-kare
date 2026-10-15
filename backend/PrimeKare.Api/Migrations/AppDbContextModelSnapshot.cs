@@ -247,6 +247,46 @@ namespace PrimeKare.Api.Migrations
                     b.ToTable("ExternalLogins");
                 });
 
+            modelBuilder.Entity("PrimeKare.Api.Models.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ReplacedByTokenId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReplacedByTokenId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("PrimeKare.Api.Models.Service", b =>
                 {
                     b.Property<int>("Id")
@@ -533,6 +573,22 @@ namespace PrimeKare.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PrimeKare.Api.Models.RefreshToken", b =>
+                {
+                    b.HasOne("PrimeKare.Api.Models.RefreshToken", null)
+                        .WithMany()
+                        .HasForeignKey("ReplacedByTokenId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("PrimeKare.Api.Models.User", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("PrimeKare.Api.Models.User", b =>
                 {
                     b.HasOne("PrimeKare.Api.Models.Customer", "Customer")
@@ -569,6 +625,8 @@ namespace PrimeKare.Api.Migrations
             modelBuilder.Entity("PrimeKare.Api.Models.User", b =>
                 {
                     b.Navigation("ExternalLogins");
+
+                    b.Navigation("RefreshTokens");
                 });
 
             modelBuilder.Entity("PrimeKare.Api.Models.Vehicle", b =>
